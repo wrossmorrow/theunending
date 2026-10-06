@@ -1,0 +1,19 @@
+title: The Unending
+author: "W. Ross Morrow"
+description: Relentless generative image creation 
+url: "https://theunending.ai"
+baseurl: ""
+og_image: /assets/og/site.jpg
+markdown: kramdown
+include:
+  - robots.txt
+  - llms.txt
+image_stream:
+  base:     "https://theunending.ai/assets/img/2026-09-12-computation/" # trailing slash
+  manifest: "/assets/images-manifest.json" # same-origin: no CORS needed
+  ext:      ".png"
+  interval: 1000
+  cols:     5
+  rows:     4
+  shuffle:  "true"
+  mask:     "true"

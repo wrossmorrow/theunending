@@ -1,0 +1,114 @@
+# Every stream on the site, in one place.
+
+defaults:
+  base:     "https://theunending.ai/assets/img"
+  ext:      ".png"
+  ratio:    1        # tile width/height: 1 square, 1.5 = 3:2
+  interval: 1000
+  cols:     5
+  rows:     4
+  shuffle:  "true"
+  mask:     "true"
+  cols_min: 3
+  cols_max: 7
+  target_tile: 150
+  theater_interval: 1000      # slower cadence on a wall
+  theater_target_tile: 240    # bigger tiles than the inline default
+
+sets:
+  computation:
+    base: "https://theunending.ai/assets/img/2026-09-12-computation/"
+    manifest: "/assets/streams/computation.json"
+    meta: "/assets/img/2026-09-12-computation/{id}.json"
+  pearl-earring:
+    base: "https://theunending.ai/assets/img/2026-09-12-pearl-earring/"
+    manifest: "/assets/streams/pearl-earring.json"
+    meta: "/assets/img/2026-09-12-pearl-earring/{id}.json"
+  memento-mori:
+    base: "https://theunending.ai/assets/img/2026-09-12-memento-mori/"
+    manifest: "/assets/streams/memento-mori.json"
+    meta: "/assets/img/2026-09-12-memento-mori/{id}.json"
+  dumpster-fire:
+    base: "https://theunending.ai/assets/img/2026-09-27-dumpster-fire/"
+    manifest: "/assets/streams/dumpster-fire.json"
+    meta: "/assets/img/2026-09-27-dumpster-fire/{id}.json"
+  news-profile:
+    base: "https://theunending.ai/assets/img/2026-09-27-news-profile/"
+    manifest: "/assets/streams/news-profile.json"
+    meta: "/assets/img/2026-09-27-news-profile/{id}.json"
+  lake-water:
+    base: "https://theunending.ai/assets/img/2026-09-27-lake-water/"
+    manifest: "/assets/streams/lake-water.json"
+    meta: "/assets/img/2026-09-27-lake-water/{id}.json"
+  modern-painting:
+    base: "https://theunending.ai/assets/img/2026-09-27-modern-painting/"
+    manifest: "/assets/streams/modern-painting.json"
+    meta: "/assets/img/2026-09-27-modern-painting/{id}.json"
+  old-computers:
+    base: "https://theunending.ai/assets/img/2026-09-27-old-computers/"
+    manifest: "/assets/streams/old-computers.json"
+    meta: "/assets/img/2026-09-27-old-computers/{id}.json"
+  obsolete-masters:
+    base: "https://theunending.ai/assets/img/2026-09-27-obsolete-masters/"
+    manifest: "/assets/streams/obsolete-masters.json"
+    meta: "/assets/img/2026-09-27-obsolete-masters/{id}.json"
+  masks:
+    base: "https://theunending.ai/assets/img/2026-09-27-masks/"
+    manifest: "/assets/streams/masks.json"
+    meta: "/assets/img/2026-09-27-masks/{id}.json"
+  dress-code:
+    base: "https://theunending.ai/assets/img/2026-09-27-dress-code/"
+    manifest: "/assets/streams/dress-code.json"
+    meta: "/assets/img/2026-09-27-dress-code/{id}.json"
+  sci-fi:
+    base: "https://theunending.ai/assets/img/2026-09-30-sci-fi/"
+    manifest: "/assets/streams/sci-fi.json"
+    meta: "/assets/img/2026-09-30-sci-fi/{id}.json"
+  framed:
+    base: "https://theunending.ai/assets/img/2026-09-30-framed/"
+    manifest: "/assets/streams/framed.json"
+    meta: "/assets/img/2026-09-30-framed/{id}.json"
+  icee:
+    base: "https://theunending.ai/assets/img/2026-09-30-icee/"
+    manifest: "/assets/streams/icee.json"
+    meta: "/assets/img/2026-09-30-icee/{id}.json"
+  grocery-shopping:
+    base: "https://theunending.ai/assets/img/2026-09-30-grocery-shopping/"
+    manifest: "/assets/streams/grocery-shopping.json"
+    meta: "/assets/img/2026-09-30-grocery-shopping/{id}.json"
+  black-holes:
+    base: "https://theunending.ai/assets/img/2026-10-01-black-holes/"
+    manifest: "/assets/streams/black-holes.json"
+    meta: "/assets/img/2026-10-01-black-holes/{id}.json"
+  burnt-sockets:
+    base: "https://theunending.ai/assets/img/2026-10-02-burnt-sockets/"
+    manifest: "/assets/streams/burnt-sockets.json"
+    meta: "/assets/img/2026-10-02-burnt-sockets/{id}.json"
+  tombstone:
+    base: "https://theunending.ai/assets/img/2026-10-02-tombstone/"
+    manifest: "/assets/streams/tombstone.json"
+    meta: "/assets/img/2026-10-02-tombstone/{id}.json"
+  drip-pope:
+    base: "https://theunending.ai/assets/img/2026-10-02-drip-pope/"
+    manifest: "/assets/streams/drip-pope.json"
+    meta: "/assets/img/2026-10-02-drip-pope/{id}.json"
+  desert-rocks:
+    base: "https://theunending.ai/assets/img/2026-10-02-desert-rocks/"
+    manifest: "/assets/streams/desert-rocks.json"
+    meta: "/assets/img/2026-10-02-desert-rocks/{id}.json"
+  health-food:
+    base: "https://theunending.ai/assets/img/2026-10-02-health-food/"
+    manifest: "/assets/streams/health-food.json"
+    meta: "/assets/img/2026-10-02-health-food/{id}.json"
+  invisible-tanks:
+    base: "https://theunending.ai/assets/img/2026-10-03-invisible-tanks/"
+    manifest: "/assets/streams/invisible-tanks.json"
+    meta: "/assets/img/2026-10-03-invisible-tanks/{id}.json"
+  modern-painting-flux2:
+    base: "https://theunending.ai/assets/img/2026-10-05-modern-painting/"
+    manifest: "/assets/streams/modern-painting-flux2.json"
+    meta: "/assets/img/2026-10-05-modern-painting/{id}.json"
+  cloud-outline:
+    base: "https://theunending.ai/assets/img/2026-10-05-cloud-outline/"
+    manifest: "/assets/streams/cloud-outline.json"
+    meta: "/assets/img/2026-10-05-cloud-outline/{id}.json"

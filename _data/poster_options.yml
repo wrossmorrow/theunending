@@ -1,0 +1,40 @@
+# Options shown in the "I'm interested" modal. Edit freely; the modal is built
+# from this file at build time, so it can't drift from what you actually offer.
+
+# Themes come from _data/streams.yml (its `sets:` keys), so this list can't
+# drift from what exists. In streams.yml, a set can set `label: Nice Name`
+# for display and `poster: false` to stay out of this modal.
+#
+# Anything here is appended after the sets -- non-set options only.
+extra_themes:
+  - id: any
+    label: No preference
+
+cost_note: est. for professional print, high quality cold-press art paper
+sizes:
+  - id: 12x18
+    label: 12 × 18 in
+    cost: 40
+  - id: 18x24
+    label: 18 × 24 in
+    cost: 110
+  - id: 24x36
+    label: 24 × 36 in
+    cost: 200
+  - id: 36x48
+    label: 36 × 48 in
+    cost: 350
+  - id: 40x80
+    label: 40 × 80 in
+    cost: 575
+
+# Where the form posts. Leave empty for dry-run mode: the modal works end to
+# end and logs the payload to the console without sending anything.
+endpoint: "https://mq3s7aiyofu5enbjzxpldboh3y0iests.lambda-url.us-east-1.on.aws/"
+
+# Copy
+button_label: "I'm interested in one"
+title: "Interested in a print?"
+blurb: "No identifying information is collected, nothing is sent to you, and you owe nothing — this just tells me which themes and sizes may be worth printing."
+note_label: "Anything else? (optional)"
+thanks: "Thank you for your interest, that's all I needed."

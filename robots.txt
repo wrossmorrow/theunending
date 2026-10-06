@@ -1,0 +1,55 @@
+---
+permalink: /robots.txt
+---
+# =======================================================
+# BLOCKED AI CRAWLERS (Model Training & Scrapers)
+# copied from Gemini, ironically
+# =======================================================
+
+# OpenAI (ChatGPT)
+User-agent: GPTBot
+Disallow: /
+
+# ChatGPT Real-time Search
+User-agent: OAI-SearchBot
+Disallow: /
+
+# Google Gemini Training (Does NOT block Google Search)
+User-agent: Google-Extended
+Disallow: /
+
+# Anthropic (Claude)
+User-agent: ClaudeBot
+Disallow: /
+User-agent: Claude-SearchBot
+Disallow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Disallow: /
+
+# Common Crawl (Massive AI training dataset)
+User-agent: CCBot
+Disallow: /
+
+# Apple AI
+User-agent: Applebot-Extended
+Disallow: /
+
+# Meta AI
+User-agent: Meta-ExternalAgent
+User-agent: FacebookBot
+Disallow: /
+
+# Cohere AI
+User-agent: cohere-ai
+Disallow: /
+
+# =======================================================
+# ALLOW ALL OTHER BOT TRAFFIC (Google Search, Bing, etc.)
+# =======================================================
+User-agent: *
+Allow: /
+
+# Sitemap link for Search Engines
+Sitemap: {{ site.url }}/sitemap.xml

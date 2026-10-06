@@ -1,0 +1,128 @@
+{%- comment -%}
+Continuous image stream.
+
+    {% include image-stream.html set="monkeys" %}
+    {% include image-stream.html set="monkeys,landscapes" axis="x" cols=8 sample=40 %}
+    {% include image-stream.html set="all" axis="x" %}
+
+A "set" is defined once in _data/streams.yml (base URL, extension, layout
+defaults) and its UUIDs live in _data/stream_ids/<set>.yml. Any set key can
+be overridden per call. Several streams on one page is fine; assets load once.
+
+  set        one set name, a comma-separated list, or "all" to pool every set
+  axis       "y" (default) = grid that scrolls up; "x" = one row that scrolls left
+  sample     inline at most N ids per set, picked fresh each build (0 = all)
+  base       CloudFront origin + prefix (trailing slash)
+  ext        extension appended to each UUID ("" if the ids include one)
+  ratio      tile width/height (1 = square, 1.5 = 3:2 landscape)
+  cols rows interval shuffle mask
+  cols_min cols_max  bounds for the on-page column picker (equal = fixed, no picker)
+  target_tile        px width the auto default aims for (default 200)
+  controls           "false" to hide the picker (default "false" when axis="x")
+  manifest   fetch this URL instead of inlining the ids (large sets)
+  large_base base for the full-size version shown in the modal (default: base)
+  meta       URL of image metadata; "{id}" in it = one file per image,
+             otherwise a single JSON object keyed by uuid, fetched on first open
+{%- endcomment -%}
+
+{%- assign defaults = site.data.streams.defaults -%}
+
+{%- comment -%} resolve the set list: one name, "a,b,c", or "all" {%- endcomment -%}
+{%- if include.set == 'all' -%}
+  {%- assign acc = '' -%}
+  {%- for pair in site.data.streams.sets -%}
+    {%- assign acc = acc | append: pair[0] | append: ',' -%}
+  {%- endfor -%}
+  {%- assign names = acc | split: ',' -%}
+{%- else -%}
+  {%- assign names = include.set | split: ',' -%}
+{%- endif -%}
+{%- assign first_name = names[0] | strip -%}
+{%- assign s = site.data.streams.sets[first_name] -%}
+
+{%- assign axis = include.axis | default: 'y' -%}
+{%- assign sample = include.sample | default: 0 -%}
+
+{%- assign base     = include.base     | default: s.base     | default: defaults.base -%}
+{%- assign ext      = include.ext      | default: s.ext      | default: defaults.ext      | default: '.jpg' -%}
+{%- assign ratio    = include.ratio    | default: s.ratio    | default: defaults.ratio    | default: 1 -%}
+{%- assign interval = include.interval | default: s.interval | default: defaults.interval | default: 1000 -%}
+{%- assign cols     = include.cols     | default: s.cols     | default: defaults.cols     | default: 5 -%}
+{%- assign rows     = include.rows     | default: s.rows     | default: defaults.rows     | default: 4 -%}
+{%- assign large_base = include.large_base | default: s.large_base | default: defaults.large_base | default: base -%}
+{%- assign meta = include.meta | default: s.meta | default: defaults.meta -%}
+{%- assign cols_min = include.cols_min | default: s.cols_min | default: defaults.cols_min | default: cols -%}
+{%- assign cols_max = include.cols_max | default: s.cols_max | default: defaults.cols_max | default: cols -%}
+{%- assign target_tile = include.target_tile | default: s.target_tile | default: defaults.target_tile | default: 200 -%}
+
+{%- comment -%} booleans need the nil test: Liquid's `default` swallows false {%- endcomment -%}
+{%- if axis == 'x' -%}{%- assign controls = 'false' -%}{%- else -%}{%- assign controls = 'true' -%}{%- endif -%}
+{%- if include.controls != nil -%}{%- assign controls = include.controls -%}
+{%- elsif s.controls != nil -%}{%- assign controls = s.controls -%}
+{%- elsif defaults.controls != nil -%}{%- assign controls = defaults.controls -%}{%- endif -%}
+
+{%- assign shuffle = 'true' -%}
+{%- if include.shuffle != nil -%}{%- assign shuffle = include.shuffle -%}
+{%- elsif s.shuffle != nil -%}{%- assign shuffle = s.shuffle -%}
+{%- elsif defaults.shuffle != nil -%}{%- assign shuffle = defaults.shuffle -%}{%- endif -%}
+
+{%- assign mask = 'true' -%}
+{%- if include.mask != nil -%}{%- assign mask = include.mask -%}
+{%- elsif s.mask != nil -%}{%- assign mask = s.mask -%}
+{%- elsif defaults.mask != nil -%}{%- assign mask = defaults.mask -%}{%- endif -%}
+
+{%- comment -%} assigns leak to page scope, so the assets emit only once {%- endcomment -%}
+{%- unless img_stream_assets -%}
+  {%- assign v = site.time | date: '%s' -%}
+  <link rel="stylesheet" href="{{ '/assets/css/image-stream.css' | relative_url }}?v={{ v }}">
+  <script src="{{ '/assets/js/image-stream.js' | relative_url }}?v={{ v }}" defer></script>
+  {%- assign img_stream_assets = true -%}
+{%- endunless -%}
+
+<div class="img-stream"
+     data-axis="{{ axis }}"
+     data-base="{{ base }}"
+     data-large-base="{{ large_base }}"
+     data-ext="{{ ext }}"
+     data-ratio="{{ ratio }}"
+     data-interval="{{ interval }}"
+     data-set="{{ include.set }}"
+     data-cols="{{ cols }}"
+     data-cols-min="{{ cols_min }}"
+     data-cols-max="{{ cols_max }}"
+     data-target-tile="{{ target_tile }}"
+     data-controls="{{ controls }}"
+     data-rows="{{ rows }}"
+     data-shuffle="{{ shuffle }}"
+     data-mask="{{ mask }}"
+     {% if meta %}data-meta="{{ meta }}"{% endif %}>
+{%- comment -%}
+  One entry per set, each carrying its own base/ext/meta so a pooled stream
+  can mix sets that live under different prefixes.
+{%- endcomment -%}
+<script type="application/json" class="is-sources">[
+{%- for raw in names -%}
+  {%- assign n = raw | strip -%}
+  {%- assign ss = site.data.streams.sets[n] -%}
+  {%- assign sbase  = ss.base  | default: defaults.base -%}
+  {%- assign sext   = ss.ext   | default: defaults.ext   | default: '.jpg' -%}
+  {%- assign smeta  = ss.meta  | default: defaults.meta  | default: '' -%}
+  {%- assign slarge = ss.large_base | default: defaults.large_base | default: sbase -%}
+  {%- assign smanifest = ss.manifest -%}
+  {%- if include.set != 'all' and names.size == 1 -%}
+    {%- assign sbase = base -%}{%- assign sext = ext -%}{%- assign smeta = meta -%}
+    {%- assign slarge = large_base -%}
+    {%- assign smanifest = include.manifest | default: ss.manifest -%}
+  {%- endif -%}
+  {"base":{{ sbase | jsonify }},"largeBase":{{ slarge | jsonify }},"ext":{{ sext | jsonify }},"meta":{{ smeta | jsonify }},
+  {%- if smanifest -%}
+    "manifest":{{ smanifest | relative_url | jsonify }}
+  {%- else -%}
+    {%- assign sids = site.data.stream_ids[n] -%}
+    {%- if sample > 0 -%}{%- assign sids = sids | sample: sample -%}{%- endif -%}
+    "ids":{{ sids | jsonify }}
+  {%- endif -%}
+  }{%- unless forloop.last -%},{%- endunless -%}
+{%- endfor -%}
+]</script>
+</div>

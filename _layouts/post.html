@@ -1,0 +1,27 @@
+---
+layout: default
+---
+
+<article class="post">
+  <header class="post-header">
+    <div class="kicker">
+      {{ page.date | date: "%Y-%m-%d" }} 
+      {% if page.location %} • {{ page.location }}{% endif %}
+      {% if page.categories.size > 0 %} • {{ page.categories | join: ", " }}{% endif %}
+    </div>
+
+    <h1>{{ page.title }}</h1>
+    
+    {% if page.subtitle %}
+      <p class="subtitle" style="font-style: italic; color: var(--meta-color); margin-top: -0.5em;">
+        {{ page.subtitle }}
+      </p>
+    {% endif %}
+  </header>
+
+  <hr style="border: none; border-top: 1px solid var(--border-color); margin: 2em 0;">
+
+  <div class="post-content">
+    {{ content }}
+  </div>
+</article>

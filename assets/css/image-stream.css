@@ -1,0 +1,301 @@
+  .img-stream {
+    --cols: 5;          /* overridden by data-cols */
+    --rows: 4;          /* visible rows */
+    --gap: 8px;
+    --radius: 4px;
+    --fade: 600ms;      /* per-image fade-in */
+    --slide: 500ms;     /* row scroll-up */
+    width: 100%;
+  }
+  .img-stream .is-viewport {
+    overflow: hidden;
+    position: relative;
+  }
+  .img-stream .is-track {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 1fr);
+    gap: var(--gap);
+    will-change: transform;
+  }
+  .img-stream .is-cell {
+    position: relative;
+    aspect-ratio: var(--ar, 1);  /* set per stream via data-ratio */
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: #1c1c1c;
+    display: block;
+    line-height: 0;              /* no baseline/descender gap */
+  }
+  /* Absolutely positioned + !important so host-theme image rules
+     (img { height: auto !important }, max-width, margins, display)
+     cannot reshape the tile. */
+  .img-stream .is-cell > img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    display: block !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    vertical-align: top;
+    opacity: 0;
+    transform: scale(1.04);
+    transition: opacity var(--fade) ease, transform var(--fade) ease;
+  }
+  .img-stream .is-cell > img.is-in { opacity: 1; transform: none; }
+
+  /* optional top fade so rows leaving the viewport dissolve */
+  .img-stream[data-mask="true"] .is-viewport {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 100%);
+            mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .img-stream { --fade: 0ms; --slide: 0ms; }
+  }
+
+  /* ---------- click target ---------- */
+  .img-stream .is-cell { cursor: zoom-in; }
+  .img-stream .is-cell:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  /* ---------- modal ---------- */
+  /* same host-theme immunity as the grid tiles: some themes put a margin on
+     every img, which pushes the picture down inside its box */
+  .is-modal img {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    max-width: none;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .is-modal {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    max-width: 100vw;
+    max-height: 100vh;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    color: #eee;
+  }
+  .is-modal::backdrop {
+    background: rgba(0, 0, 0, .62);
+    backdrop-filter: blur(6px);
+  }
+  .is-modal-figure {
+    margin: 0;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem 1.25rem;
+    box-sizing: border-box;
+  }
+  .is-modal-img {
+    display: block;
+    max-width: min(92vw, 1200px) !important;
+    max-height: 78vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 3px;
+    background: #1c1c1c;
+  }
+  .is-modal-close {
+    position: fixed;
+    top: .5rem; right: .75rem;
+    z-index: 1;
+    background: none;
+    border: 0;
+    color: #bbb;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: .25rem .5rem;
+  }
+  .is-modal-close:hover { color: #fff; }
+  .is-modal-meta {
+    width: var(--img-w, 100%);
+    max-width: 100%;
+    font: 400 .85rem/1.55 system-ui, -apple-system, sans-serif;
+    color: #bbb;
+    text-align: left;
+  }
+  .is-modal-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 .5rem;
+  }
+  .is-modal-meta dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: .2rem .9rem;
+    margin: 0;
+  }
+  .is-modal-meta dt {
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-size: .7rem;
+    padding-top: .18rem;
+  }
+  .is-modal-meta dd { margin: 0; overflow-wrap: anywhere; }
+  .is-modal-id { margin: .9rem 0 0; font-size: .72rem; }
+  .is-modal-id a { color: #666; text-decoration: none; overflow-wrap: anywhere; }
+  .is-modal-id a:hover { color: #aaa; text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    .is-modal-img { max-height: 62vh; }
+  }
+
+  /* ---------- similar images ---------- */
+  .is-modal-similar { margin-top: 1.1rem; }
+  .is-modal-similar-label {
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .05em;
+    color: #777; margin-bottom: .4rem;
+  }
+  .is-modal-similar-row {
+    display: grid;
+    grid-template-columns: repeat(var(--sim-n, 4), 1fr);
+    gap: .5rem;
+  }
+  .is-modal-thumb {
+    position: relative;
+    padding: 0; border: 0; background: #1c1c1c; cursor: pointer;
+    width: 100%; aspect-ratio: var(--ar, 1);
+    border-radius: 3px; overflow: hidden;
+    opacity: .75; transition: opacity .15s;
+  }
+  .is-modal-thumb:hover, .is-modal-thumb:focus-visible { opacity: 1; }
+  .is-modal-thumb:focus-visible { outline: 2px solid #888; outline-offset: 2px; }
+  .is-modal-thumb > img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    display: block !important;
+    vertical-align: top;
+  }
+
+  /* ---------- column picker ---------- */
+  .img-stream .is-controls {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    margin-top: .6rem;
+    font: 400 .72rem/1 system-ui, -apple-system, sans-serif;
+  }
+  .img-stream .is-controls-label {
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #999;
+    margin-right: .2rem;
+  }
+  .img-stream .is-colbtn,
+  .img-stream .is-colauto {
+    font: inherit;
+    cursor: pointer;
+    color: #888;
+    background: none;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    padding: .25rem .45rem;
+    min-width: 1.75em;
+    transition: color .12s, background-color .12s;
+  }
+  .img-stream .is-colauto { border-style: dashed; margin-left: .35rem; }
+  .img-stream .is-colbtn:hover,
+  .img-stream .is-colauto:hover { color: #333; }
+  .img-stream .is-colbtn.is-on {
+    color: #222;
+    background: rgba(128, 128, 128, .18);
+  }
+  .img-stream .is-colbtn:focus-visible,
+  .img-stream .is-colauto:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+  @media (prefers-color-scheme: dark) {
+    .img-stream .is-colbtn:hover,
+    .img-stream .is-colauto:hover { color: #ddd; }
+    .img-stream .is-colbtn.is-on { color: #eee; }
+  }
+
+  /* ---------- horizontal ticker (axis="x", a single row) ---------- */
+  .img-stream .is-track[data-axis="x"] {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  }
+  /* fade in from the leading edge instead of the top */
+  .img-stream[data-mask="true"][data-axis="x"] .is-viewport {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%);
+  }
+
+  /* ---------- theater mode ---------- */
+  .img-stream.is-theater {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    margin: 0;
+    padding: 0;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+  }
+  .img-stream.is-theater .is-viewport { flex: 1 1 auto; }
+  .img-stream.is-theater .is-controls {
+    position: absolute;
+    right: .8rem;
+    bottom: .7rem;
+    margin: 0;
+    z-index: 1;
+    opacity: .25;
+    transition: opacity .2s;
+  }
+  .img-stream.is-theater .is-controls:hover,
+  .img-stream.is-theater .is-controls:focus-within { opacity: 1; }
+  .img-stream.is-theater .is-controls-label,
+  .img-stream.is-theater .is-colbtn,
+  .img-stream.is-theater .is-colauto { color: #bbb; }
+  .img-stream.is-theater .is-colbtn.is-on { color: #fff; background: rgba(255,255,255,.18); }
+
+  /* the page behind must not scroll or peek out around the fixed layer */
+  body.is-theater-open { overflow: hidden; }
+
+  .img-stream .is-theaterbtn {
+    font: inherit;
+    cursor: pointer;
+    color: #888;
+    background: none;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    padding: .25rem .5rem;
+    margin-left: .5rem;
+    transition: color .12s;
+  }
+  .img-stream .is-theaterbtn:hover { color: #333; }
+  .img-stream .is-theaterbtn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+  .img-stream.is-theater .is-theaterbtn { color: #bbb; }
+  .img-stream.is-theater .is-theaterbtn:hover { color: #fff; }
+
+  @media (prefers-color-scheme: dark) {
+    .img-stream .is-theaterbtn:hover { color: #ddd; }
+  }

@@ -1,0 +1,94 @@
+{%- comment -%}
+"I'm interested in one" button + anonymous interest modal.
+
+    {% include poster-interest.html %}
+    {% include poster-interest.html theme="icebergs" label="Want this one?" %}
+
+Options come from _data/poster_options.yml. Several buttons on a page share
+one dialog; pass `theme` to preselect. With `endpoint` empty the modal runs
+in dry-run mode: it works end to end and logs the payload instead of posting.
+
+  theme     preselect a theme id (defaults to the page's front-matter `set:`)
+  label     override the button text
+  endpoint  override the POST target
+
+This include deliberately emits NO dialog markup. kramdown does not treat
+<dialog> as a block-level element, so in a Markdown page it is parsed as a
+span: its contents get reparsed as Markdown and its closing tag is emitted
+as literal text. A <script type="application/json"> block passes through
+untouched in both .md and .html pages, so the dialog is built from it at
+runtime instead.
+{%- endcomment -%}
+
+{%- assign po = site.data.poster_options -%}
+{%- assign endpoint = include.endpoint | default: po.endpoint | default: '' -%}
+{%- comment -%}
+  Preselected theme: an explicit `theme=` wins, else the page's own front
+  matter `set:`. So a post about one set needs no parameter at all.
+{%- endcomment -%}
+{%- assign preset = include.theme | default: page.set -%}
+
+{%- comment -%}
+  Themes are derived from _data/streams.yml so the modal can't offer a set
+  that no longer exists. A set opts out with `poster: false`, and supplies a
+  display name with `label:` (otherwise the key is de-slugged). Entries in
+  poster_options.extra_themes are appended -- that's where "No preference"
+  and any non-set theme live.
+{%- endcomment -%}
+{%- comment -%}
+  Collect the keys first, then sort: Liquid's `sort` wants an array, and a
+  data hash iterated by `for` yields pairs in file order, which is just the
+  sequence sets happened to be added in.
+{%- endcomment -%}
+{%- assign acc = '' -%}
+{%- for pair in site.data.streams.sets -%}
+  {%- unless pair[1].poster == false -%}
+    {%- assign acc = acc | append: pair[0] | append: ',' -%}
+  {%- endunless -%}
+{%- endfor -%}
+{%- assign keys = acc | split: ',' | sort -%}
+{%- capture themes_json -%}
+[
+{%- assign sep = '' -%}
+{%- comment -%} extras first: "No preference" must not sit below 20 sets {%- endcomment -%}
+{%- for t in po.extra_themes -%}
+  {{ sep }}{"id":{{ t.id | jsonify }},"label":{{ t.label | jsonify }}}
+  {%- assign sep = ',' -%}
+{%- endfor -%}
+{%- for key in keys -%}
+  {%- assign sv = site.data.streams.sets[key] -%}
+  {{ sep }}
+  {%- assign lbl = sv.label | default: key | replace: '-', ' ' | replace: '_', ' ' | capitalize -%}
+  {"id":{{ key | jsonify }},"label":{{ lbl | jsonify }}}
+  {%- assign sep = ',' -%}
+{%- endfor -%}
+]
+{%- endcapture -%}
+
+{%- unless poster_interest_assets -%}
+  {%- assign v = site.time | date: '%s' -%}
+  <link rel="stylesheet" href="{{ '/assets/css/poster-interest.css' | relative_url }}?v={{ v }}">
+  <script src="{{ '/assets/js/poster-interest.js' | relative_url }}?v={{ v }}" defer></script>
+  {%- assign poster_interest_assets = true -%}
+{%- endunless -%}
+
+{%- unless poster_interest_config -%}
+{%- assign poster_interest_config = true -%}
+<script type="application/json" class="pi-config">{"endpoint":{{ endpoint | jsonify }},"title":{{ po.title | default: "Interested in a poster?" | jsonify }},"blurb":{{ po.blurb | default: "" | jsonify }},"noteLabel":{{ po.note_label | default: "" | jsonify }},"notePlaceholder":{{ po.note_placeholder | default: "Please don't include contact details — this is anonymous and I can't reply." | jsonify }},"thanks":{{ po.thanks | default: "Noted — thank you." | jsonify }},"themeLabel":{{ po.theme_label | default: "Theme" | jsonify }},"themePlaceholder":{{ po.theme_placeholder | default: "Choose a theme…" | jsonify }},"sizeLabel":{{ po.size_label | default: "Size" | jsonify }},"currency":{{ po.currency | default: "$" | jsonify }},"costNote":{{ po.cost_note | default: "" | jsonify }},"themes":{{ themes_json }},"sizes":{{ po.sizes | jsonify }}}</script>
+{%- endunless -%}
+
+{%- comment -%}
+  Safety: with no endpoint the modal is a dry run, which a visitor would read
+  as a bug (or worse, as a thank-you for something that wasn't recorded). So
+  the button only renders when there is somewhere to post, in a non-production
+  build, or when explicitly asked for with preview=true.
+{%- endcomment -%}
+{%- assign show = false -%}
+{%- if endpoint != '' -%}{%- assign show = true -%}
+{%- elsif include.preview -%}{%- assign show = true -%}
+{%- elsif jekyll.environment != 'production' -%}{%- assign show = true -%}{%- endif -%}
+{%- if show -%}
+<button type="button" class="pi-open"{% if preset %} data-theme="{{ preset }}"{% endif %}>{{ include.label | default: po.button_label | default: "I'm interested in one" }}</button>
+{%- else -%}
+<!-- poster-interest: no endpoint configured; button hidden in production -->
+{%- endif -%}
