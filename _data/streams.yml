@@ -112,3 +112,7 @@ sets:
     base: "https://theunending.ai/assets/img/2026-10-05-cloud-outline/"
     manifest: "/assets/streams/cloud-outline.json"
     meta: "/assets/img/2026-10-05-cloud-outline/{id}.json"
+  painters-block:
+    base: "https://theunending.ai/assets/img/2026-10-07-painters-block/"
+    manifest: "/assets/streams/painters-block.json"
+    meta: "/assets/img/2026-10-07-painters-block/{id}.json"

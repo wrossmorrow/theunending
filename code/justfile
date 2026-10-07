@@ -1,0 +1,85 @@
+
+raw_S3_bucket := "wrossmorrow-genai-repetitions-use1"
+site_s3_bucket := "theunending-ai-site-content-use1"
+ssh_key := "imagen-lambda.pem"
+
+default:
+    just --list
+
+run prompt rows cols width="512" height="512":
+    #!/bin/bash
+    HASH=$( printf "%s" "{{prompt}}" | sha256sum | awk '{print $1}' )
+    TILES="generated-tiles/${HASH}"
+    mkdir -p ${TILES}
+    echo "{{prompt}}" > "${TILES}/prompt.txt"
+    uv run imagen \
+        --prompt="{{prompt}}" \
+        --width {{width}} \
+        --height {{height}} \
+        --rows {{rows}} \
+        --cols {{cols}} \
+        --tiles ${TILES}
+
+regen prompt regen loc width="512" height="512":
+    #!/bin/bash
+    HASH=$( printf "%s" "{{prompt}}" | sha256sum | awk '{print $1}' )
+    COUNT=$( cat {{regen}} | wc -l | sed -E 's/[^0-9]//g' )
+
+    echo "Directory: ${HASH} (${COUNT})"
+
+    TILES="generated-tiles/${HASH}"
+    mkdir -p ${TILES}
+    echo "{{prompt}}" > "${TILES}/prompt.txt"
+    uv run imagen \
+        --prompt="{{prompt}}" \
+        --width {{width}} \
+        --height {{height}} \
+        --rows 1 \
+        --cols ${COUNT} \
+        --tiles ${TILES}
+
+    exec 3< {{regen}}
+    for FILE in ${TILES}/*.png; do
+        # Read the next line from names.txt
+        if read -r NEW_NAME <&3; then
+            mv "${FILE}" "${TILES}/${NEW_NAME}.png"
+        fi
+    done
+    exec 3<&-
+
+    ls -al ${TILES}
+
+    aws s3 cp \
+        ${TILES} \
+        s3://dac2ef3da2-exercises-or-excuses-site-content-use1/assets/img/{{loc}}/ \
+        --exclude "*" --include "*.png" --recursive
+
+ssh ip:
+    ssh -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}
+
+scp ip:
+    scp -i ~/.ssh/{{ssh_key}} remote/.env remote/setup.sh remote/run.sh ubuntu@{{ip}}:~/
+    scp -i ~/.ssh/{{ssh_key}} pyproject.toml uv.lock README.md ubuntu@{{ip}}:~/
+    scp -i ~/.ssh/{{ssh_key}} poster.py og_tiles.py web-posters.py ubuntu@{{ip}}:~/
+    scp -r -i ~/.ssh/{{ssh_key}} src ubuntu@{{ip}}:~/
+
+prepopulate runname postdate setname:
+    #!/bin/bash
+    POST_NAME="{{postdate}}-{{setname}}"
+    FROM_S3="s3://{{raw_S3_bucket}}/runs/{{runname}}"
+    TO_S3="s3://{{site_s3_bucket}}/assets/img/${POST_NAME}"
+    echo "Syncing \"${FROM_S3}\" to \"${TO_S3}\""
+    aws s3 sync "${FROM_S3}" "${TO_S3}"
+    aws s3 ls "${TO_S3}/" \
+        | awk '{ print $4 }' | grep '\.png$' | sed 's/\.png$//' \
+        | python3 -c 'import sys,json; json.dump([l.strip() for l in sys.stdin if l.strip()], sys.stdout)' \
+        > ../_data/stream_ids/{{setname}}.json
+    cp ../_data/stream_ids/{{setname}}.json ../assets/streams/{{setname}}.json
+
+syncback ip postdate setname:
+    scp -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}:~/{{postdate}}-{{setname}}.md ../_drafts/{{postdate}}-{{setname}}.md
+    scp -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}:~/{{setname}}.json ../_data/stream_ids/{{setname}}.json
+    cp ../_data/stream_ids/{{setname}}.json ../assets/streams/{{setname}}.json
+    scp -r -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}:~/posters/previews ../assets/img/posters/previews/
+    scp -r -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}:~/posters/thumbs ../assets/img/posters/thumbs/
+    scp -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}:~/posters/*.json ./

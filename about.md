@@ -33,6 +33,10 @@ If you would rather not poison your views of these pages, [get out]({{ site.base
 
 Generative images, in the sense of digital visual content, are here. Not like, here here, as in this page/site though they are, but like "in the system," certainly on social media, many advertisements, and probably inside many workplaces. Specifically what we can do is the following: write some text (sometimes of semi-structured format) or supply some sample images and get "digital images" as a result. "Digital images" are pixel-value arrays that can be transmitted easily over computer networks and rendered on displays effectively anywhere in the world. 
 
+If this sounds weird, here's a `gif` of this running:
+
+![running]({{ "assets/img/about/running-1080p.gif" | relative_url }})
+
 I am exploring several aspects of generative images that I guess, by definition, are interesting to me: 
 * Turning text into digital images is relatively cheap (thousands of images for a few dollars in an hour or less)
 * Variations, minor or major, on a theme are abundant (automatic, automatable, abundant)
@@ -66,7 +70,7 @@ or
 
 ![old masters]({{ "assets/img/about/single-old-masters.png" | relative_url }}){:width="75%"}
 
-They're maybe interesting for a few seconds but ultimately obviously disposable. If anything compositional is interesting at all it's from uncanny physical inaccuracies slightly confounding interpretation. Maybe a best case outcome is any given image feels vapid and its the presentation emphasizing the character of the approach in which they're shown. That is, I think any single image misses the "volumetric" axis of generative AI. 
+They're maybe interesting for a few seconds but ultimately obviously disposable in their blunt [hyperreality](https://en.wikipedia.org/wiki/Hyperreality). If anything compositional is interesting at all it's from uncanny physical inaccuracies slightly confounding interpretation. Maybe a best case outcome is any given image feels curious but eventually vapid and the presentation emphasizes the character of the approach in which they're shown more so than its own content. Particularly, I think any single image misses the "volumetric" axis of generative AI, with minor variations around one theme inducing a boredom reflective (to me) of social media's regurgitative reflexivity.
 
 Here's a format I think is _perhaps_ suitable for physical printing with a potentially related effect. This one is a 24"x36" ready preparation (a pretty normal hanging picture or poster size) with 260 1.5" square images:
 
@@ -90,7 +94,7 @@ I'm not sure analogue media are able to translate a dynamic sense of "unending" 
 
 ---
 
-So all of these examples intend to be an illusion of a truly unending stream (and an uncontrollable one at that, if you didn't notice). Posing an "illusion" is actually apt, and  of what I think is happening anyway. Hopefully you don't take that knowledge as deflating, though that happens easily;  even if you know you can still value enough to maybe even give me some feedback. If you think the explanation ruins the effect scroll up, close the page, or [get out]({{ site.baseurl }}/).
+So all of these examples intend to be an illusion of a truly unending stream (and an uncontrollable one at that, if you didn't notice). Posing an "illusion" is apt, part of what I think is happening with all these tools anyway. Hopefully you don't take that knowledge as deflating, though that happens easily;  even if you know you can still value enough to maybe even give me some feedback. If you think the explanation ruins the effect scroll up, close the page, or [get out]({{ site.baseurl }}/).
 
 These pages loop through a shuffled pre-computed array of images randomized on every page load. This array is large, typically 5000 unique images/image-variations are pre-computed for a given prompt. Creating these takes maybe a few dollars and a few hours with open (and freely licensed) models. Given the size and rate of image population it would still take a reasonable fraction of an hour to see them all, you'd download about a gigabyte of data (so heads up), and the variations should be observably different even though closely related. I would posit the stream is _perceptually_ unending, if not precisely infinite, as I'd challenge someone to perceptually identify looping without counting. One could, in principle, create a functionally unending stream running these works a different way reserving persistent compute for generation and calling up new images without end. I kind of like faking it with scale though.
 
