@@ -15,9 +15,12 @@ that is not software:
 - the written page copy, essays, and commentary
 - the poster compositions and the Open Graph cards under `assets/og/`
 
-Not covered here, and covered by `LICENSE` instead: the Jekyll includes and
-layouts, the JavaScript and CSS, the Lambda handlers, and the tools under
-`code/`.
+Not covered here, and covered by `LICENSE` instead:
+
+- the Jekyll includes and layouts, 
+- the JavaScript and CSS, 
+- the Lambda handlers, 
+- the tools under `code/`.
 
 ## The grant
 
@@ -79,6 +82,7 @@ this project or endorsed by it.
 
 | Component | License | Notes |
 |---|---|---|
+| FLUX.2 [schnell] 12B — Black Forest Labs | Apache-2.0 | Used to generate the images. Commercial use of outputs permitted. |
 | FLUX.2 [klein] 4B — Black Forest Labs | Apache-2.0 | Used to generate the images. Commercial use of outputs permitted. The **9B** variant is released under a non-commercial license; if generation moves to it, the terms covering the resulting images change. |
 | Perception Encoder / PE Core — Meta | Apache-2.0 | Used to compute the embeddings behind the similar-image tiles. The similarity data in this repository is derived from its output. |
 | DejaVu Sans Condensed Bold | Bitstream Vera / Arev | Glyph outlines embedded in the favicon assets under `assets/icons/`. |
