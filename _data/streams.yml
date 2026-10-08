@@ -136,3 +136,11 @@ sets:
     base: "https://theunending.ai/assets/img/2026-10-08-attention/"
     manifest: "/assets/streams/attention.json"
     meta: "/assets/img/2026-10-08-attention/{id}.json"
+  gentrification:
+    base: "https://theunending.ai/assets/img/2026-10-08-gentrification/"
+    manifest: "/assets/streams/gentrification.json"
+    meta: "/assets/img/2026-10-08-gentrification/{id}.json"
+  kolmogorov-complexity:
+    base: "https://theunending.ai/assets/img/2026-10-08-kolmogorov-complexity/"
+    manifest: "/assets/streams/kolmogorov-complexity.json"
+    meta: "/assets/img/2026-10-08-kolmogorov-complexity/{id}.json"

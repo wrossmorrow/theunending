@@ -5,6 +5,11 @@ set -a && source .env && set +a
 
 # define these
 
+POST_TITLE="Kolmogorov Complexity"
+SET_NAME="kolmogorov-complexity"
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+PROMPT="8 colored squares on a grid tightly packed touching each other on all sides. contrasting colors randomly chosen per square"
+
 # POST_TITLE="Emo Vermeer"
 # SET_NAME="emo-pearl"
 # MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
@@ -25,10 +30,10 @@ set -a && source .env && set +a
 # MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
 # PROMPT="an iphone photograph of a large mass of people in an art gallery staring at a painting. we can barely see the painting there are so many crowded people. some are taking pictures themselves of the painting. another painting sits to side alone, with no attention."
 
-POST_TITLE="Gentrification"
-SET_NAME="gentrification"
-MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-PROMPT="an iphone photograph of a an empty in-wall case in a museum. the case is embedded in the wall with clear facing glass in which we can see some reflections of lights and people. there are interior lighst in the case casting uneven light and shadows emphasizing the rectangular geometry. blocky, rectangular white stands sit in the case waiting for pieces to be displayed. the case walls are a constrasting primary color. the walls outside the case are a boring neutral grey color"
+# POST_TITLE="Gentrification"
+# SET_NAME="gentrification"
+# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+# PROMPT="an iphone photograph of a an empty in-wall case in a museum. the case is embedded in the wall with clear facing glass in which we can see some reflections of lights and people. there are interior lighst in the case casting uneven light and shadows emphasizing the rectangular geometry. blocky, rectangular white stands sit in the case waiting for pieces to be displayed. the case walls are a constrasting primary color. the walls outside the case are a boring neutral grey color"
 
 # let it rip below here
 

@@ -102,5 +102,5 @@ As for "practice", almost none of these are "one-shots" as we might say; you mig
 
 ---
 
-<small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `js`/`jekyll` magic myself, and was a good use case for letting something else handle it.</small>
+<small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `css`/`js`/`jekyll` magic that much myself, so it was a good use case for letting something else handle it.</small>
 
