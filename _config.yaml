@@ -17,6 +17,7 @@ image_stream:
   rows:     4
   shuffle:  "true"
   mask:     "true"
+prompt_idea_endpoint: "https://5mjwfedsoqywwgdigh55vrv4im0eaqsp.lambda-url.us-east-1.on.aws/"
 exclude:
   - code/
   - lambda/

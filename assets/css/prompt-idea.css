@@ -1,0 +1,265 @@
+/* Prompt-idea modal.
+ *
+ * Written to survive a host theme that styles bare tags. Everything inside
+ * .idea-modal gets a zero-specificity reset first, then the component's own
+ * rules land on top. Note the ordering trap: :where() has no specificity, so
+ * anything the reset neutralises has to be RESTATED afterwards or it loses to
+ * nothing at all -- which is how a white-on-white Send button happens. */
+
+/* Descendants only. Including .idea-modal itself here sets margin:0 on the
+ * dialog, which overrides the UA stylesheet's `margin: auto` -- author styles
+ * beat the UA sheet whatever :where() does to specificity -- and the dialog
+ * lands in the top-left corner instead of centred. */
+:where(.idea-modal *) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: none;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.idea-open {
+  display: inline-block;
+  padding: 0.55em 1.1em;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.idea-open:hover,
+.idea-open:focus-visible {
+  background: #111;
+  color: #fff;
+}
+
+.idea-modal {
+  /* Centring stated outright rather than inherited from the UA stylesheet.
+   * `height: fit-content` is load-bearing: with inset:0 top and bottom and an
+   * auto height, the box is over-constrained, the auto margins collapse to 0
+   * and the dialog stretches the full viewport height instead of centring. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  box-sizing: border-box;
+  width: min(32rem, calc(100vw - 2rem));
+  height: fit-content;
+  max-height: calc(100vh - 4rem);
+  overflow: auto;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+  font-size: 16px;                 /* never inherit a shrunken page size */
+  line-height: 1.5;
+}
+.idea-modal::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.idea-form {
+  position: relative;
+  display: block;
+  padding: 1.6rem 1.5rem 1.4rem;
+}
+
+.idea-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.65rem;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  background: none;
+  color: #888;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.idea-close:hover { color: #111; }
+
+/* restated after the reset above, which stripped the theme's heading styles */
+.idea-head {
+  margin: 0 0 0.5rem;
+  color: #111;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.idea-blurb {
+  margin: 0 0 1.25rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.idea-field { margin: 0 0 1.1rem; }
+
+.idea-labelrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.3rem;
+}
+
+.idea-label {
+  color: #333;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.idea-count {
+  color: #aaa;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.idea-count.is-full { color: #b4341f; }
+
+.idea-input {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-size: 0.95rem;
+}
+.idea-input:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 1px;
+  border-color: #111;
+}
+.idea-area {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.idea-fine {
+  margin: 0.4rem 0 0;
+  color: #777;
+  font-size: 0.78rem;
+}
+
+/* The honeypot has to be reachable to a bot parsing the DOM and invisible to a
+ * person. display:none would be a tell, so it is moved out of the viewport. */
+.idea-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.idea-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin: 1.4rem 0 0;
+}
+
+.idea-cancel,
+.idea-submit {
+  padding: 0.5rem 1.1rem;
+  border: 1px solid #111;
+  border-radius: 2px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.idea-cancel {
+  border-color: #ccc;
+  background: #fff;
+  color: #444;
+}
+.idea-cancel:hover { border-color: #999; color: #111; }
+
+/* inverted surface: restated AFTER the :where() reset, or it renders
+ * white-on-white */
+.idea-submit {
+  background: #111;
+  color: #fff;
+}
+.idea-submit:hover:not(:disabled) { background: #333; }
+.idea-submit:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.idea-status {
+  margin: 0.9rem 0 0;
+  font-size: 0.87rem;
+}
+.idea-status.is-ok { color: #1d6f42; }
+.idea-status.is-err { color: #b4341f; }
+
+/* on success the fields are done with; keep the message and the close button */
+.idea-form.is-done .idea-field,
+.idea-form.is-done .idea-actions,
+.idea-form.is-done .idea-blurb {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .idea-modal {
+    border-color: #333;
+    background: #161616;
+    color: #eee;
+  }
+  .idea-head { color: #f5f5f5; }
+  .idea-blurb { color: #aaa; }
+  .idea-label { color: #ccc; }
+  .idea-count { color: #777; }
+  .idea-fine { color: #999; }
+  .idea-close { color: #777; }
+  .idea-close:hover { color: #eee; }
+  .idea-input {
+    border-color: #444;
+    background: #0e0e0e;
+    color: #eee;
+  }
+  .idea-input:focus-visible {
+    outline-color: #eee;
+    border-color: #eee;
+  }
+  .idea-cancel {
+    border-color: #444;
+    background: transparent;
+    color: #bbb;
+  }
+  .idea-cancel:hover { border-color: #777; color: #fff; }
+  .idea-submit {
+    border-color: #eee;
+    background: #eee;
+    color: #111;
+  }
+  .idea-submit:hover:not(:disabled) { background: #fff; }
+  .idea-open:hover,
+  .idea-open:focus-visible {
+    background: #eee;
+    color: #111;
+  }
+  .idea-status.is-ok { color: #6ec28c; }
+  .idea-status.is-err { color: #e4705c; }
+}
+
+@media (max-width: 480px) {
+  .idea-modal { width: calc(100vw - 1rem); }
+  .idea-form { padding: 1.4rem 1.1rem 1.2rem; }
+  .idea-actions { flex-direction: column-reverse; }
+  .idea-cancel,
+  .idea-submit { width: 100%; }
+}

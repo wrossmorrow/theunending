@@ -1,0 +1,43 @@
+{%- comment -%}
+  Prompt-idea button.
+
+  Emits only a config <script> and a <button>, both on one line each. The
+  dialog itself is built in JS (assets/js/prompt-idea.js) for the same reason
+  poster-interest does it: kramdown does not treat <dialog> as a block-level
+  element, so a <dialog> authored here gets wrapped in <p> and its closing tag
+  can end up rendered as literal text on a page written in Markdown.
+
+  Usage:
+    {% include prompt-idea.html %}
+    {% include prompt-idea.html label="Suggest a prompt" preview=true %}
+
+  preview=true forces the button to render even with no endpoint configured,
+  which puts the client in dry-run mode (payload logged, nothing sent).
+{%- endcomment -%}
+
+{%- assign endpoint = site.prompt_idea_endpoint | default: '' -%}
+{%- assign btn_label = include.label | default: 'I have a prompt idea' -%}
+{%- assign cfg_title = include.title | default: 'Have a prompt idea?' -%}
+{%- assign cfg_blurb = include.blurb | default: 'Describe a scene the way you would describe it to the model. Short and concrete beats long and vague, nouns and adjectives, no negatives. I read these and pick ones I want to run; nothing is automatically run here, particularly an on-accelerator image gen model.' -%}
+{%- assign cfg_thanks = include.thanks | default: 'Got it — thank you, and will take a look.' -%}
+
+{%- capture cfg -%}
+{"endpoint":{{ endpoint | jsonify }},"title":{{ cfg_title | jsonify }},"blurb":{{ cfg_blurb | jsonify }},"thanks":{{ cfg_thanks | jsonify }},"set":{{ page.set | default: '' | jsonify }},"nameLabel":"Title","nameMax":60,"namePlaceholder":"Three or four words","bodyLabel":"Prompt","bodyMax":256,"bodyMin":12,"bodyPlaceholder":"a photograph taken from…","contactLabel":"Contact (optional)","contactMax":120,"contactPlaceholder":"email or handle","contactNote":"Only used to follow up about this idea. Leave it blank to stay anonymous."}
+{%- endcapture -%}
+
+{%- unless prompt_idea_assets -%}
+  {%- assign prompt_idea_assets = true -%}
+  <link rel="stylesheet" href="{{ '/assets/css/prompt-idea.css' | relative_url }}?v={{ site.time | date: '%s' }}">
+  <script defer src="{{ '/assets/js/prompt-idea.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
+{%- endunless -%}
+
+<script type="application/json" class="idea-config">{{ cfg }}</script>
+
+{%- comment -%}
+  Render the button when there is somewhere to send to, when previewing on
+  purpose, or anywhere outside a production build. A production build with no
+  endpoint set renders nothing rather than a button that fails on click.
+{%- endcomment -%}
+{%- if endpoint != '' or include.preview or jekyll.environment != 'production' -%}
+<button type="button" class="idea-open">{{ btn_label }}</button>
+{%- endif -%}

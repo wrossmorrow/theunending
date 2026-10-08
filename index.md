@@ -24,3 +24,7 @@ title: Unending
     {% endfor %}
   </ul>
 {% endfor %}
+
+---
+
+{% include prompt-idea.html %}
