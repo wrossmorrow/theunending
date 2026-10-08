@@ -17,6 +17,18 @@ image_stream:
   rows:     4
   shuffle:  "true"
   mask:     "true"
+exclude:
+  - code/
+  - lambda/
+  - scripts/
+  - justfile
+  - README.md
+  # Jekyll's own defaults, which `exclude` REPLACES rather than extends:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/
+  - .sass-cache/
 livereload_ignore:
   - "code/**"
   - "lambda/**"

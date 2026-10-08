@@ -73,8 +73,7 @@ prepopulate runname postdate setname:
     aws s3 ls "${TO_S3}/" \
         | awk '{ print $4 }' | grep '\.png$' | sed 's/\.png$//' \
         | python3 -c 'import sys,json; json.dump([l.strip() for l in sys.stdin if l.strip()], sys.stdout)' \
-        > ../_data/stream_ids/{{setname}}.json
-    cp ../_data/stream_ids/{{setname}}.json ../assets/streams/{{setname}}.json
+        > ../assets/streams/{{setname}}.json
 
 syncback ip postdate setname:
     scp -i ~/.ssh/{{ssh_key}} \

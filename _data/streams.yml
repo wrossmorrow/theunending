@@ -124,3 +124,11 @@ sets:
     base: "https://theunending.ai/assets/img/2026-10-07-emo-pearl/"
     manifest: "/assets/streams/emo-pearl.json"
     meta: "/assets/img/2026-10-07-emo-pearl/{id}.json"
+  cardboard-calavaras:
+    base: "https://theunending.ai/assets/img/2026-10-08-cardboard-calavaras/"
+    manifest: "/assets/streams/cardboard-calavaras.json"
+    meta: "/assets/img/2026-10-08-cardboard-calavaras/{id}.json"
+  load-bearing:
+    base: "https://theunending.ai/assets/img/2026-10-08-load-bearing/"
+    manifest: "/assets/streams/load-bearing.json"
+    meta: "/assets/img/2026-10-08-load-bearing/{id}.json"
