@@ -7,10 +7,10 @@
 
 This repository is licensed in two halves, because it contains two different kinds of content.
 
-| | Covers | License |
+| | Covers | Terms |
 |---|---|---|
 | [`LICENSE`](LICENSE) | Jekyll includes and layouts, JS, CSS, Lambda handlers, tools under `code/` | MIT |
-| [`LICENSE-CONTENT`](LICENSE-CONTENT) | Generated images, prompt texts, page copy, poster and OG compositions | CC BY-NC 4.0 |
+| [`CONTENT-TERMS.md`](CONTENT-TERMS.md) | Generated images, prompt texts, page copy, poster and OG compositions | CC BY-NC 4.0 |
 
 The code here is open, do what you like with it. Image sets are shared for your viewing pleasure (or displeasure) and building on non-commercially. If you want to sell something made from these images, contact me for originals worth doing that or follow the patterns here yourself, which are open and repeatable. 
 
