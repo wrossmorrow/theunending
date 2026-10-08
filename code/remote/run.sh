@@ -20,15 +20,15 @@ set -a && source .env && set +a
 # MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
 # PROMPT="a photograph taken from behind a gallery wall. raw plywood, aluminum brackets, and bundled cable runs held with zip ties, lit by a single clamped work light. bright white light leaks around every edge of the panel from the exhibition on the other side, and a thin rectangle of that light falls across the concrete floor. nothing on this side is finished or painted. 35mm, shallow depth of field, cool shadows against the warm spill, quiet and unglamorous."
 
-POST_TITLE="Attention"
-SET_NAME="attention"
-MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-PROMPT="an iphone photograph of a large mass of people in an art gallery staring at a painting. we can barely see the painting there are so many crowded people. some are taking pictures themselves of the painting. another painting sits to side alone, with no attention."
-
-# POST_TITLE="Gentrification"
-# SET_NAME="gentrification"
+# POST_TITLE="Attention"
+# SET_NAME="attention"
 # MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="an iphone photograph of a an empty in-wall case in a museum. the case is embedded in the wall with clear facing glass in which we can see some reflections of lights and people. there are interior lighst in the case casting uneven light and shadows emphasizing the rectangular geometry. blocky, rectangular white stands sit in the case waiting for pieces to be displayed. the case walls are a constrasting primary color. the walls outside the case are a boring neutral grey color"
+# PROMPT="an iphone photograph of a large mass of people in an art gallery staring at a painting. we can barely see the painting there are so many crowded people. some are taking pictures themselves of the painting. another painting sits to side alone, with no attention."
+
+POST_TITLE="Gentrification"
+SET_NAME="gentrification"
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+PROMPT="an iphone photograph of a an empty in-wall case in a museum. the case is embedded in the wall with clear facing glass in which we can see some reflections of lights and people. there are interior lighst in the case casting uneven light and shadows emphasizing the rectangular geometry. blocky, rectangular white stands sit in the case waiting for pieces to be displayed. the case walls are a constrasting primary color. the walls outside the case are a boring neutral grey color"
 
 # let it rip below here
 

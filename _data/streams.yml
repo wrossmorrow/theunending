@@ -132,3 +132,7 @@ sets:
     base: "https://theunending.ai/assets/img/2026-10-08-load-bearing/"
     manifest: "/assets/streams/load-bearing.json"
     meta: "/assets/img/2026-10-08-load-bearing/{id}.json"
+  attention:
+    base: "https://theunending.ai/assets/img/2026-10-08-attention/"
+    manifest: "/assets/streams/attention.json"
+    meta: "/assets/img/2026-10-08-attention/{id}.json"

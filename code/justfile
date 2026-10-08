@@ -81,8 +81,6 @@ syncback ip postdate setname:
         ../_drafts/{{postdate}}-{{setname}}.md
     scp -i ~/.ssh/{{ssh_key}} \
         ubuntu@{{ip}}:~/{{setname}}.json \
-        ../_data/stream_ids/{{setname}}.json
-    cp ../_data/stream_ids/{{setname}}.json \
         ../assets/streams/{{setname}}.json
     scp -r -i ~/.ssh/{{ssh_key}} \
         ubuntu@{{ip}}:~/posters/previews/{{postdate}}-{{setname}}/ \
