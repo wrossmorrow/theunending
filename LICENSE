@@ -20,15 +20,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 ---
 
 This license covers the SOFTWARE in this repository only. The images, prompt
 texts, and written page content are covered separately by CONTENT-TERMS.md.
 See that file for the distinction and for why it is drawn where it is.
-
-(That file is deliberately not named LICENSE-CONTENT. GitHub's license
-detector scores every root file matching its license-filename pattern --
-LICENSE-MIT is one of its own examples -- and returns no license at all when
-the matches don't resolve to a single known one. Naming the content terms
-outside the pattern keeps this file detectable as MIT.)

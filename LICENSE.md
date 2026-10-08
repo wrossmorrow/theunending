@@ -14,7 +14,7 @@ This repository is licensed in two halves, because it contains two different kin
 
 The code here is open, do what you like with it. Image sets are shared for your viewing pleasure (or displeasure) and building on non-commercially. If you want to sell something made from these images, contact me for originals worth doing that or follow the patterns here yourself, which are open and repeatable. 
 
-`LICENSE-CONTENT` under current U.S. law the raw model outputs likely have no copyright holder at all, so restricting on them is "polite;" closer to a request than a rule. "All rights reserved" for AI generated work may reserve nothing.
+`CONTENT-TERMS` under current U.S. law the raw model outputs likely have no copyright holder at all, so restricting on them is "polite;" closer to a request than a rule. In any case high enough fidelity images for reproduction are not packaged here. "All rights reserved" for AI generated work may reserve nothing. The name is chosen to comply with GitHub scanning rules to match the MIT license on the code.
 
 **This project's name is separate.** "The Unending" and the "Un" mark aren't granted by either license.
 
