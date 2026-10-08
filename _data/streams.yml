@@ -116,3 +116,11 @@ sets:
     base: "https://theunending.ai/assets/img/2026-10-07-painters-block/"
     manifest: "/assets/streams/painters-block.json"
     meta: "/assets/img/2026-10-07-painters-block/{id}.json"
+  time-management:
+    base: "https://theunending.ai/assets/img/2026-10-07-time-management/"
+    manifest: "/assets/streams/time-management.json"
+    meta: "/assets/img/2026-10-07-time-management/{id}.json"
+  emo-pearl:
+    base: "https://theunending.ai/assets/img/2026-10-07-emo-pearl/"
+    manifest: "/assets/streams/emo-pearl.json"
+    meta: "/assets/img/2026-10-07-emo-pearl/{id}.json"

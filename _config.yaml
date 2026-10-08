@@ -17,3 +17,7 @@ image_stream:
   rows:     4
   shuffle:  "true"
   mask:     "true"
+livereload_ignore:
+  - "code/**"
+  - "lambda/**"
+  - "scripts/*"

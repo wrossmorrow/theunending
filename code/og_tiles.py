@@ -3,7 +3,7 @@
 Build 1200x630 Open Graph cards by tiling images from a run.
 
     # one set
-    ./og_tiles.py --set computation --run 17 --out assets/og
+    ./og_tiles.py --set computation --prefix runs/run-17 --out assets/og
 
     # every set listed in a mapping file  (YAML: "set: run" per line, or JSON)
     ./og_tiles.py --map og_runs.yml --out assets/og
@@ -145,14 +145,13 @@ def pick(keys, n, seed):
     return rng.sample(keys, min(n, len(keys)))
 
 
-def gather(source, bucket, run, name, n, seed):
+def gather(source, bucket, prefix, name, n, seed):
     """Return up to n opened images for one set."""
     if source:
         keys = list_local(source)
         if not keys:
             raise SystemExit(f"{name}: no images in {source}")
         return [open_local(k) for k in pick(keys, n, seed)]
-    prefix = f"runs/run-{run}/"
     keys = list_s3(bucket, prefix)
     if not keys:
         raise SystemExit(f"{name}: no images under s3://{bucket}/{prefix}")
@@ -163,9 +162,9 @@ def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--bucket", default=os.environ.get("S3_BUCKET", ""))
-    p.add_argument("--map", help="YAML/JSON mapping of set name -> run id")
+    p.add_argument("--prefix", help="where the raw data actually is")
+    p.add_argument("--map", help="YAML/JSON mapping of set name -> prefix")
     p.add_argument("--set", help="single set name")
-    p.add_argument("--run", help="run id for --set")
     p.add_argument("--source", help="local directory instead of S3 (for testing)")
     p.add_argument("--out", default="assets/og")
     p.add_argument("--cols", type=int, default=6, help="tiles across (default 6)")
@@ -190,7 +189,7 @@ def main():
                 k, v = line.split(":", 1)
                 pairs[k.strip()] = v.strip().strip("\"'")
     elif args.set:
-        pairs = {args.set: args.run}
+        pairs = {args.set: args.prefix}
     else:
         p.error("need --map or --set")
 
@@ -199,8 +198,8 @@ def main():
 
     per_card = args.cols * max(1, math.ceil(OG_H / (OG_W / args.cols)))
 
-    for name, run in pairs.items():
-        imgs = gather(args.source, args.bucket, run, name, per_card, name)
+    for name, prefix in pairs.items():
+        imgs = gather(args.source, args.bucket, prefix, name, per_card, name)
         card = build_card(imgs, args.cols, args.title and name.replace("-", " ").title() or None,
                           args.subtitle if args.title else None, args.gap)
         save(card, os.path.join(args.out, f"{name}.{args.ext}"))
@@ -208,8 +207,8 @@ def main():
     if args.site:
         # a few from each run so the site card isn't just one theme
         imgs, per_run = [], max(1, per_card // max(1, len(pairs)) + 1)
-        for name, run in pairs.items():
-            imgs += gather(args.source, args.bucket, run, name, per_run, f"site-{name}")
+        for name, prefix in pairs.items():
+            imgs += gather(args.source, args.bucket, prefix, name, per_run, f"site-{name}")
         random.Random("site").shuffle(imgs)
         card = build_card(imgs, args.cols, "The Unending" if args.title else None,
                           args.subtitle if args.title else None, args.gap)

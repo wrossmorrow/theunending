@@ -5,21 +5,33 @@ set -a && source .env && set +a
 
 # define these
 
-POST_TITLE="Painters Block"
-POST_DATE="$( date -I )"
-SET_NAME="painters-block"
-RUN_NUMBER="26"
+# POST_TITLE="Emo Vermeer"
+# SET_NAME="emo-pearl"
+# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+# PROMPT="an emo woman with a pearl earring, yellow headband. painting, reminiscent of the vermeer but modern hyperrealistic painting. shadowy, chiaroscuro style"
+
+POST_TITLE="Calavaras"
+SET_NAME="cardboard-calavaras"
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-PROMPT="a closeup high resolution photograph of a blank canvas in light tan, so light it is almost white. there is a very light grey pencil sketch on the canvas, a rectangular grid covering the entire canvas and outlined fluffy clouds, unfinished. there is a prominent branching crack filled with bright gold in Kintsugi style repair in the canvas. the canvas rests on a white marble counter or table."
+PROMPT="a painting of a calavaras (a colorful, intricately designed skull); thickly applied paint; colorful. painted directly on a cardboard square"
 
 # let it rip below here
 
+# infer vars (ok, some defined, but still)
+
 SITE_BUCKET="theunending-ai-site-content-use1"
+POST_DATE="$( date -d 'TZ="America/Los_Angeles"' -I )"
 POST_NAME="${POST_DATE}-${SET_NAME}"
 SITE_IMG_ASSETS="s3://${SITE_BUCKET}/assets/img/${POST_NAME}/"
 
+PROMPT_HASH=$( echo -n "${PROMPT}" | sha256sum | cut -d ' ' -f 1 )
 RAW_BUCKET="wrossmorrow-genai-repetitions-use1"
-RAW_PREFIX="runs/run-${RUN_NUMBER}"
+RAW_PREFIX="runs/${PROMPT_HASH}"
+
+PORTRAIT_SIZES=( "12x18" "18x24" "24x36" "36x48" )
+LANDSCAPE_SIZES=( "40x80" )
+
+# setup
 
 mkdir -p "images" "similar" "posters" "og"
 
@@ -78,7 +90,7 @@ aws s3 ls "${SITE_IMG_ASSETS}" \
 
 "${HOME}/.venv/bin/python" "${HOME}/og_tiles.py" \
     --set "${SET_NAME}" \
-    --run "${RUN_NUMBER}" \
+    --prefix "${RAW_PREFIX}" \
     --source ./images \
     --out og
 
@@ -86,15 +98,6 @@ aws s3 cp "og/${SET_NAME}.jpg" "s3://${SITE_BUCKET}/assets/og/${SET_NAME}.jpg"
 
 # create posters
 
-PORTRAIT_SIZES=(
-    "12x18"
-    "18x24"
-    "24x36"
-    "36x48"
-)
-LANDSCAPE_SIZES=(
-    "40x80"
-)
 for SIZE in "${PORTRAIT_SIZES[@]}"; do
     OUTPUT_NAME="posters/${SIZE}/${POST_NAME}.png"
     if [ ! -f "${OUTPUT_NAME}" ]; then
@@ -126,11 +129,6 @@ for SIZE in "${LANDSCAPE_SIZES[@]}"; do
     fi
 done
 
-# TODO: web copy of posters for printable
-
-#   posters/<WxH>/<name>.png  ->  posters/thumbs/<name>/<WxH>.webp     (<= 0.5 MB, grid tile)
-#                                 posters/previews/<name>/<WxH>.webp   (<= 1 MB, click-through)
-#                                 posters/web.json                     (index for the page)
-#                                 posters/unending-posters.json        (restructured index for the page)
+# webp's for poster printable page
 
 uv run python web-posters.py posters

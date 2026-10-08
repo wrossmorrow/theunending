@@ -6,7 +6,7 @@ default:
     just --list
 
 serve:
-    bundle exec jekyll serve --livereload --drafts
+    bundle exec jekyll serve --livereload --drafts --future
 
 build env="production":
     JEKYLL_ENV={{env}} bundle exec jekyll build

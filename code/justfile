@@ -58,10 +58,10 @@ ssh ip:
     ssh -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}
 
 scp ip:
-    scp -i ~/.ssh/{{ssh_key}} remote/.env remote/setup.sh remote/run.sh ubuntu@{{ip}}:~/
     scp -i ~/.ssh/{{ssh_key}} pyproject.toml uv.lock README.md ubuntu@{{ip}}:~/
-    scp -i ~/.ssh/{{ssh_key}} poster.py og_tiles.py web-posters.py ubuntu@{{ip}}:~/
+    scp -i ~/.ssh/{{ssh_key}} remote/.env remote/*.sh ubuntu@{{ip}}:~/
     scp -r -i ~/.ssh/{{ssh_key}} src ubuntu@{{ip}}:~/
+    scp -i ~/.ssh/{{ssh_key}} poster.py og_tiles.py web-posters.py ubuntu@{{ip}}:~/
 
 prepopulate runname postdate setname:
     #!/bin/bash
@@ -77,9 +77,23 @@ prepopulate runname postdate setname:
     cp ../_data/stream_ids/{{setname}}.json ../assets/streams/{{setname}}.json
 
 syncback ip postdate setname:
-    scp -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}:~/{{postdate}}-{{setname}}.md ../_drafts/{{postdate}}-{{setname}}.md
-    scp -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}:~/{{setname}}.json ../_data/stream_ids/{{setname}}.json
-    cp ../_data/stream_ids/{{setname}}.json ../assets/streams/{{setname}}.json
-    scp -r -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}:~/posters/previews ../assets/img/posters/previews/
-    scp -r -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}:~/posters/thumbs ../assets/img/posters/thumbs/
+    scp -i ~/.ssh/{{ssh_key}} \
+        ubuntu@{{ip}}:~/{{postdate}}-{{setname}}.md \
+        ../_drafts/{{postdate}}-{{setname}}.md
+    scp -i ~/.ssh/{{ssh_key}} \
+        ubuntu@{{ip}}:~/{{setname}}.json \
+        ../_data/stream_ids/{{setname}}.json
+    cp ../_data/stream_ids/{{setname}}.json \
+        ../assets/streams/{{setname}}.json
+    scp -r -i ~/.ssh/{{ssh_key}} \
+        ubuntu@{{ip}}:~/posters/previews/{{postdate}}-{{setname}}/ \
+        ../assets/img/posters/previews/{{postdate}}-{{setname}}/
+    scp -r -i ~/.ssh/{{ssh_key}} \
+        ubuntu@{{ip}}:~/posters/thumbs/{{postdate}}-{{setname}}/ \
+        ../assets/img/posters/thumbs/{{postdate}}-{{setname}}/
     scp -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}:~/posters/*.json ./
+    cp ../_data/unending-posters.json \
+        unending-posters.json.orig
+    jq -s '.[0] * .[1]' \
+        unending-posters.json.orig unending-posters.json \
+        > ../_data/unending-posters.json
