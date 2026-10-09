@@ -1,0 +1,43 @@
+{%- comment -%}
+  Press and mentions, newest first, from _data/reviews.yml.
+
+  Unlike the modal components, this one deliberately does NOT reset inherited
+  styles. A modal is a foreign object dropped onto the page and wants
+  isolation; this is page content and should take the site's body type, so it
+  styles only its own classes and lets everything else inherit.
+
+  Usage:
+    {% include reviews-list.html %}
+    {% include reviews-list.html empty="Nothing yet." %}
+{%- endcomment -%}
+
+{%- assign items = site.data.reviews | default: empty -%}
+{%- assign sorted = items | sort: 'date' | reverse -%}
+
+{%- if sorted.size > 0 -%}
+<ol class="reviews-list">
+  {%- for item in sorted -%}
+  <li class="reviews-item">
+    <div class="reviews-head">
+      <span class="reviews-outlet">{{ item.outlet }}</span>
+      {%- if item.kind %}<span class="reviews-kind">{{ item.kind }}</span>{% endif -%}
+      <time class="reviews-date" datetime="{{ item.date | date: '%Y-%m-%d' }}">
+        {{ item.date | date: "%B %-d, %Y" }}
+      </time>
+    </div>
+
+    {%- if item.quote %}
+    <blockquote class="reviews-quote">{{ item.quote }}</blockquote>
+    {%- endif %}
+
+    <a class="reviews-link" href="{{ item.url }}" rel="noopener">{{ item.title }}</a>
+
+    {%- if item.note %}
+    <p class="reviews-note">{{ item.note }}</p>
+    {%- endif %}
+  </li>
+  {%- endfor -%}
+</ol>
+{%- elsif include.empty -%}
+<p class="reviews-empty">{{ include.empty }}</p>
+{%- endif -%}

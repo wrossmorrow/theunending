@@ -1,0 +1,39 @@
+# Press and mentions, newest first.
+#
+# This file ships EMPTY on purpose. A press page is the one place where
+# placeholder content is genuinely dangerous: a plausible-looking example
+# entry that survives to production is a fabricated endorsement, whatever it
+# was meant to be. So there are no sample entries here, only the schema.
+#
+# Fields:
+#   outlet    required  publication or person
+#   title     required  the piece's own title
+#   url       required  link to the piece
+#   date      required  YYYY-MM-DD, used for ordering and display
+#   quote     optional  one or two sentences, their words, trimmed with …
+#   kind      optional  review | mention | interview | listed  (shown as a tag)
+#   note      optional  one line of your own context, shown muted
+#
+# Example of the shape, kept commented so it cannot render:
+#
+# - outlet: Some Publication
+#   title: The piece's headline
+#   url: https://example.com/the-piece
+#   date: 2026-10-08
+#   quote: A sentence or two, quoted exactly, cut with … where needed.
+#   kind: review
+#   note: Part of a roundup on generative image work.
+
+# Add entries below this line.
+
+- outlet: Instagram.com
+  title: We reviewed your account, theunending.ai
+  url: https://instagram.com/
+  date: 2026-10-08
+  kind: review
+  quote: |
+    Hi theunending.ai,
+
+    We reviewed your account and found that it still doesn’t follow our Community Standards. As a result, your account has been permanently disabled.
+
+    Learn how our Community Standards help keep the Instagram community an authentic and respectful place for people to express themselves.

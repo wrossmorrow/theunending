@@ -14,3 +14,4 @@ build env="production":
 sync: build
     aws s3 sync _site/ s3://{{site_s3_bucket}}/ # --delete
     aws cloudfront create-invalidation --distribution-id {{cloudfront_dist_id}} --paths "/*"
+  

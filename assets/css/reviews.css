@@ -1,0 +1,100 @@
+/* Press and mentions.
+ *
+ * Styles only its own classes, with no reset: this is page content and should
+ * inherit the site's body type. (The opposite of the modal components, which
+ * are foreign objects on the page and need isolating from it.) */
+
+.reviews-list {
+  list-style: none;
+  margin: 2.5rem 0 0;
+  padding: 0;
+}
+
+.reviews-item {
+  padding: 1.9rem 0;
+  border-top: 1px solid currentColor;
+  border-image: linear-gradient(to right,
+                currentColor 0 6rem, transparent 6rem) 1;
+  /* a short rule rather than a full-width one: it marks the entry without
+     drawing a table across the page */
+}
+.reviews-item:first-child { border-top: 0; padding-top: 0; }
+
+.reviews-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  margin: 0 0 0.75rem;
+}
+
+/* the outlet is what people scan for, so it carries the weight */
+.reviews-outlet {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.reviews-kind {
+  font-size: 0.68rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  padding: 0.18em 0.5em;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  opacity: 0.55;
+}
+
+.reviews-date {
+  margin-left: auto;          /* pushed right, and wraps underneath on mobile */
+  font-size: 0.82rem;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The opening quote hangs into the left margin so the first letter of the
+   text still lines up with everything else in the column. Without this the
+   quote mark pushes the whole block visibly out of alignment. */
+.reviews-quote {
+  margin: 0 0 0.85rem;
+  padding: 0;
+  border: 0;
+  font-size: 1.18em;
+  line-height: 1.5;
+  text-indent: -0.42em;
+}
+.reviews-quote::before { content: "\201C"; }
+.reviews-quote::after  { content: "\201D"; }
+
+.reviews-link {
+  display: inline-block;
+  font-size: 0.95em;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+}
+.reviews-link::after {
+  content: " \2192";
+  text-decoration: none;
+}
+.reviews-link:hover { opacity: 0.68; }
+
+.reviews-note {
+  margin: 0.7rem 0 0;
+  font-size: 0.86em;
+  opacity: 0.6;
+}
+
+.reviews-empty {
+  margin: 2.5rem 0;
+  opacity: 0.6;
+  font-style: italic;
+}
+
+@media (max-width: 540px) {
+  .reviews-item { padding: 1.5rem 0; }
+  .reviews-date { margin-left: 0; width: 100%; }
+  .reviews-quote { font-size: 1.08em; }
+}
