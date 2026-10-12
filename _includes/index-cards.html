@@ -1,0 +1,56 @@
+{%- comment -%}
+  Index list with one thumbnail per entry.
+
+  One static image rather than a rolling strip: the header ticker already
+  supplies the motion on this page, and the index's job is scanning. A single
+  tile gives the "what does this set look like" signal at a fraction of the
+  weight -- about 2KB a row against roughly 1.2MB for a prebuilt animated strip.
+
+  Image selection, in order of preference:
+    1. `thumb:` in the post's front matter -- an id you chose
+    2. the first id in _data/stream_ids/<set>.json
+  With one tile standing for a whole set, the curated option is worth taking:
+  the first id is whatever sorted first, which may be an outlier.
+
+  A post with neither renders as a plain row -- no thumbnail, no empty slot.
+
+  Usage:
+    {% include index-cards.html %}
+    {% include index-cards.html posts=site.categories.unending %}
+{%- endcomment -%}
+
+{%- assign posts = include.posts | default: site.posts -%}
+
+<ol class="idx-list">
+{%- for post in posts -%}
+
+  {%- assign set = post.set -%}
+  {%- assign cfg = site.data.streams.sets[set] -%}
+  {%- assign base = cfg.base -%}
+  {%- assign ext = cfg.ext | default: 'png' -%}
+
+  {%- assign id = cfg.thumb -%}
+  {%- if id == nil and set -%}
+    {%- assign pool = site.data.stream_ids[set] -%}
+    {%- if pool -%}{%- assign id = pool | first -%}{%- endif -%}
+    {%- assign thumb = cfg.thumb -%}
+  {%- endif -%}
+
+  <li class="idx-item">
+    {%- if id and base -%}
+    <a class="idx-thumb" href="{{ post.url | relative_url }}" tabindex="-1" aria-hidden="true">
+      <img src="{{ base }}{{ id }}.{{ ext }}" alt="" loading="lazy" decoding="async" width="128" height="128">
+    </a>
+    {%- endif -%}
+
+    <div class="idx-meta">
+      <a class="idx-title" href="{{ post.url | relative_url }}">{{ post.title }}</a>
+      <time class="idx-date" datetime="{{ post.date | date: '%Y-%m-%d' }}">({{ post.date | date: "%Y-%m-%d" }})</time>
+      {%- if post.subtitle or post.description %}
+      <span class="idx-sub">{{ post.subtitle | default: post.description | truncate: 72 }}</span>
+      {%- endif %}
+    </div>
+  </li>
+
+{%- endfor -%}
+</ol>

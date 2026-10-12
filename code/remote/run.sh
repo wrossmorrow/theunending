@@ -5,10 +5,50 @@ set -a && source .env && set +a
 
 # define these
 
-POST_TITLE="Kolmogorov Complexity"
-SET_NAME="kolmogorov-complexity"
+# POST_TITLE=""
+# SET_NAME=""
+# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+# PROMPT=""
+
+POST_TITLE="Dinner Paint"
+SET_NAME="dinner-paint"
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-PROMPT="8 colored squares on a grid tightly packed touching each other on all sides. contrasting colors randomly chosen per square"
+PROMPT="colorful thick paint on a white dinner plate, partially mixed. brown, green, and purple placed by a palatte knife which still rests on the plate. elegant silverware to the left and right, several forks, spoon, knife. white tablecloth with gold embroidery. high resolution photograph for a restaurant review."
+
+# POST_TITLE="Mountains"
+# SET_NAME="mountains"
+# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+# PROMPT="snowy mountaintop, snow and rocks, wisps of slow or cloud blowing off the sharp black peak, light grey sky"
+
+# POST_TITLE="Venture Capital"
+# SET_NAME="venture-capital"
+# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+# PROMPT="a colorful unicorn running through a apocolyptic wasteland. realistic photography, 35mm lens"
+
+# POST_TITLE="Nymphaeaceae"
+# SET_NAME="nymphaeaceae"
+# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+# PROMPT="a heavily impressionistic painting focusing on a pond surface with water lilies. sweeping brushstrokes"
+
+# POST_TITLE="Securities"
+# SET_NAME="securities"
+# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+# PROMPT="messy large vertical stacks of rolls of blue painters tape. the tape is matte and non-reflective wrapped around a tan cardboard spool. some have fallen to the ground. plain white background"
+
+# POST_TITLE="Manufactured Data"
+# SET_NAME="manufactured-data"
+# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+# PROMPT="a set of complicated graphs of data. white background, solid black line axes on all sides top bottom left and right. colorful data points and lines or curves"
+
+# POST_TITLE="Unnatural Formations"
+# SET_NAME="unnatural-formations"
+# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+# PROMPT="archaic concrete crystals arise out of a gently rolling field of wheat grass. the concrete crystals are covered in overlapping graffiti in various colors. light blue and partly cloudy sky"
+
+# POST_TITLE="Kolmogorov Complexity"
+# SET_NAME="kolmogorov-complexity"
+# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+# PROMPT="8 colored squares on a grid tightly packed touching each other on all sides. contrasting colors randomly chosen per square"
 
 # POST_TITLE="Emo Vermeer"
 # SET_NAME="emo-pearl"
@@ -143,3 +183,4 @@ done
 # webp's for poster printable page
 
 uv run python web-posters.py posters
+

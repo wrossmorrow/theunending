@@ -7,14 +7,12 @@ title: Unending
 
 ---
 
-{% assign sorted_categories = site.categories | sort %}
+{% include index-cards.html %}
+
+<!-- {% assign sorted_categories = site.categories | sort %}
 {% for category in sorted_categories %}
   {% assign cat_code = category[0] %}
   {% assign cat_data = site.data.categories[cat_code] %}
-  <!-- <h2>{{ cat_data.name }}</h2>
-  {% if cat_data.summary %}
-  <p><em>{{ cat_data.summary }}</em></p>
-  {% endif %} -->
   <ul>
     {% for post in category[1] %}
       <li>
@@ -23,7 +21,7 @@ title: Unending
       </li>
     {% endfor %}
   </ul>
-{% endfor %}
+{% endfor %} -->
 
 ---
 

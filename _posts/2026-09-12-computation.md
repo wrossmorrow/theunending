@@ -7,6 +7,7 @@ location: "Places"
 categories: [unending]
 set: computation
 image: assets/og/computation.jpg
+teaser: assets/img/2026-09-12-computation/000c9cde-21d8-40d1-81e2-24ae4383d60f.png
 ---
 
 {% include image-stream.html set=page.set cols=5 rows=6 interval=500 %}

@@ -11,7 +11,7 @@ permalink: /about/
 
 I should probably explain what this is about. If you're looking it can obviously be about anything you like, not only my half-baked view. I have to admit I also believe explaining at all defeats the purpose. Or maybe put another way if I _have_ to explain I've failed in communicating whatever it is I'm trying to find already. And any explanation somewhat presumes there is a purpose past general interest or boredom. 
 
-I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for art production is a bit frought. Its undeniably "here" though. Maybe that alone is part of my goal, exploring that discomfort. 
+I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit frought if undeniably "here." Maybe that alone is part of my goal, exploring that discomfort.
 
 You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything.
 
@@ -90,7 +90,15 @@ Maybe unrealistically large such compositions like 40"x80" (slightly larger than
 
 ![desert-rocks]({{ "assets/img/about/desert-rocks-40x80.webp" | relative_url }}){:width="75%"}
 
-I'm not sure analogue media are able to translate a dynamic sense of "unending" off a screen, but it would have to be many of these disposable single variations at once. In any case, [here is a blast of printable style representations]({% link printable.md %}).
+I'm not sure analogue media are able to translate a dynamic sense of "unending" off a screen, but it would have to be many of these disposable single variations at once. Randomness of course may play a role in the aesthetic at some scale as well; [Dress Code]({% post_url 2026-09-27-dress-code %})'s large scale rendering appears to undulate like fabric of its central subject
+
+![dress-code]({{ "assets/img/about/dress-code-40x80.webp" | relative_url }}){:width="75%"}
+
+and I can't help enjoy the almost childish primary color chaos of [Kolmogorov Complexity]({% post_url 2026-10-08-kolmogorov-complexity %})'s intentional exploration of randomness 
+
+![kolmogorov-complexity]({{ "assets/img/about/kolmogorov-complexity-40x80.webp" | relative_url }}){:width="75%"}
+
+In any case, [here is a blast of printable style representations]({% link printable.md %}) in various sizes.
 
 ---
 
