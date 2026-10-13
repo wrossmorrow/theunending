@@ -251,6 +251,21 @@ sets:
   second-law-empty:
     base: https://theunending.ai/assets/img/2026-10-13-second-law-empty/
     manifest: /assets/streams/second-law-empty.json
-    meta: /assets/img/2026-10-12-second-law-empty/{id}.json
+    meta: /assets/img/2026-10-13-second-law-empty/{id}.json
     thumb: 0245238e-7fcf-4ece-9d03-018fb1d43e93
+  garbage:
+    base: https://theunending.ai/assets/img/2026-10-13-garbage/
+    manifest: /assets/streams/garbage.json
+    meta: /assets/img/2026-10-13-garbage/{id}.json
+    thumb: 00129aa2-f8de-44e3-86af-49bf1496519b
+  force-majeure:
+    base: https://theunending.ai/assets/img/2026-10-13-force-majeure/
+    manifest: /assets/streams/force-majeure.json
+    meta: /assets/img/2026-10-13-force-majeure/{id}.json
+    thumb: 01ee8920-045f-428e-aaa6-91a230db6bd4
+  real-time:
+    base: https://theunending.ai/assets/img/2026-10-13-real-time/
+    manifest: /assets/streams/real-time.json
+    meta: /assets/img/2026-10-13-real-time/{id}.json
+    thumb: 14bb9b41-a3ff-415d-9973-b376a72731e4
   

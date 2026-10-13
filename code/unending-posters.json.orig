@@ -3023,78 +3023,6 @@
       }
     }
   },
-  "2026-10-12-second-law": {
-    "12x18": {
-      "name": "2026-10-12-second-law",
-      "size": "12x18",
-      "preview": {
-        "src": "previews/2026-10-12-second-law/12x18.webp",
-        "w": 1600,
-        "h": 2400
-      },
-      "thumb": {
-        "src": "thumbs/2026-10-12-second-law/12x18.webp",
-        "w": 600,
-        "h": 900
-      }
-    },
-    "18x24": {
-      "name": "2026-10-12-second-law",
-      "size": "18x24",
-      "preview": {
-        "src": "previews/2026-10-12-second-law/18x24.webp",
-        "w": 1800,
-        "h": 2400
-      },
-      "thumb": {
-        "src": "thumbs/2026-10-12-second-law/18x24.webp",
-        "w": 675,
-        "h": 900
-      }
-    },
-    "24x36": {
-      "name": "2026-10-12-second-law",
-      "size": "24x36",
-      "preview": {
-        "src": "previews/2026-10-12-second-law/24x36.webp",
-        "w": 1600,
-        "h": 2400
-      },
-      "thumb": {
-        "src": "thumbs/2026-10-12-second-law/24x36.webp",
-        "w": 600,
-        "h": 900
-      }
-    },
-    "36x48": {
-      "name": "2026-10-12-second-law",
-      "size": "36x48",
-      "preview": {
-        "src": "previews/2026-10-12-second-law/36x48.webp",
-        "w": 1800,
-        "h": 2400
-      },
-      "thumb": {
-        "src": "thumbs/2026-10-12-second-law/36x48.webp",
-        "w": 675,
-        "h": 900
-      }
-    },
-    "40x80": {
-      "name": "2026-10-12-second-law",
-      "size": "40x80",
-      "preview": {
-        "src": "previews/2026-10-12-second-law/40x80.webp",
-        "w": 2400,
-        "h": 1200
-      },
-      "thumb": {
-        "src": "thumbs/2026-10-12-second-law/40x80.webp",
-        "w": 900,
-        "h": 450
-      }
-    }
-  },
   "2026-10-12-tv-iv": {
     "12x18": {
       "name": "2026-10-12-tv-iv",
@@ -3306,6 +3234,222 @@
       },
       "thumb": {
         "src": "thumbs/2026-10-12-embroidered-calavaras/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-10-13-topography": {
+    "12x18": {
+      "name": "2026-10-13-topography",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-13-topography/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-topography/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-13-topography",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-13-topography/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-topography/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-13-topography",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-13-topography/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-topography/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-13-topography",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-13-topography/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-topography/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-13-topography",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-13-topography/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-topography/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-10-13-second-law-empty": {
+    "12x18": {
+      "name": "2026-10-13-second-law-empty",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-13-second-law-empty/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-second-law-empty/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-13-second-law-empty",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-13-second-law-empty/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-second-law-empty/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-13-second-law-empty",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-13-second-law-empty/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-second-law-empty/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-13-second-law-empty",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-13-second-law-empty/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-second-law-empty/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-13-second-law-empty",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-13-second-law-empty/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-second-law-empty/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-10-13-garbage": {
+    "12x18": {
+      "name": "2026-10-13-garbage",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-13-garbage/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-garbage/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-13-garbage",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-13-garbage/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-garbage/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-13-garbage",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-13-garbage/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-garbage/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-13-garbage",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-13-garbage/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-garbage/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-13-garbage",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-13-garbage/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-13-garbage/40x80.webp",
         "w": 900,
         "h": 450
       }

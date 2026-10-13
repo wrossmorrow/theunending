@@ -10,22 +10,10 @@ set -a && source .env && set +a
 # MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
 # PROMPT=""
 
-POST_TITLE="Second Law"
-SET_NAME="second-law-empty"
+POST_TITLE="Real Time"
+SET_NAME="real-time"
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-PROMPT="an empty transparent glass rests on a white marble countertop. above it a large mass of opaque liquid floats in the air in an unruly ameobic shape. bubbles separate and surround the mass."
-
-# POST_TITLE="Garbage"
-# SET_NAME="garbage"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="an iphone photograph of garbage left near a street curb. piles of old dirty clothes, empty aluminum cans, vehicle oil, small propane tanks, empty food wrappers."
-
-# POST_TITLE="Force Majeure"
-# SET_NAME="force-majeure"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="a detailed financial contract on a thick black carpet that has been torn to shreds, chewed up, destroyed. we can see partial pages but there are chewed shreds everywhere. we can see some discolorations, grey-wet marks from saliva."
-
-# --- done ---
+PROMPT="a screenshot from a phone video of a large industrial warehouse on fire. the warehouse, while huge, is a small portion of the lower part of the image. most of the image is huge billowing clouds of grey and black smoke rising above the facility. these clouds almost consume the entire image.  near where the smoke meets the facility we can see bright orange, yellow, and red light peeking through. there is semi-transparent header and footer on the top and bottom from the phone app, with a light blue playbar at the bottom."
 
 # let it rip below here
 

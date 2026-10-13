@@ -13,33 +13,21 @@ I should probably explain what this is about. If you're looking it can obviously
 
 I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit frought if undeniably "here." Maybe that alone is part of my goal, exploring that discomfort.
 
-You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything.
-
-<!-- In any case, the relevant pages on this site being explained are:
-<ul>
-{% for post in site.categories.unending %}
-    {% if post.url != page.url %}
-    <li>
-    <span style="color: #666;">{{ post.date | date: "%Y-%m-%d" }}</span> — 
-    <a href="{{ post.url | relative_url }}">{{ post.title }} (<small>{{ post.subtitle | truncate: 40, "..." }}</small>)</a>
-    </li>
-    {% endif %}
-{% endfor %}
-</ul> -->
+You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything. 
 
 If you would rather not poison your views of these pages, [get out]({{ site.baseurl }}/).
 
-Or, now or after reading, <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">tell me what you think.</a> No wrong answers.
+Now, or after reading, <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">tell me what you think.</a> No wrong answers.
 
 ---
 
 Generative images, in the sense of digital visual content, are here. Not just like, here here, as in this page/site though they are, but like "in the system," certainly on social media, many advertisements, and probably inside many workplaces. Specifically what we can do is the following: write some text (sometimes of semi-structured format) or supply some sample images and get "digital images" as a result. "Digital images" are pixel-value arrays that can be transmitted easily over computer networks and rendered on displays effectively anywhere in the world. 
 
-If this sounds weird, here's a `gif` of this running:
+If this sounds weird, here's a `gif` of this running on my laptop:
 
 ![running]({{ "assets/img/about/running-1080p.gif" | relative_url }})
 
-I am exploring several aspects of generative images that I guess, by definition, are interesting to me: 
+I am exploring several aspects of generative images that, by definition, are interesting to me: 
 * Turning text into digital images is relatively cheap (thousands of images for a few dollars in an hour or less)
 * Variations, minor or major, on a theme are abundant (automatic, automatable, abundant)
 * The themes chosen can be nearly arbitrary (though I find quality varies wildly)
