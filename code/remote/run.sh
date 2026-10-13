@@ -1,31 +1,36 @@
 #!/bin/bash
 
 set -ex
-set -a && source .env && set +a
+set -a
+source .env
+source .run
+set +a
 
-# define these
-
-# POST_TITLE=""
-# SET_NAME=""
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT=""
-
-POST_TITLE="Real Time"
-SET_NAME="real-time"
-MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-PROMPT="a screenshot from a phone video of a large industrial warehouse on fire. the warehouse, while huge, is a small portion of the lower part of the image. most of the image is huge billowing clouds of grey and black smoke rising above the facility. these clouds almost consume the entire image.  near where the smoke meets the facility we can see bright orange, yellow, and red light peeking through. there is semi-transparent header and footer on the top and bottom from the phone app, with a light blue playbar at the bottom."
-
-# let it rip below here
+for V in POST_TITLE SET_NAME PROMPT; do
+    if [[ -z "${!V}" ]]; then
+        echo "${V} is not set or empty" >&2
+        exit 1
+    fi
+done
 
 # infer vars (ok, some defined, but still)
 
-SITE_BUCKET="theunending-ai-site-content-use1"
-POST_DATE="$( date -d 'TZ="America/Los_Angeles"' -I )"
+DEFAULT_MODEL_ID="black-forest-labs/FLUX.2-klein-4B" 
+if [[ -z "${MODEL_ID}" ]]; then
+    echo "MODEL_ID is not set or empty: ${MODEL_ID}; defaulting to ${DEFAULT_MODEL_ID}"
+    MODEL_ID="${DEFAULT_MODEL_ID}"
+fi
+
+DEFAULT_SITE_BUCKET="theunending-ai-site-content-use1"
+DEFAULT_RAW_BUCKET="wrossmorrow-genai-repetitions-use1"
+
+SITE_BUCKET="${SITE_BUCKET:-$DEFAULT_SITE_BUCKET}"
+POST_DATE="$( TZ="America/Los_Angeles" date +%Y-%m-%d )"
 POST_NAME="${POST_DATE}-${SET_NAME}"
 SITE_IMG_ASSETS="s3://${SITE_BUCKET}/assets/img/${POST_NAME}/"
 
 PROMPT_HASH=$( echo -n "${PROMPT}" | sha256sum | cut -d ' ' -f 1 )
-RAW_BUCKET="wrossmorrow-genai-repetitions-use1"
+RAW_BUCKET="${RAW_BUCKET:-$DEFAULT_RAW_BUCKET}"
 RAW_PREFIX="runs/${PROMPT_HASH}"
 
 declare -A POSTER_SIZES=(

@@ -1,4 +1,9 @@
 
+POST_TITLE="Real Time"
+SET_NAME="real-time"
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+PROMPT="a screenshot from a phone video of a large industrial warehouse on fire. the warehouse, while huge, is a small portion of the lower part of the image. most of the image is huge billowing clouds of grey and black smoke rising above the facility. these clouds almost consume the entire image.  near where the smoke meets the facility we can see bright orange, yellow, and red light peeking through. there is semi-transparent header and footer on the top and bottom from the phone app, with a light blue playbar at the bottom."
+
 POST_TITLE="Force Majeure"
 SET_NAME="force-majeure"
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"

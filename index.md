@@ -7,21 +7,7 @@ title: Unending
 
 ---
 
-{% include index-cards.html %}
-
-<!-- {% assign sorted_categories = site.categories | sort %}
-{% for category in sorted_categories %}
-  {% assign cat_code = category[0] %}
-  {% assign cat_data = site.data.categories[cat_code] %}
-  <ul>
-    {% for post in category[1] %}
-      <li>
-        <span style="color: #666;">{{ post.date | date: "%Y-%m-%d" }}</span> — 
-        <a href="{{ post.url | relative_url }}">{{ post.title }} (<small>{{ post.subtitle | truncate: 40, "..." }}</small>)</a>
-      </li>
-    {% endfor %}
-  </ul>
-{% endfor %} -->
+{% include index-cards.html posts=site.categories.unending %}
 
 ---
 

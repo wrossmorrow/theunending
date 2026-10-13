@@ -60,9 +60,12 @@ ssh ip ssh_key=ssh_key:
 
 scp ip ssh_key=ssh_key user="ubuntu":
     scp -i ~/.ssh/{{ssh_key}} pyproject.toml uv.lock README.md {{user}}@{{ip}}:~/
-    scp -i ~/.ssh/{{ssh_key}} remote/.env remote/*.sh {{user}}@{{ip}}:~/
+    scp -i ~/.ssh/{{ssh_key}} remote/.env remote/.run remote/*.sh {{user}}@{{ip}}:~/
     scp -r -i ~/.ssh/{{ssh_key}} src {{user}}@{{ip}}:~/
     scp -i ~/.ssh/{{ssh_key}} poster.py og_tiles.py web-posters.py {{user}}@{{ip}}:~/
+
+scp-run ip ssh_key=ssh_key user="ubuntu":
+    scp -i ~/.ssh/{{ssh_key}} remote/.run {{user}}@{{ip}}:~/
 
 copy-vast ip port:
     scp -P {{port}} pyproject.toml uv.lock README.md root@{{ip}}:~/

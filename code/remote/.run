@@ -1,0 +1,5 @@
+# define these
+POST_TITLE=""
+SET_NAME=""
+PROMPT=""
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
