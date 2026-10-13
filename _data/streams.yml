@@ -223,11 +223,6 @@ sets:
     manifest: /assets/streams/white-collar.json
     meta: /assets/img/2026-10-12-white-collar/{id}.json
     thumb: 000a0fb7-b41b-4fe7-bfa1-fb3505209356
-  second-law:
-    base: https://theunending.ai/assets/img/2026-10-12-second-law/
-    manifest: /assets/streams/second-law.json
-    meta: /assets/img/2026-10-12-second-law/{id}.json
-    thumb: 00166f3a-e48b-4f5d-ae83-1bd4e41c6b78
   tv-iv:
     base: https://theunending.ai/assets/img/2026-10-12-tv-iv/
     manifest: /assets/streams/tv-iv.json

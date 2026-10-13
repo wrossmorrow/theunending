@@ -1,0 +1,7 @@
+sets:
+  second-law:
+    base: https://theunending.ai/assets/img/2026-10-12-second-law/
+    manifest: /assets/streams/second-law.json
+    meta: /assets/img/2026-10-12-second-law/{id}.json
+    thumb: 00166f3a-e48b-4f5d-ae83-1bd4e41c6b78
+  
