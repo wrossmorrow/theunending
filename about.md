@@ -15,7 +15,7 @@ I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a li
 
 You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything.
 
-In any case, the relevant pages on this site being explained are:
+<!-- In any case, the relevant pages on this site being explained are:
 <ul>
 {% for post in site.categories.unending %}
     {% if post.url != page.url %}
@@ -25,13 +25,15 @@ In any case, the relevant pages on this site being explained are:
     </li>
     {% endif %}
 {% endfor %}
-</ul>
+</ul> -->
 
 If you would rather not poison your views of these pages, [get out]({{ site.baseurl }}/).
 
+Or, now or after reading, <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">tell me what you think.</a> No wrong answers.
+
 ---
 
-Generative images, in the sense of digital visual content, are here. Not like, here here, as in this page/site though they are, but like "in the system," certainly on social media, many advertisements, and probably inside many workplaces. Specifically what we can do is the following: write some text (sometimes of semi-structured format) or supply some sample images and get "digital images" as a result. "Digital images" are pixel-value arrays that can be transmitted easily over computer networks and rendered on displays effectively anywhere in the world. 
+Generative images, in the sense of digital visual content, are here. Not just like, here here, as in this page/site though they are, but like "in the system," certainly on social media, many advertisements, and probably inside many workplaces. Specifically what we can do is the following: write some text (sometimes of semi-structured format) or supply some sample images and get "digital images" as a result. "Digital images" are pixel-value arrays that can be transmitted easily over computer networks and rendered on displays effectively anywhere in the world. 
 
 If this sounds weird, here's a `gif` of this running:
 
@@ -44,7 +46,7 @@ I am exploring several aspects of generative images that I guess, by definition,
 
 Based on these features the explorations in these pages first explicitly trade off quality for quantity. That there are too many, "unending", variations on a given theme of hopefully-apparently-cheap quality (each) is the point. By being of copious volume, any given image alone probably feels diminished; cheap abundance should by nature be devaluing. So if it feels confusingly cheap or vacuous while presented in a possibly overwhelming way that's probably a good thing. 
 
-Minor variations/variability achievable are also subtly interesting, I think, especially if almost imperceptible. In contrast to "real" works, where minor variations would be both laborious and presumably futile, often connoting "drafts" to select from based on criteria unidentified _a priori_, minor variations feel effectively "free" through pseudo-randomness and potentially unjudgeable. I can't help think of Warhol prints, but I'm not conciously trying to draw a pop art parallel even if inevitable. 
+The minor variations/variability achievable are also subtly interesting, I think, especially if almost imperceptible. In contrast to "real" works, where minor variations would be both laborious and presumably futile, connoting "drafts" to select from based on criteria unidentified _a priori_. Minor variations by contrast feel effectively "free" through pseudo-randomness and potentially unjudgeable, with no "primary" version I'd, at least, expect of physical works. I can't help think of Warhol prints, but I'm not conciously trying to draw a pop art parallel even if inevitable. 
 
 If you click on an image and see the "similar" results, 
 
@@ -54,7 +56,7 @@ you can evaluate uniqueness yourself. If the stream has an exact duplicate image
 
 I'm occasionally playing with arbitrary themes too. That's more "traditional" and worth less explanation being closer to how you yourself reflect on the specific content of a given image. If so, the content and the titles should work together to point out what I'm exploring. This all sounds objectively silly and I know that; in fact I hope you can find some humor hiding in some of the themes.
 
-So, besides exploring what I can find in being able to generate digital images, maybe "as a medium," I am curious about the specific format communicating an accompanying sense of drowning in a content stream we can't stop of cheap variations of visually rendered ideas. To be clear, I hope this _isn't_ a medium for one-off substitutes for human production, and that's not the proposal. The voluminous production, the minor variations, the unstoppability, feels aligned with the expectations around these tools, what the zeitgeist (so to speak) behind them points to.
+So, besides exploring what I can find in being able to generate digital images, maybe "as a medium," I am curious about the specific format communicating an accompanying sense of drowning in a content stream we can't stop of cheap variations of visually rendered ideas. To be clear, I hope this _isn't_ a "medium" for one-off substitutes for human production, and that's not the proposal; but part of the "medium" existing is reflective exporation of it. The voluminous production, the minor variations lacking some unique selected reification, the unstoppability, all feel aligned with the expectations around these tools, what the zeitgeist (so to speak) behind them points to.
 
 ---
 
@@ -75,7 +77,7 @@ They're maybe interesting for a few seconds but ultimately obviously disposable 
 Here's a format I think is _perhaps_ suitable for physical printing with a potentially related effect. This one is a 24"x36" ready preparation (a pretty normal hanging picture or poster size) with 260 1.5" square images:
 
 <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; width: 100%;">
-  <img src="{{ 'assets/img/about/dress-code-24x36.webp' | relative_url }}" alt="dress code" style="width: 100%; height: auto; object-fit: contain; outline: 1px solid #eee;" />
+  <img src="{{ 'assets/img/about/dinner-paint-24x36.webp' | relative_url }}" alt="dinner paint" style="width: 100%; height: auto; object-fit: contain; outline: 1px solid #eee;" />
   <img src="{{ 'assets/img/about/burnt-sockets-24x36.webp' | relative_url }}" alt="burnt sockets" style="width: 100%; height: auto; object-fit: contain; outline: 1px solid #eee;" />
 </div>
 
@@ -88,15 +90,15 @@ I have at least drafted prints like this:
 
 Maybe unrealistically large such compositions like 40"x80" (slightly larger than a twin XL bed) with 1104 1.5" square images do a bit better:
 
-![desert-rocks]({{ "assets/img/about/desert-rocks-40x80.webp" | relative_url }}){:width="75%"}
+<img src="{{ 'assets/img/about/desert-rocks-40x80.webp' | relative_url }}" alt="desert rocks" style="width: 100%;display: block; outline: 1px solid #eee;" />
 
 I'm not sure analogue media are able to translate a dynamic sense of "unending" off a screen, but it would have to be many of these disposable single variations at once. Randomness of course may play a role in the aesthetic at some scale as well; [Dress Code]({% post_url 2026-09-27-dress-code %})'s large scale rendering appears to undulate like fabric of its central subject
 
-![dress-code]({{ "assets/img/about/dress-code-40x80.webp" | relative_url }}){:width="75%"}
+<img src="{{ 'assets/img/about/dress-code-40x80.webp' | relative_url }}" alt="dress code" style="width: 100%;display: block; outline: 1px solid #eee;" />
 
 and I can't help enjoy the almost childish primary color chaos of [Kolmogorov Complexity]({% post_url 2026-10-08-kolmogorov-complexity %})'s intentional exploration of randomness 
 
-![kolmogorov-complexity]({{ "assets/img/about/kolmogorov-complexity-40x80.webp" | relative_url }}){:width="75%"}
+<img src="{{ 'assets/img/about/kolmogorov-complexity-40x80.webp' | relative_url }}" alt="kolmogorov complexity" style="width: 100%;display: block; outline: 1px solid #eee;" />
 
 In any case, [here is a blast of printable style representations]({% link printable.md %}) in various sizes.
 
@@ -111,4 +113,6 @@ As for "practice", almost none of these are "one-shots" as we might say; you mig
 ---
 
 <small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `css`/`js`/`jekyll` magic that much myself, so it was a good use case for letting something else handle it.</small>
+
+<small>With rare, specifically detailed exception, all prompts conceived of, written, evaluated, refined, and executed by a human author not any existing AI language tool or related agent, harness, or automated prompting and generation loop.</small>
 

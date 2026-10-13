@@ -10,70 +10,22 @@ set -a && source .env && set +a
 # MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
 # PROMPT=""
 
-POST_TITLE="Dinner Paint"
-SET_NAME="dinner-paint"
+POST_TITLE="Second Law"
+SET_NAME="second-law-empty"
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-PROMPT="colorful thick paint on a white dinner plate, partially mixed. brown, green, and purple placed by a palatte knife which still rests on the plate. elegant silverware to the left and right, several forks, spoon, knife. white tablecloth with gold embroidery. high resolution photograph for a restaurant review."
+PROMPT="an empty transparent glass rests on a white marble countertop. above it a large mass of opaque liquid floats in the air in an unruly ameobic shape. bubbles separate and surround the mass."
 
-# POST_TITLE="Mountains"
-# SET_NAME="mountains"
+# POST_TITLE="Garbage"
+# SET_NAME="garbage"
 # MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="snowy mountaintop, snow and rocks, wisps of slow or cloud blowing off the sharp black peak, light grey sky"
+# PROMPT="an iphone photograph of garbage left near a street curb. piles of old dirty clothes, empty aluminum cans, vehicle oil, small propane tanks, empty food wrappers."
 
-# POST_TITLE="Venture Capital"
-# SET_NAME="venture-capital"
+# POST_TITLE="Force Majeure"
+# SET_NAME="force-majeure"
 # MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="a colorful unicorn running through a apocolyptic wasteland. realistic photography, 35mm lens"
+# PROMPT="a detailed financial contract on a thick black carpet that has been torn to shreds, chewed up, destroyed. we can see partial pages but there are chewed shreds everywhere. we can see some discolorations, grey-wet marks from saliva."
 
-# POST_TITLE="Nymphaeaceae"
-# SET_NAME="nymphaeaceae"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="a heavily impressionistic painting focusing on a pond surface with water lilies. sweeping brushstrokes"
-
-# POST_TITLE="Securities"
-# SET_NAME="securities"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="messy large vertical stacks of rolls of blue painters tape. the tape is matte and non-reflective wrapped around a tan cardboard spool. some have fallen to the ground. plain white background"
-
-# POST_TITLE="Manufactured Data"
-# SET_NAME="manufactured-data"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="a set of complicated graphs of data. white background, solid black line axes on all sides top bottom left and right. colorful data points and lines or curves"
-
-# POST_TITLE="Unnatural Formations"
-# SET_NAME="unnatural-formations"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="archaic concrete crystals arise out of a gently rolling field of wheat grass. the concrete crystals are covered in overlapping graffiti in various colors. light blue and partly cloudy sky"
-
-# POST_TITLE="Kolmogorov Complexity"
-# SET_NAME="kolmogorov-complexity"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="8 colored squares on a grid tightly packed touching each other on all sides. contrasting colors randomly chosen per square"
-
-# POST_TITLE="Emo Vermeer"
-# SET_NAME="emo-pearl"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="an emo woman with a pearl earring, yellow headband. painting, reminiscent of the vermeer but modern hyperrealistic painting. shadowy, chiaroscuro style"
-
-# POST_TITLE="Calavaras"
-# SET_NAME="cardboard-calavaras"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="a painting of a calavaras (a colorful, intricately designed skull); thickly applied paint; colorful. painted directly on a cardboard square"
-
-# POST_TITLE="Load Bearing"
-# SET_NAME="load-bearing"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="a photograph taken from behind a gallery wall. raw plywood, aluminum brackets, and bundled cable runs held with zip ties, lit by a single clamped work light. bright white light leaks around every edge of the panel from the exhibition on the other side, and a thin rectangle of that light falls across the concrete floor. nothing on this side is finished or painted. 35mm, shallow depth of field, cool shadows against the warm spill, quiet and unglamorous."
-
-# POST_TITLE="Attention"
-# SET_NAME="attention"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="an iphone photograph of a large mass of people in an art gallery staring at a painting. we can barely see the painting there are so many crowded people. some are taking pictures themselves of the painting. another painting sits to side alone, with no attention."
-
-# POST_TITLE="Gentrification"
-# SET_NAME="gentrification"
-# MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-# PROMPT="an iphone photograph of a an empty in-wall case in a museum. the case is embedded in the wall with clear facing glass in which we can see some reflections of lights and people. there are interior lighst in the case casting uneven light and shadows emphasizing the rectangular geometry. blocky, rectangular white stands sit in the case waiting for pieces to be displayed. the case walls are a constrasting primary color. the walls outside the case are a boring neutral grey color"
+# --- done ---
 
 # let it rip below here
 
@@ -134,7 +86,7 @@ EOF
 
 # EXECUTE!!!!!!
 
-"${HOME}/.venv/bin/python" "${HOME}/src/imagen/worker.py" \
+"${HOME}/.venv/bin/python" "${HOME}/src/imagen/cspworker.py" \
     --prompt "${PROMPT}" \
     --s3-bucket "${RAW_BUCKET}" \
     --s3-prefix "${RAW_PREFIX}" \

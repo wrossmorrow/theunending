@@ -208,3 +208,49 @@ sets:
     manifest: /assets/streams/dinner-paint.json
     meta: /assets/img/2026-10-11-dinner-paint/{id}.json
     thumb: 000008f8-bf7a-434a-876b-33e2fab4f4b2
+  memento-mori-flux2:
+    base: https://theunending.ai/assets/img/2026-10-12-memento-mori-flux2/
+    manifest: /assets/streams/memento-mori-flux2.json
+    meta: /assets/img/2026-10-12-memento-mori-flux2/{id}.json
+    thumb: 000852b6-fede-4f8d-9550-b134d5f6db05
+  reading:
+    base: https://theunending.ai/assets/img/2026-10-12-reading/
+    manifest: /assets/streams/reading.json
+    meta: /assets/img/2026-10-12-reading/{id}.json
+    thumb: 00080427-e310-4b57-ad0e-248e0cbf88b6
+  white-collar:
+    base: https://theunending.ai/assets/img/2026-10-12-white-collar/
+    manifest: /assets/streams/white-collar.json
+    meta: /assets/img/2026-10-12-white-collar/{id}.json
+    thumb: 000a0fb7-b41b-4fe7-bfa1-fb3505209356
+  second-law:
+    base: https://theunending.ai/assets/img/2026-10-12-second-law/
+    manifest: /assets/streams/second-law.json
+    meta: /assets/img/2026-10-12-second-law/{id}.json
+    thumb: 00166f3a-e48b-4f5d-ae83-1bd4e41c6b78
+  tv-iv:
+    base: https://theunending.ai/assets/img/2026-10-12-tv-iv/
+    manifest: /assets/streams/tv-iv.json
+    meta: /assets/img/2026-10-12-tv-iv/{id}.json
+    thumb: 0000e1fb-c239-41ed-badf-e501a34f74db
+  not-dunes:
+    base: https://theunending.ai/assets/img/2026-10-12-not-dunes/
+    manifest: /assets/streams/not-dunes.json
+    meta: /assets/img/2026-10-12-not-dunes/{id}.json
+    thumb: 005918fd-b6f7-4865-ba33-43edef32c556
+  embroidered-calavaras:
+    base: https://theunending.ai/assets/img/2026-10-12-embroidered-calavaras/
+    manifest: /assets/streams/embroidered-calavaras.json
+    meta: /assets/img/2026-10-12-embroidered-calavaras/{id}.json
+    thumb: 02608ac4-7131-47de-af2c-220c6d05fb5b
+  topography:
+    base: https://theunending.ai/assets/img/2026-10-13-topography/
+    manifest: /assets/streams/topography.json
+    meta: /assets/img/2026-10-13-topography/{id}.json
+    thumb: 016db53b-eed0-4045-8a78-55354a68d408
+  second-law-empty:
+    base: https://theunending.ai/assets/img/2026-10-13-second-law-empty/
+    manifest: /assets/streams/second-law-empty.json
+    meta: /assets/img/2026-10-12-second-law-empty/{id}.json
+    thumb: 0245238e-7fcf-4ece-9d03-018fb1d43e93
+  
