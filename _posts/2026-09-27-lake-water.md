@@ -3,7 +3,6 @@ layout: post
 title: "Lake Water"
 subtitle: "closeup photograph of the surface of deep lake water; blues and greens; daytime with sunlight reflecting off undulations in the water; 85mm lens."
 date: 2026-09-27
-location: "Places"
 categories: [unending]
 set: lake-water
 image: assets/og/lake-water.jpg

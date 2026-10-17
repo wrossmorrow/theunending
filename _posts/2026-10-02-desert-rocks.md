@@ -3,7 +3,6 @@ layout: post
 title: "Desert Rocks"
 subtitle: "an acrylic painting of desert rocks. strongly geometric and planar rocks with some clear brushstrokes. deep oranges, red ochre shadows. bright blue sky."
 date: 2026-10-02
-location: "Places"
 categories: [unending]
 set: desert-rocks
 image: assets/og/desert-rocks.jpg

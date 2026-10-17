@@ -11,7 +11,7 @@ permalink: /about/
 
 I should probably explain what this is about. If you're looking it can obviously be about anything you like, not only my half-baked view. I have to admit I also believe explaining at all defeats the purpose. Or maybe put another way if I _have_ to explain I've failed in communicating whatever it is I'm trying to find already. And any explanation somewhat presumes there is a purpose past general interest or boredom. 
 
-I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit frought if undeniably "here." Maybe that alone is part of my goal, exploring that discomfort.
+I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit fraught if undeniably "here." Maybe that alone is part of my goal, exploring that discomfort.
 
 You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything. 
 
@@ -27,14 +27,17 @@ If this sounds weird, here's a `gif` of this running on my laptop:
 
 ![running]({{ "assets/img/about/running-1080p.gif" | relative_url }})
 
-I am exploring several aspects of generative images that, by definition, are interesting to me: 
+This site explores the use of these technologies, as a tool, potentially but not necessarily for "art", trying to find characteristics beyond any specific visually readable digitized imagery it literally produces while perhaps explicitly choosing content reflecting on the tool itself in or out of art production. It may be a failure.
+
+In particular I am exploring several aspects of generative images that, by definition, are interesting to me and thus worth reflection on in this respect: 
 * Turning text into digital images is relatively cheap (thousands of images for a few dollars in an hour or less)
-* Variations, minor or major, on a theme are abundant (automatic, automatable, abundant)
-* The themes chosen can be nearly arbitrary (though I find quality varies wildly)
+* The themes chosen can be nearly arbitrary (though I find "quality" varies wildly with ideas and prompt construction)
+* Variations, minor or major, on a theme are easy to generate (automatic, automatable, abundant in an unusual way)
+* Over many variations uncanny properties appear (a corpus is worth reflecting on, more so than a single image)
 
-Based on these features the explorations in these pages first explicitly trade off quality for quantity. That there are too many, "unending", variations on a given theme of hopefully-apparently-cheap quality (each) is the point. By being of copious volume, any given image alone probably feels diminished; cheap abundance should by nature be devaluing. So if it feels confusingly cheap or vacuous while presented in a possibly overwhelming way that's probably a good thing. 
+Based on these features the explorations in these pages first explicitly trade off quality for quantity. That there are too many, "unending", variations on a given theme of hopefully-apparently-cheap quality (each) is the point. By being of copious volume, any given image alone probably feels diminished; cheap abundance should by nature be devaluing. So if it feels confusingly cheap or vacuous while presented in a possibly overwhelming way that's probably a good thing. A key angle here is too many, not any specific finely tuned output.
 
-The minor variations/variability achievable are also subtly interesting, I think, especially if almost imperceptible. In contrast to "real" works, where minor variations would be both laborious and presumably futile, connoting "drafts" to select from based on criteria unidentified _a priori_. Minor variations by contrast feel effectively "free" through pseudo-randomness and potentially unjudgeable, with no "primary" version I'd, at least, expect of physical works. I can't help think of Warhol prints, but I'm not conciously trying to draw a pop art parallel even if inevitable. 
+The minor variations/variability achievable are also subtly interesting, I think, especially if almost imperceptible. In contrast to "real" works, where minor variations would be both laborious and presumably futile, connoting "drafts" to select from based on criteria unidentified _a priori_. Minor variations by contrast feel effectively "free" through pseudo-randomness and potentially unjudgeable, with no "primary" version I'd, at least, expect of physical works. I can't help think of [Warhol prints](https://andipagallery.com/blog/144-rinse-repeat-how-warhol-uses-repetition/), Umbrico's [suns and sunsets](https://www.sfmoma.org/read/sunsets-umbrico/), and the [Becher's towers](https://www.guggenheim.org/artwork/500). I'm not consciously trying to draw any specific parallels even if inevitable; and in a way authorship present in those works is whitewashed through AI in some strange way.
 
 If you click on an image and see the "similar" results, 
 
@@ -44,7 +47,7 @@ you can evaluate uniqueness yourself. If the stream has an exact duplicate image
 
 I'm occasionally playing with arbitrary themes too. That's more "traditional" and worth less explanation being closer to how you yourself reflect on the specific content of a given image. If so, the content and the titles should work together to point out what I'm exploring. This all sounds objectively silly and I know that; in fact I hope you can find some humor hiding in some of the themes.
 
-So, besides exploring what I can find in being able to generate digital images, maybe "as a medium," I am curious about the specific format communicating an accompanying sense of drowning in a content stream we can't stop of cheap variations of visually rendered ideas. To be clear, I hope this _isn't_ a "medium" for one-off substitutes for human production, and that's not the proposal; but part of the "medium" existing is reflective exporation of it. The voluminous production, the minor variations lacking some unique selected reification, the unstoppability, all feel aligned with the expectations around these tools, what the zeitgeist (so to speak) behind them points to.
+So, besides exploring what I can find in being able to generate digital images, maybe "as a medium," I am curious about the specific format communicating an accompanying sense of drowning in a content stream we can't stop of cheap variations of visually rendered ideas. To be clear, I hope this _isn't_ a "medium" for one-off substitutes for human production, and that's not the proposal; but part of the "medium" existing is reflective exploration of it. The voluminous production, the minor variations lacking some unique selected reification, the unstoppability, all feel aligned with the expectations around these tools, what the zeitgeist (so to speak) behind them points to.
 
 ---
 
@@ -76,19 +79,25 @@ I have at least drafted prints like this:
   <img src="{{ 'assets/img/about/memento-mori-printed.jpg' | relative_url }}" alt="second image" style="width: 100%; aspect-ratio: 2 / 3; object-fit: cover; display: block;" />
 </div>
 
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; width: 100%;">
+<img src="{{ 'assets/img/about/prints1.jpg' | relative_url }}" alt="prints 1" style="width: 100%; display: block; outline: 1px solid #eee;" />
+<img src="{{ 'assets/img/about/prints2.jpg' | relative_url }}" alt="prints 2" style="width: 100%; display: block; outline: 1px solid #eee;" />
+<img src="{{ 'assets/img/about/prints3.jpg' | relative_url }}" alt="prints 3" style="width: 100%; display: block; outline: 1px solid #eee;" />
+</div>
+
 Maybe unrealistically large such compositions like 40"x80" (slightly larger than a twin XL bed) with 1104 1.5" square images do a bit better:
 
 <img src="{{ 'assets/img/about/desert-rocks-40x80.webp' | relative_url }}" alt="desert rocks" style="width: 100%;display: block; outline: 1px solid #eee;" />
 
 I'm not sure analogue media are able to translate a dynamic sense of "unending" off a screen, but it would have to be many of these disposable single variations at once. Randomness of course may play a role in the aesthetic at some scale as well; [Dress Code]({% post_url 2026-09-27-dress-code %})'s large scale rendering appears to undulate like fabric of its central subject
 
-<img src="{{ 'assets/img/about/dress-code-40x80.webp' | relative_url }}" alt="dress code" style="width: 100%;display: block; outline: 1px solid #eee;" />
+<img src="{{ 'assets/img/about/dress-code-40x80.webp' | relative_url }}" alt="dress code" style="width: 100%; display: block; outline: 1px solid #eee;" />
 
-and I can't help enjoy the almost childish primary color chaos of [Kolmogorov Complexity]({% post_url 2026-10-08-kolmogorov-complexity %})'s intentional exploration of randomness 
+and I can't help enjoy the almost childish (and "incorrect" for the prompt) primary color chaos of [Kolmogorov Complexity]({% post_url 2026-10-08-kolmogorov-complexity %})'s intentional exploration of randomness 
 
 <img src="{{ 'assets/img/about/kolmogorov-complexity-40x80.webp' | relative_url }}" alt="kolmogorov complexity" style="width: 100%;display: block; outline: 1px solid #eee;" />
 
-In any case, [here is a blast of printable style representations]({% link printable.md %}) in various sizes.
+In any case, [here is a blast of printable style representations]({% link printable.md %}) in various sizes. Or, at least, web-ready downscaled representations of them.
 
 ---
 
@@ -100,7 +109,7 @@ As for "practice", almost none of these are "one-shots" as we might say; you mig
 
 ---
 
-<small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `css`/`js`/`jekyll` magic that much myself, so it was a good use case for letting something else handle it.</small>
+<small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `css`/`js`/`jekyll` magic that much myself, so it was a good use case for letting something else handle it. Claude has also done much of the image pipelining and semantic embedding, but partially because I've done these workflows "in person" already. I did eventually have to optimize some of the logic it wrote for effective GPU utilization but on the whole its done well.</small>
 
 <small>With rare, specifically detailed exception, all prompts conceived of, written, evaluated, refined, and executed by a human author not any existing AI language tool or related agent, harness, or automated prompting and generation loop.</small>
 

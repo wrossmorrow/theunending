@@ -3,7 +3,6 @@ layout: post
 title: "Gentrification"
 subtitle: "an iphone photograph of a an empty in-wall case in a museum. the case is embedded in the wall with clear facing glass in which we can see some reflections of lights and people. there are interior lighst in the case casting uneven light and shadows emphasizing the rectangular geometry. blocky, rectangular white stands sit in the case waiting for pieces to be displayed. the case walls are a constrasting primary color. the walls outside the case are a boring neutral grey color"
 date: 2026-10-08
-location: "Places"
 categories: [unending]
 set: gentrification
 image: assets/og/gentrification.jpg

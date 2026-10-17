@@ -3,7 +3,6 @@ layout: post
 title: "Topography"
 subtitle: "closed taupe drapes in a fancy victorian room, with elegant looking folds running from top to bottom. the room is covered in wallpaper with a topographical map design. flat back wall."
 date: 2026-10-13
-location: "Places"
 categories: [unending]
 set: topography
 image: assets/og/topography.jpg

@@ -3,7 +3,6 @@ layout: post
 title: "Cloud Outline"
 subtitle: "a photograph of fluffy clouds blocking the sun in an otherwise light blue sky. the sun sits behind the clouds, shining through the cloud's edges creating a dramatic outline of light."
 date: 2026-10-05
-location: "Places"
 categories: [unending]
 set: cloud-outline
 image: assets/og/cloud-outline.jpg

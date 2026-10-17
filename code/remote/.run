@@ -1,5 +1,5 @@
 # define these
-POST_TITLE=""
-SET_NAME=""
-PROMPT=""
+POST_TITLE="Ars Brevis"
+SET_NAME="ars-brevis"
+PROMPT="floral arrangements and a small, framed, landscape painting sit on a wooden surface. the flowers are wilted and drooping downwards. multiple arrangements. the landscape painting is on canvas, resting on a tiny easel, and angled slightly away from the view. multiple arrangements, with a bouquet partially blocking the painting. closeup photography, 135mm lens, fuzzy unfocused background"
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"

@@ -3,7 +3,6 @@ layout: post
 title: "Securities"
 subtitle: "messy large vertical stacks of rolls of blue painters tape. the tape is matte and non-reflective wrapped around a tan cardboard spool. some have fallen to the ground. plain white background"
 date: 2026-10-11
-location: "Places"
 categories: [unending]
 set: securities
 image: assets/og/securities.jpg

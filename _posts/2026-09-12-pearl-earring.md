@@ -3,7 +3,6 @@ layout: post
 title: "Pearl Earrings"
 subtitle: "I'm embarrassed to say I've lost the prompt for this one. It was roughly to make 1960's catalogue style images reminiscent of Vermeer's girl with a pearl earring"
 date: 2026-09-12
-location: "Places"
 categories: [unending]
 set: pearl-earring
 image: assets/og/pearl-earring.jpg

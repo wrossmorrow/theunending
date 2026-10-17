@@ -3,7 +3,6 @@ layout: post
 title: "Attention"
 subtitle: "an iphone photograph of a large mass of people in an art gallery staring at a painting. we can barely see the painting there are so many crowded people. some are taking pictures themselves of the painting. another painting sits to side alone, with no attention."
 date: 2026-10-08
-location: "Places"
 categories: [unending]
 set: attention
 image: assets/og/attention.jpg

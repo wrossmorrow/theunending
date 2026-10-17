@@ -3,7 +3,6 @@ layout: post
 title: "Black Holes"
 subtitle: "a pencil drawing of a black hole. the core is a darkly shaded circle. it is surrounded by a spinning disk off axis as if coming out of and into the plane of the image around the dark core circle. white background"
 date: 2026-10-01
-location: "Places"
 categories: [unending]
 set: black-holes
 image: assets/og/black-holes.jpg

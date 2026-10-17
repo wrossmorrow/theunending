@@ -263,4 +263,63 @@ sets:
     manifest: /assets/streams/real-time.json
     meta: /assets/img/2026-10-13-real-time/{id}.json
     thumb: 14bb9b41-a3ff-415d-9973-b376a72731e4
-  
+  unnatural-formations-wildfire:
+    base: https://theunending.ai/assets/img/2026-10-15-unnatural-formations-wildfire/
+    manifest: /assets/streams/unnatural-formations-wildfire.json
+    meta: /assets/img/2026-10-15-unnatural-formations-wildfire/{id}.json
+    thumb: 00058304-ff7d-4fc5-9a66-1e62caf77693
+  self-reflection:
+    base: https://theunending.ai/assets/img/2026-10-15-self-reflection/
+    manifest: /assets/streams/self-reflection.json
+    meta: /assets/img/2026-10-15-self-reflection/{id}.json
+    thumb: 00295ada-3da6-4d7c-8f07-31e81a8ca565
+  poisson-fountain:
+    base: https://theunending.ai/assets/img/2026-10-15-poisson-fountain/
+    manifest: /assets/streams/poisson-fountain.json
+    meta: /assets/img/2026-10-15-poisson-fountain/{id}.json
+    thumb: 000d1985-f4b0-45b4-96f1-2c44b2d41710
+  old-computers-origami:
+    base: https://theunending.ai/assets/img/2026-10-15-old-computers-origami/
+    manifest: /assets/streams/old-computers-origami.json
+    meta: /assets/img/2026-10-15-old-computers-origami/{id}.json
+    thumb: 001cc85c-63ad-4d93-8827-65261e4bc9df
+  musical-history:
+    base: https://theunending.ai/assets/img/2026-10-15-musical-history/
+    manifest: /assets/streams/musical-history.json
+    meta: /assets/img/2026-10-15-musical-history/{id}.json
+    thumb: 00abdb65-e755-4f17-a63c-cbdaac7542f3
+  directions:
+    base: https://theunending.ai/assets/img/2026-10-16-directions/
+    manifest: /assets/streams/directions.json
+    meta: /assets/img/2026-10-16-directions/{id}.json
+    thumb: 0013da3b-8ff1-4939-befd-a3c22a02d160
+  quilt-calavaras:
+    base: https://theunending.ai/assets/img/2026-10-16-quilt-calavaras/
+    manifest: /assets/streams/quilt-calavaras.json
+    meta: /assets/img/2026-10-16-quilt-calavaras/{id}.json
+    thumb: 0001626c-d72a-4bdb-875a-0749e2928041
+  laser-maze:
+    base: https://theunending.ai/assets/img/2026-10-16-laser-maze/
+    manifest: /assets/streams/laser-maze.json
+    meta: /assets/img/2026-10-16-laser-maze/{id}.json
+    thumb: 0003711f-3b0c-4540-88d7-5e8a6f816a3f
+  detritus:
+    base: https://theunending.ai/assets/img/2026-10-16-detritus/
+    manifest: /assets/streams/detritus.json
+    meta: /assets/img/2026-10-16-detritus/{id}.json
+    thumb: 008de9bb-1634-429d-861a-29a9ab5959af
+  ideation:
+    base: https://theunending.ai/assets/img/2026-10-17-ideation/
+    manifest: /assets/streams/ideation.json
+    meta: /assets/img/2026-10-17-ideation/{id}.json
+    thumb: 007ec996-f577-4b09-a9fa-89286ea61ea8
+  no-signal:
+    base: https://theunending.ai/assets/img/2026-10-17-no-signal/
+    manifest: /assets/streams/no-signal.json
+    meta: /assets/img/2026-10-17-no-signal/{id}.json
+    thumb: 05b1dcaa-a489-484d-b235-ff2a4d24d6c3
+  ars-brevis:
+    base: https://theunending.ai/assets/img/2026-10-17-ars-brevis/
+    manifest: /assets/streams/ars-brevis.json
+    meta: /assets/img/2026-10-17-ars-brevis/{id}.json
+    thumb: 000f37b2-88d4-4ab6-bfa4-6b11c5554f97

@@ -3,7 +3,6 @@ layout: post
 title: "Venture Capital"
 subtitle: "a colorful unicorn running through a apocolyptic wasteland. realistic photography, 35mm lens"
 date: 2026-10-11
-location: "Places"
 categories: [unending]
 set: venture-capital
 image: assets/og/venture-capital.jpg

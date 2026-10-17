@@ -3,7 +3,6 @@ layout: post
 title: "Mountains"
 subtitle: "snowy mountaintop, snow and rocks, wisps of snow or cloud blowing off the sharp black peak, light grey sky"
 date: 2026-10-11
-location: "Places"
 categories: [unending]
 set: mountains
 image: assets/og/mountains.jpg

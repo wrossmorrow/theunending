@@ -1,9 +1,8 @@
 ---
 layout: post
-title: "Calavaras"
-subtitle: "a painting of a calavaras (a colorful, intricately designed skull); thickly applied paint; colorful. painted directly on a cardboard square"
+title: "Calaveras"
+subtitle: "a painting of a calaveras (a colorful, intricately designed skull); thickly applied paint; colorful. painted directly on a cardboard square"
 date: 2026-10-08
-location: "Places"
 categories: [unending]
 set: cardboard-calavaras
 image: assets/og/cardboard-calavaras.jpg

@@ -3,7 +3,6 @@ layout: post
 title: "Dress Code"
 subtitle: "a professional, well-lit photograph of a men's suit jacket on a wooden coat hanger. The hanger and jacket are suspended, floating in mid-air, by a vertical yellow-brown hemp rope tied to the hanger. The background is a grey industrial concrete wall. minimalist composition, centered, tightly framed. Softbox lighting shot with 85mm lens, keeping the focus entirely on the jacket and hanger."
 date: 2026-09-27
-location: "Places"
 categories: [unending]
 set: dress-code
 image: assets/og/dress-code.jpg

@@ -3,7 +3,6 @@ layout: post
 title: "Kolmogorov Complexity"
 subtitle: "8 colored squares on a grid tightly packed touching each other on all sides. contrasting colors randomly chosen per square"
 date: 2026-10-08
-location: "Places"
 categories: [unending]
 set: kolmogorov-complexity
 image: assets/og/kolmogorov-complexity.jpg

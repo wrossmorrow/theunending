@@ -12,3 +12,7 @@ permalink: /reviews/
 <link rel="stylesheet" href="{{ '/assets/css/reviews.css' | relative_url }}?v={{ site.time | date: '%s' }}">
 
 {% include reviews-list.html empty="Nothing yet." %}
+
+---
+
+<a href="mailto:reviews@theunending.ai">Submit a review</a>

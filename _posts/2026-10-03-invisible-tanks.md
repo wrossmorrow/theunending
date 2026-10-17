@@ -3,7 +3,6 @@ layout: post
 title: "Invisible Tanks"
 subtitle: "several aboveground storage tanks in a tank farm in an industrial area. the tanks are painted neon green like for a green screen, Chroma Key Green."
 date: 2026-10-03
-location: "Places"
 categories: [unending]
 set: invisible-tanks
 image: assets/og/invisible-tanks.jpg

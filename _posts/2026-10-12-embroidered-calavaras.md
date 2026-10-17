@@ -1,9 +1,8 @@
 ---
 layout: post
-title: "Calavaras"
-subtitle: "a calavaras (a skull with colorful symmetric patterns) knitted with embroidery. fine detail of the threads is visible and we can see the light tan embroidery hoop. photograph looking directly onto the design, with the full circle visible occupying most of the frame. flat white background, small shadow on the right and bottom right besides the hoop."
+title: "Calaveras"
+subtitle: "a calaveras (a skull with colorful symmetric patterns) knitted with embroidery. fine detail of the threads is visible and we can see the light tan embroidery hoop. photograph looking directly onto the design, with the full circle visible occupying most of the frame. flat white background, small shadow on the right and bottom right besides the hoop."
 date: 2026-10-12
-location: "Places"
 categories: [unending]
 set: embroidered-calavaras
 image: assets/og/embroidered-calavaras.jpg

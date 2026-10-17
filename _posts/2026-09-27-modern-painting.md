@@ -3,7 +3,6 @@ layout: post
 title: "Modern Painting"
 subtitle: "a classical american masters painting of a sweeping landscape hanging on the wall of a museum. the painting is of emotionally beautiful mountainous landscape painted at dusk with strong sunset colors in an elaborate and expensive dark wood frame. we are looking head-on at the painting. someone has graffitied an elaborate mathematical equation covering much of the painting and spilling onto the wall in large thick, dripping black spraypaint. there is a graffittied signature near the bottom. text all in black."
 date: 2026-09-27
-location: "Places"
 categories: [unending]
 set: modern-painting
 image: assets/og/modern-painting.jpg

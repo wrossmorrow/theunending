@@ -3,7 +3,6 @@ layout: post
 title: "Computation"
 subtitle: "moody or cinematic photography, a monkey writing on an old typewriter."
 date: 2026-09-12
-location: "Places"
 categories: [unending]
 set: computation
 image: assets/og/computation.jpg

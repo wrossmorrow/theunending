@@ -5,6 +5,8 @@ url: "https://theunending.ai"
 baseurl: ""
 og_image: /assets/og/site.jpg
 markdown: kramdown
+plugins:
+  - jekyll-sitemap
 include:
   - robots.txt
   - llms.txt

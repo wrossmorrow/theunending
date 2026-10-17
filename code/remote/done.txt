@@ -1,3 +1,57 @@
+POST_TITLE="No Signal"
+SET_NAME="no-signal"
+PROMPT="a hastily-taken iphone photograph of a painting in a museum in an otherwise empty room. the painting is large, occupying most of the plain wall in front of us, and is in a layered, aged, gold and brown frame. inside the frame is completely filled with television static, uniform, black and white, bright as if lit from behind. we look straight at the painting. greyish beige wall almost like fabric, shadows and directed light, white tile floor barely visible. a shadow of the photographer reaches across the floor, wall, and lower part of the painting in very light grey, barely visible."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Ideation"
+SET_NAME="ideation"
+PROMPT="a wall with neon-colored post-it notes. the notes cover the entire wall and have various scribbles on them. boring white wall. soft fluorescent lighting from a long tubular light mounted on the wall horizontally directly above the post it notes. above the tube light we can see the edge of the ceiling. straight horizontal lines."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Detritus"
+SET_NAME="detritus"
+PROMPT="flower petals from roses and tulips and yellow-orange maple leaves scattered on a stone floor. many petals and leaves, we can barely see the stone floor. a few puddles of water from rain reflect a light blue, partially cloudy sky. a single silver hot wheels car rests upside-down in one of the puddles."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Laser Maze"
+SET_NAME="laser-maze"
+PROMPT="a bright red laser bounces around a dark maze of mirrors wildly in a black room. left to right, diagonal, up, down. mirror reflections are barely visible. shattered reflections and red lines of light cover the entire image. closeup"
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Calavaras"
+SET_NAME="quilt-calavaras"
+PROMPT="a historic patchwork quilt hanging on a wall on a wooden rod. the patches are all calavaras designs, intricately patterned skulls. amish style quilt, bright colors, fabric texture. every square patch has a calavaras. plain light blue wall behind the quilt, simple wood floor and matching floorboard. 85mm photography."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Directions"
+SET_NAME="directions"
+PROMPT="overhead view of a complicated cloverleaf style intersection of gigantic, many lane but empty freeways. roads point off in many star-like directions connected by semicircular onramps and offramps. some are elevated and we can see some shadows from them onto others. dead tan-yellow grass is overgrown around the ramps and road."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Musical History"
+SET_NAME="musical-history"
+PROMPT="a photograph of a poster wall. years of posters pasted on top of each other for political events and punk rock concerts. peeling edges, torn pages, sun-aged discoloration. overlapping placement. looking straight at the wall emphasizing linear borders between posters. multiple colors."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Old Computers"
+SET_NAME="old-computers-origami"
+PROMPT="an origami computer on an empty desk, made of yellow legal pad paper, light blue ruling lines visible. some text and notes in pencil on the paper from before folding, sketched keyboard keys. black messy coiled cords on the desk."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Poisson Fountain"
+SET_NAME="poisson-fountain"
+PROMPT="a row of three urinals that have been tagged by graffiti artists in plain black text on their lower basin lip. the graffiti tag is stylistic, fluid, sweeping marks. white-beige tile with a finer tile grid on the floor than the wall. a broken paintbrush lays on the ground in several pieces. 35mm photograph looking straight on to the urinals."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Self Reflection"
+SET_NAME="self-reflection"
+PROMPT="a hall of mirrors; floor-to-ceiling mirrors, marble floor, mirrors on the ceiling. an artist's easel stands in the middle of the hallway halfway back with an empty canvas resting on it. an industrial doorway is barely visible at the end of the hall behind everything else. the door is slightly ajar with exterior light spilling through visible on the floor."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Unnatural Formations"
+SET_NAME="unnatural-formations-wildfire"
+PROMPT="a rusting steel beam rises vertically from the ground in the aftermath of a forest fire. the beam is a dark grey and maroon rusty color. twisted reinforcement bars eminate from the beam like branches on a tree would, tied in loops around the beam. black burnt ground. we can see the entirety of the beam, which appears to be perfectly vertical in the image. hazy background shading vague branchless trees."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
 
 POST_TITLE="Real Time"
 SET_NAME="real-time"
@@ -52,7 +106,7 @@ PROMPT="an uncomfortably close portrait photograph of a face like might appear i
 POST_TITLE="Memento Mori"
 SET_NAME="memento-mori-flux2"
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-PROMPT="A clasical (17-18th century) memento mori painting focusing on a dead floral arrangement on a table. next to the floral arrangment is the remains of a burning candle on a very short brass chamberstick that has burned almost all the way down. wax drips over the chamberstick and down over the table. the candle flame is non-realistic and visibly pixelated with small cubes in shades of orange and yellow and brown. dark chiaroscuro theme."
+PROMPT="A classical (17-18th century) memento mori painting focusing on a dead floral arrangement on a table. next to the floral arrangment is the remains of a burning candle on a very short brass chamberstick that has burned almost all the way down. wax drips over the chamberstick and down over the table. the candle flame is non-realistic and visibly pixelated with small cubes in shades of orange and yellow and brown. dark chiaroscuro theme."
 
 POST_TITLE="Reading"
 SET_NAME="reading"

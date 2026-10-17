@@ -3,7 +3,6 @@ layout: post
 title: "Manufactured Data"
 subtitle: "a set of complicated graphs of data. white background, solid black line axes on all sides top bottom left and right. colorful data points and lines or curves"
 date: 2026-10-11
-location: "Places"
 categories: [unending]
 set: manufactured-data
 image: assets/og/manufactured-data.jpg

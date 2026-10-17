@@ -3,7 +3,6 @@ layout: post
 title: "News Profiles"
 subtitle: "pointilist style profile portrait drawing in a newspaper column. surrounded by text. faded as if archival content aged by time."
 date: 2026-09-27
-location: "Places"
 categories: [unending]
 set: news-profile
 image: assets/og/news-profile.jpg

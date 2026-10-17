@@ -3,7 +3,6 @@ layout: post
 title: "Nymphaeaceae"
 subtitle: "a heavily impressionistic painting focusing on a pond surface with water lilies. sweeping brushstrokes"
 date: 2026-10-11
-location: "Places"
 categories: [unending]
 set: nymphaeaceae
 image: assets/og/nymphaeaceae.jpg

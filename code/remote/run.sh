@@ -64,7 +64,6 @@ layout: post
 title: "${POST_TITLE}"
 subtitle: "${PROMPT}"
 date: ${POST_DATE}
-location: "Places"
 categories: [unending]
 set: ${SET_NAME}
 image: assets/og/${SET_NAME}.jpg

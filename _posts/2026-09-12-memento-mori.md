@@ -1,9 +1,8 @@
 ---
 layout: post
 title: "Memento Mori"
-subtitle: "A clasical (17-18th century) memento mori painting focusing on a skull, open ancient book, and a candle; dark chiaroscuro theme."
+subtitle: "A classical (17-18th century) memento mori painting focusing on a skull, open ancient book, and a candle; dark chiaroscuro theme."
 date: 2026-09-12
-location: "Places"
 categories: [unending]
 set: memento-mori
 image: assets/og/memento-mori.jpg

@@ -3,7 +3,6 @@ layout: post
 title: "Load Bearing"
 subtitle: "a photograph taken from behind a gallery wall. raw plywood, aluminum brackets, and bundled cable runs held with zip ties, lit by a single clamped work light. bright white light leaks around every edge of the panel from the exhibition on the other side, and a thin rectangle of that light falls across the concrete floor. nothing on this side is finished or painted. 35mm, shallow depth of field, cool shadows against the warm spill, quiet and unglamorous."
 date: 2026-10-08
-location: "Places"
 categories: [unending]
 set: load-bearing
 image: assets/og/load-bearing.jpg

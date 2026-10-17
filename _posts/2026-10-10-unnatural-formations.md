@@ -3,7 +3,6 @@ layout: post
 title: "Unnatural Formations"
 subtitle: "archaic concrete crystals arise out of a gently rolling field of wheat grass. the concrete crystals are covered in overlapping graffiti in various colors. light blue and partly cloudy sky"
 date: 2026-10-10
-location: "Places"
 categories: [unending]
 set: unnatural-formations
 image: assets/og/unnatural-formations.jpg

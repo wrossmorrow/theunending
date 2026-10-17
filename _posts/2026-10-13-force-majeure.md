@@ -3,7 +3,6 @@ layout: post
 title: "Force Majeure"
 subtitle: "a detailed financial contract on a thick black carpet that has been torn to shreds, chewed up, destroyed. we can see partial pages but there are chewed shreds everywhere. we can see some discolorations, grey-wet marks from saliva."
 date: 2026-10-13
-location: "Places"
 categories: [unending]
 set: force-majeure
 image: assets/og/force-majeure.jpg

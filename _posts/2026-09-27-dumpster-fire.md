@@ -3,7 +3,6 @@ layout: post
 title: "Dumpster Fires"
 subtitle: "black and white photograph of an industrial dumpster on fire in an empty parking lot. overgrown forest in the distance. daytime."
 date: 2026-09-27
-location: "Places"
 categories: [unending]
 set: dumpster-fire
 image: assets/og/dumpster-fire.jpg
