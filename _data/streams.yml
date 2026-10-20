@@ -323,3 +323,38 @@ sets:
     manifest: /assets/streams/ars-brevis.json
     meta: /assets/img/2026-10-17-ars-brevis/{id}.json
     thumb: 000f37b2-88d4-4ab6-bfa4-6b11c5554f97
+  vacancy:
+    base: https://theunending.ai/assets/img/2026-10-17-vacancy/
+    manifest: /assets/streams/vacancy.json
+    meta: /assets/img/2026-10-17-vacancy/{id}.json
+    thumb: 680fedce-362e-40a8-ab20-7a80776bef32
+  this-is-not-a:
+    base: https://theunending.ai/assets/img/2026-10-19-this-is-not-a/
+    manifest: /assets/streams/this-is-not-a.json
+    meta: /assets/img/2026-10-19-this-is-not-a/{id}.json
+    thumb: 0a30559b-0abc-46f2-a230-e1826361027e
+  perspective:
+    base: https://theunending.ai/assets/img/2026-10-19-perspective/
+    manifest: /assets/streams/perspective.json
+    meta: /assets/img/2026-10-19-perspective/{id}.json
+    thumb: 061d7c9d-a4d6-4a16-b13e-ecb573956666
+  automation:
+    base: https://theunending.ai/assets/img/2026-10-19-automation/
+    manifest: /assets/streams/automation.json
+    meta: /assets/img/2026-10-19-automation/{id}.json
+    thumb: 00acea5d-9bec-4284-a526-7d4e44e03c13
+  incoming:
+    base: https://theunending.ai/assets/img/2026-10-19-incoming/
+    manifest: /assets/streams/incoming.json
+    meta: /assets/img/2026-10-19-incoming/{id}.json
+    thumb: 070f9085-380c-4fd6-a6ba-22b63ca64702
+  dumpster-fire-watercolor:
+    base: https://theunending.ai/assets/img/2026-10-19-dumpster-fire-watercolor/
+    manifest: /assets/streams/dumpster-fire-watercolor.json
+    meta: /assets/img/2026-10-19-dumpster-fire-watercolor/{id}.json
+    thumb: 0002cb8c-a501-463a-9097-69d2725e326a
+  triple-point:
+    base: https://theunending.ai/assets/img/2026-10-19-triple-point/
+    manifest: /assets/streams/triple-point.json
+    meta: /assets/img/2026-10-19-triple-point/{id}.json
+    thumb: 0b913f54-4d46-4e5c-b076-d80a0d1cb0ba

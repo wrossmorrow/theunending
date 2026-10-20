@@ -1,0 +1,195 @@
+/* Full-bleed mosaic landing.
+ *
+ * Deliberately edge to edge: no container, no measure, no margins. The grid
+ * is sized in JS so the tiles stay roughly square at any viewport and the
+ * last row is never a sliver. */
+
+html.mosaic-page,
+html.mosaic-page body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;              /* the page is the viewport; nothing scrolls */
+  background: #0b0b0b;
+  color: #fff;
+}
+
+/* All four of these are position:fixed. Without explicit z-index they paint in
+ * DOM order, which puts the mosaic on top of the CTA and swallows every click
+ * aimed at it -- the page looks right and the Enter button does nothing. */
+.mosaic {
+  z-index: 0;
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 6), 1fr);
+  grid-template-rows: repeat(var(--rows, 4), 1fr);
+  gap: 0;                        /* abutting tiles read as one field */
+  background: #0b0b0b;
+}
+
+.mo-cell {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #121212;
+  cursor: default;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.mo-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity var(--fade, 900ms) ease;
+  /* stated, not assumed: every image component on this site has been bitten
+     by the host theme's bare-img margins at least once */
+  margin: 0;
+  max-width: none;
+  user-select: none;
+}
+.mo-img.is-on { opacity: 1; }
+
+.mo-cell.is-linked { cursor: pointer; }
+
+/* Which set a tile belongs to, revealed on hover. Without it every tile is a
+   link to an unannounced destination. z-index because ::before is inserted as
+   the first child and would otherwise sit under the images. */
+.mo-cell::before {
+  content: attr(data-label);
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 1;
+  padding: 1.2em 0.75em 0.6em;
+  text-align: left;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.6rem;
+  line-height: 1.1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.8), rgb(0 0 0 / 0));
+  opacity: 0;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+}
+.mo-cell.is-linked:hover::before,
+.mo-cell.is-linked:focus-visible::before { opacity: 1; }
+
+/* a quiet hint that tiles are clickable, without lighting up the whole field */
+.mo-cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0);
+  background: rgb(255 255 255 / 0);
+  transition: background 180ms ease, box-shadow 180ms ease;
+  pointer-events: none;
+}
+.mo-cell.is-linked:hover::after,
+.mo-cell.is-linked:focus-visible::after {
+  background: rgb(255 255 255 / 0.07);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35);
+}
+
+/* Scrim. A radial rather than a flat wash, so the centre stays legible over
+   whatever happens to be behind it while the edges of the field stay bright. */
+.mo-veil {
+  z-index: 1;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 34% 30% at 50% 50%,
+      rgb(0 0 0 / 0.62) 0%,
+      rgb(0 0 0 / 0.34) 46%,
+      rgb(0 0 0 / 0) 100%);
+}
+
+.mo-cta {
+  z-index: 2;
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;          /* clicks fall through to the tiles */
+  padding: 1.5rem;
+}
+.mo-cta > * { pointer-events: auto; }
+
+/* Kept in the DOM, out of the picture: the page is otherwise a heading-less
+   document with no text, which is bad for assistive tech and for unfurlers. */
+.mo-title {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mo-title-visible {
+  margin: 0 0 1.4rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: clamp(2.1rem, 7vw, 4.4rem);
+  line-height: 1;
+  letter-spacing: -0.012em;
+  color: #fff;
+  text-shadow: 0 2px 30px rgb(0 0 0 / 0.6);
+}
+
+.mo-enter {
+  display: inline-block;
+  padding: 0.9em 2.1em;
+  border: 1px solid rgb(255 255 255 / 0.5);
+  border-radius: 2px;
+  color: #fff;
+  text-decoration: none;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  backdrop-filter: blur(2px);
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.mo-enter:hover,
+.mo-enter:focus-visible {
+  background: #fff;
+  border-color: #fff;
+  color: #111;
+}
+
+/* one small line of provenance, bottom centre, easy to delete */
+.mo-foot {
+  z-index: 2;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 1.1rem;
+  text-align: center;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.45);
+  pointer-events: none;
+}
+
+@media (max-width: 560px) {
+  .mo-enter { padding: 0.85em 1.7em; font-size: 0.72rem; }
+  .mo-foot { bottom: 0.8rem; font-size: 0.62rem; }
+}
+
+/* Motion here is pure decoration. Switched off, the page is still a mosaic
+   of the work and the CTA still works, so it switches off completely. */
+@media (prefers-reduced-motion: reduce) {
+  .mo-img { transition: none; }
+}

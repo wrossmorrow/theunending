@@ -1,3 +1,38 @@
+POST_TITLE="Dumpster Fire"
+SET_NAME="dumpster-fire-watercolor"
+PROMPT="a watercolor painting of an industrial dumpster on fire in an empty parking lot. in the distance there are grass and trees in washed out green and brown."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Incoming"
+SET_NAME="incoming"
+PROMPT="a painting of gigantic boxy/rectangular cloud formations over an expansive valley in the american southwest. the clouds are rolling in from the right of the painting, lighter grey or white at elevation and much darker grey below facing the ground. behind the clouds is a colorful sunset with blue light highest in the sky. the view below the clouds is blended and hazy obscured by distant rain. a large plateau or butte extends across the image partially behind the rainy haze, deep orange and red and brown, appearing to meet the clouds. the desert floor is vast, orange with sporadic light and dark green from plants. mixed realistic/impressionistic style with heavy impasto style in places."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Automation"
+SET_NAME="automation"
+PROMPT="archival photograph of attractive itinerant field labors during the great depression. they are resting in a makeshift rectangular tent between shifts sitting on the ground and on a cot. man and woman, in slightly dirty clothing. the man only wears a sleevless undershirt, with suspenders, the woman a loose but long sundress. a pipe rests in the man's mouth. their facial expressions are plain and direct, neither smiling nor frowning. they stare directly into the camera. next to the cot is a tall server rack for computers and gpus."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Perspective"
+SET_NAME="perspective"
+PROMPT="a medival/byzantine religious painting featuring a holy figure with a gold foil halo around their head. the figure is itself a protester in all black, with a back facemask, reflective-lens ski goggles with a black frame, wild long hair in front of the halo draping downwards."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Ceci n'est Pas"
+SET_NAME="this-is-not-a"
+PROMPT="a chicago-style hotdog. iphone photograph on the street, closeup of the hotdog."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Vacancy"
+SET_NAME="vacancy"
+PROMPT="a mural on the side of a building; all white paint with numerous black numbers on it. aging brick building like an old mill or vacant factory. sunny day, blue sky. high-resolution photography, looking up to the huge mural from the ground, straight on. overgrown grass."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Ars Brevis"
+SET_NAME="ars-brevis"
+PROMPT="floral arrangements and a small, framed, landscape painting sit on a wooden surface. the flowers are wilted and drooping downwards. multiple arrangements. the landscape painting is on canvas, resting on a tiny easel, and angled slightly away from the view. multiple arrangements, with a bouquet partially blocking the painting. closeup photography, 135mm lens, fuzzy unfocused background"
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
 POST_TITLE="No Signal"
 SET_NAME="no-signal"
 PROMPT="a hastily-taken iphone photograph of a painting in a museum in an otherwise empty room. the painting is large, occupying most of the plain wall in front of us, and is in a layered, aged, gold and brown frame. inside the frame is completely filled with television static, uniform, black and white, bright as if lit from behind. we look straight at the painting. greyish beige wall almost like fabric, shadows and directed light, white tile floor barely visible. a shadow of the photographer reaches across the floor, wall, and lower part of the painting in very light grey, barely visible."
@@ -126,7 +161,7 @@ PROMPT="snowy mountaintop, snow and rocks, wisps of slow or cloud blowing off th
 POST_TITLE="Venture Capital"
 SET_NAME="venture-capital"
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
-PROMPT="a colorful unicorn running through a apocolyptic wasteland. realistic photography, 35mm lens"
+PROMPT="a colorful unicorn running through a apocalyptic wasteland. realistic photography, 35mm lens"
 
 POST_TITLE="Nymphaeaceae"
 SET_NAME="nymphaeaceae"

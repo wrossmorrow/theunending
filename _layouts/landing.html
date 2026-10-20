@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" class="mosaic-page">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | default: site.title }}</title>
+  {%- if page.description or site.description %}
+  <meta name="description" content="{{ page.description | default: site.description }}">
+  {%- endif %}
+
+  {%- comment -%} favicon + OG, same as the default layout {%- endcomment -%}
+  {%- include head-meta.html -%}
+
+  <link rel="stylesheet" href="{{ '/assets/css/mosaic-hero.css' | relative_url }}?v={{ site.time | date: '%s' }}">
+
+  {%- comment -%}
+    The stream component is deliberately NOT loaded here. Tiles navigate to
+    their set rather than opening a modal, so the landing page carries none
+    of that weight and needs no export from it.
+  {%- endcomment -%}
+  <script defer src="{{ '/assets/js/mosaic-hero.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
+</head>
+<body>
+
+{%- comment -%}
+  The CTA comes FIRST in the DOM on purpose. The mosaic is sixty-odd
+  interactive tiles; putting it first would mean sixty tab stops before a
+  keyboard user reaches the only link that matters. The tiles are reachable
+  by pointer and are a bonus, not the route into the site.
+{%- endcomment -%}
+<div class="mo-cta">
+  <h1 class="mo-title">{{ site.title | default: "The Unending" }}</h1>
+  <p style="margin:0"><a class="mo-enter" href="{{ page.enter_url | default: '/unending/' | relative_url }}">Explore</a></p>
+</div>
+
+<div class="mo-veil" aria-hidden="true"></div>
+
+<div class="mosaic" aria-hidden="true"></div>
+
+{%- if page.footnote %}
+<div class="mo-foot" aria-hidden="true">{{ page.footnote }}</div>
+{%- endif %}
+
+{%- comment -%}
+  set -> { url, title }, built here rather than in the pool script: Liquid can
+  see site.posts and their `set:` front matter, the shell script cannot.
+
+  The title matters separately from the key. A set slug carries disambiguating
+  suffixes ("modern-painting-flux2") that are there to keep the key unique,
+  not to be read; the post's title is the name for people.
+{%- endcomment -%}
+{%- capture set_urls -%}
+{%- assign sep = "" -%}
+{%- for post in site.posts -%}
+{%- if post.set -%}{{ sep }}{{ post.set | jsonify }}:{"url":{{ post.url | relative_url | jsonify }},"title":{{ post.title | jsonify }}}{%- assign sep = "," -%}{%- endif -%}
+{%- endfor -%}
+{%- endcapture -%}
+
+<script type="application/json" class="mosaic-config">
+{
+  "setUrls": { {{ set_urls }} },
+  "poolUrl": {{ "/assets/landing-pool.json" | relative_url | jsonify }},
+  "tile": {{ page.tile | default: 210 }},
+  "swapMs": {{ page.swap_ms | default: 620 }},
+  "fadeMs": {{ page.fade_ms | default: 900 }},
+  "maxLoads": {{ page.max_loads | default: 3 }}
+}
+</script>
+
+</body>
+</html>

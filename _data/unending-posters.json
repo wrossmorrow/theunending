@@ -4462,5 +4462,509 @@
         "h": 450
       }
     }
+  },
+  "2026-10-17-vacancy": {
+    "12x18": {
+      "name": "2026-10-17-vacancy",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-17-vacancy/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-17-vacancy/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-17-vacancy",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-17-vacancy/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-17-vacancy/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-17-vacancy",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-17-vacancy/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-17-vacancy/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-17-vacancy",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-17-vacancy/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-17-vacancy/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-17-vacancy",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-17-vacancy/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-17-vacancy/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-10-19-this-is-not-a": {
+    "12x18": {
+      "name": "2026-10-19-this-is-not-a",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-19-this-is-not-a/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-this-is-not-a/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-19-this-is-not-a",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-19-this-is-not-a/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-this-is-not-a/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-19-this-is-not-a",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-19-this-is-not-a/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-this-is-not-a/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-19-this-is-not-a",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-19-this-is-not-a/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-this-is-not-a/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-19-this-is-not-a",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-19-this-is-not-a/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-this-is-not-a/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-10-19-perspective": {
+    "12x18": {
+      "name": "2026-10-19-perspective",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-19-perspective/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-perspective/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-19-perspective",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-19-perspective/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-perspective/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-19-perspective",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-19-perspective/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-perspective/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-19-perspective",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-19-perspective/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-perspective/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-19-perspective",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-19-perspective/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-perspective/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-10-19-automation": {
+    "12x18": {
+      "name": "2026-10-19-automation",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-19-automation/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-automation/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-19-automation",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-19-automation/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-automation/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-19-automation",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-19-automation/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-automation/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-19-automation",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-19-automation/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-automation/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-19-automation",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-19-automation/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-automation/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-10-19-incoming": {
+    "12x18": {
+      "name": "2026-10-19-incoming",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-19-incoming/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-incoming/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-19-incoming",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-19-incoming/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-incoming/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-19-incoming",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-19-incoming/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-incoming/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-19-incoming",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-19-incoming/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-incoming/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-19-incoming",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-19-incoming/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-incoming/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-10-19-dumpster-fire-watercolor": {
+    "12x18": {
+      "name": "2026-10-19-dumpster-fire-watercolor",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-19-dumpster-fire-watercolor/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-dumpster-fire-watercolor/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-19-dumpster-fire-watercolor",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-19-dumpster-fire-watercolor/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-dumpster-fire-watercolor/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-19-dumpster-fire-watercolor",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-19-dumpster-fire-watercolor/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-dumpster-fire-watercolor/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-19-dumpster-fire-watercolor",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-19-dumpster-fire-watercolor/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-dumpster-fire-watercolor/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-19-dumpster-fire-watercolor",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-19-dumpster-fire-watercolor/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-dumpster-fire-watercolor/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-10-19-triple-point": {
+    "12x18": {
+      "name": "2026-10-19-triple-point",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-19-triple-point/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-triple-point/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-19-triple-point",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-19-triple-point/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-triple-point/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-19-triple-point",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-19-triple-point/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-triple-point/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-19-triple-point",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-19-triple-point/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-triple-point/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-19-triple-point",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-19-triple-point/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-19-triple-point/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
   }
 }

@@ -9,15 +9,13 @@ permalink: /about/
 
 ---
 
-I should probably explain what this is about. If you're looking it can obviously be about anything you like, not only my half-baked view. I have to admit I also believe explaining at all defeats the purpose. Or maybe put another way if I _have_ to explain I've failed in communicating whatever it is I'm trying to find already. And any explanation somewhat presumes there is a purpose past general interest or boredom. 
+I should probably explain what this is about. If you're looking it can obviously be about anything you like, not only my half-baked view. I have to admit I also believe explaining at all defeats the purpose. Or maybe put another way if I _have_ to explain I've failed in communicating whatever it is I'm trying to find already. 
 
-I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit fraught if undeniably "here." Maybe that alone is part of my goal, exploring that discomfort.
+I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit fraught. Maybe that alone is part of my goal, exploring that discomfort.
 
-You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything. 
+You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything. The intent can be in the action alone more than an outcome, reclaiming process from the answer-me-now-make-no-mistakes mechanics of contemporary AI.
 
-If you would rather not poison your views of these pages, [get out]({{ site.baseurl }}/).
-
-Now, or after reading, <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">tell me what you think.</a> No wrong answers.
+If you think discussion will poison your views of these pages, [get out]({{ site.baseurl }}/). Maybe come back later. Now, or after reading, <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">tell me what you think.</a> No wrong answers.
 
 ---
 
@@ -27,7 +25,7 @@ If this sounds weird, here's a `gif` of this running on my laptop:
 
 ![running]({{ "assets/img/about/running-1080p.gif" | relative_url }})
 
-This site explores the use of these technologies, as a tool, potentially but not necessarily for "art", trying to find characteristics beyond any specific visually readable digitized imagery it literally produces while perhaps explicitly choosing content reflecting on the tool itself in or out of art production. It may be a failure.
+This site explores the use of these technologies, as a tool, potentially but not necessarily for "art", trying to find characteristics beyond any specific visually readable digitized imagery it literally produces while perhaps explicitly choosing content reflecting on the tool itself as applicable (or not) to art production.
 
 In particular I am exploring several aspects of generative images that, by definition, are interesting to me and thus worth reflection on in this respect: 
 * Turning text into digital images is relatively cheap (thousands of images for a few dollars in an hour or less)
@@ -47,7 +45,9 @@ you can evaluate uniqueness yourself. If the stream has an exact duplicate image
 
 I'm occasionally playing with arbitrary themes too. That's more "traditional" and worth less explanation being closer to how you yourself reflect on the specific content of a given image. If so, the content and the titles should work together to point out what I'm exploring. This all sounds objectively silly and I know that; in fact I hope you can find some humor hiding in some of the themes.
 
-So, besides exploring what I can find in being able to generate digital images, maybe "as a medium," I am curious about the specific format communicating an accompanying sense of drowning in a content stream we can't stop of cheap variations of visually rendered ideas. To be clear, I hope this _isn't_ a "medium" for one-off substitutes for human production, and that's not the proposal; but part of the "medium" existing is reflective exploration of it. The voluminous production, the minor variations lacking some unique selected reification, the unstoppability, all feel aligned with the expectations around these tools, what the zeitgeist (so to speak) behind them points to.
+Unlike much of the work I have done, work that focuses more on singular subject matter or process outcome, the title text also presents an opportunity to inject meaning beyond identification. I certainly don't provide something like a description the prompts naturally provide. Several of the streams here are not themselves without the title, and possibly also the prompt.
+
+Besides exploring what I can find in being able to "just" generate digital images, maybe "as a medium," I am curious about the specific format communicating them. The streams are intended to supply an accompanying sense of drowning in a content stream we can't stop of cheap variations of visually rendered ideas. To be clear, I hope this _isn't_ a "medium" for one-off substitutes for human production; but part of the "medium" existing is reflective exploration of it, as it exists, with its own intended properties. The voluminous production, the minor variations lacking some unique selected reification, the unstoppability, all feel aligned with the expectations around these tools, what the zeitgeist (so to speak) behind them points to.
 
 ---
 
@@ -109,7 +109,7 @@ As for "practice", almost none of these are "one-shots" as we might say; you mig
 
 ---
 
-<small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `css`/`js`/`jekyll` magic that much myself, so it was a good use case for letting something else handle it. Claude has also done much of the image pipelining and semantic embedding, but partially because I've done these workflows "in person" already. I did eventually have to optimize some of the logic it wrote for effective GPU utilization but on the whole its done well.</small>
+<small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `css`/`js`/`jekyll` magic that much myself, so it was a good use case for letting something else handle it. Claude has also done much of the image pipelining and semantic embedding, but partially because I've done these workflows "in person" already. I did eventually have to optimize some of the logic it wrote for effective GPU utilization.</small>
 
 <small>With rare, specifically detailed exception, all prompts conceived of, written, evaluated, refined, and executed by a human author not any existing AI language tool or related agent, harness, or automated prompting and generation loop.</small>
 
