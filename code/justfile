@@ -2,24 +2,26 @@
 raw_S3_bucket := "wrossmorrow-genai-repetitions-use1"
 site_s3_bucket := "theunending-ai-site-content-use1"
 ssh_key := "imagen-lambda.pem"
+flux1 := "black-forest-labs/FLUX.1-schnell"
+flux2 := "black-forest-labs/FLUX.2-klein-4B"
 
 default:
     just --list
 
-run prompt rows cols width="512" height="512":
-    #!/bin/bash
-    HASH=$( printf "%s" "{{prompt}}" | sha256sum | awk '{print $1}' )
-    echo "Publishing in ${HASH}"
-    TILES="generated-tiles/${HASH}"
-    mkdir -p ${TILES}
-    echo "{{prompt}}" > "${TILES}/prompt.txt"
-    uv run imagen \
-        --prompt="{{prompt}}" \
-        --width {{width}} \
-        --height {{height}} \
-        --rows {{rows}} \
-        --cols {{cols}} \
-        --tiles ${TILES}
+run prompt rows cols width="512" height="512" model_id=flux2:
+    PROMPT="{{prompt}}" \
+    ROWS={{rows}} \
+    COLS={{cols}} \
+    WIDTH={{width}} \
+    HEIGHT={{height}} \
+    MODEL_ID="{{model_id}}" \
+        ./remote/prompt.sh
+
+run-flux1 prompt rows cols width="512" height="512":
+    just run {{prompt}} {{rows}} {{cols}} {{width}} {{height}} {{flux1}}
+
+run-flux2 prompt rows cols width="512" height="512":
+    just run {{prompt}} {{rows}} {{cols}} {{width}} {{height}} {{flux2}}
 
 regen prompt regen loc width="512" height="512":
     #!/bin/bash
@@ -55,14 +57,30 @@ regen prompt regen loc width="512" height="512":
         s3://dac2ef3da2-exercises-or-excuses-site-content-use1/assets/img/{{loc}}/ \
         --exclude "*" --include "*.png" --recursive
 
-ssh ip ssh_key=ssh_key:
-    ssh -i ~/.ssh/{{ssh_key}} ubuntu@{{ip}}
+ssh ip ssh_key=ssh_key user="ubuntu" *flags="":
+    ssh -i ~/.ssh/{{ssh_key}} {{user}}@{{ip}} {{flags}}
 
-scp ip ssh_key=ssh_key user="ubuntu":
-    scp -i ~/.ssh/{{ssh_key}} pyproject.toml uv.lock README.md {{user}}@{{ip}}:~/
-    scp -i ~/.ssh/{{ssh_key}} remote/.env remote/.run remote/*.sh {{user}}@{{ip}}:~/
-    scp -r -i ~/.ssh/{{ssh_key}} src {{user}}@{{ip}}:~/
-    scp -i ~/.ssh/{{ssh_key}} poster.py og_tiles.py web-posters.py {{user}}@{{ip}}:~/
+scp ip ssh_key=ssh_key user="ubuntu" *flags="":
+    scp -i ~/.ssh/{{ssh_key}} {{flags}} pyproject.toml uv.lock README.md {{user}}@{{ip}}:~/
+    scp -i ~/.ssh/{{ssh_key}} {{flags}} remote/.env remote/.run remote/*.sh {{user}}@{{ip}}:~/
+    scp -r -i ~/.ssh/{{ssh_key}} {{flags}} src {{user}}@{{ip}}:~/
+    scp -i ~/.ssh/{{ssh_key}} {{flags}} poster.py og_tiles.py web-posters.py {{user}}@{{ip}}:~/
+
+prompt ip prompt ssh_key=ssh_key user="ubuntu":
+    ssh -i ~/.ssh/{{ssh_key}} {{user}}@{{ip}} 'PROMPT="{{prompt}}" OUTDIR="demo" bash -lc ./prompt.sh'
+    scp -i ~/.ssh/{{ssh_key}} {{user}}@{{ip}}:~/demo/thematic-grid-0.png images/thematic-grid-0.png
+
+boot ip ssh_key=ssh_key user="ubuntu":
+    just scp {{ip}} {{ssh_key}} {{user}} \
+        -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null
+    ssh -i ~/.ssh/{{ssh_key}} \
+        -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null \
+        {{user}}@{{ip}} "bash setup.sh"
+    just ssh {{ip}} {{ssh_key}} {{user}} \
+        -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null
 
 scp-run ip ssh_key=ssh_key user="ubuntu":
     scp -i ~/.ssh/{{ssh_key}} remote/.run {{user}}@{{ip}}:~/

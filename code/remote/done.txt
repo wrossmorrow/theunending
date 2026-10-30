@@ -1,3 +1,93 @@
+POST_TITLE="Easy Out"
+SET_NAME="easy-out"
+PROMPT="a framed picture hangs on a museum wall. inside is burlap hastily painted with green screen color paint, Chroma Key Green. the frame is an elaborate black wood. the wall is a light, almost-white pink; the floor featureless white tile. professional, catalog-worthy photography."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Invisible Office"
+SET_NAME="invisible-office"
+PROMPT="a drab suburban office park with plain looking buildings. the buildings are painted over entirely with neon green like for a green screen, Chroma Key Green. partly cloudy day with mostly light grey sky, some light almost white blue behind clouds"
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="After Sheeler"
+SET_NAME="after-sheeler"
+PROMPT="an industrial landscape depicting an open-air data center. expansive orderly racks of servers, wiring, piping in an open plowed-over field. painting, muted colors, strong geometric lines in the style of Charles Sheeler."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Modern Painting"
+SET_NAME="modern-painting-abstract"
+PROMPT="a colorful, contemporary abstract hanging on the wall of a museum. the painting has bold brushstrokes and large sweeping scraped blocks of paint. it is in a plain, but still expensive looking, dark wood frame. we are looking head-on at the painting. someone has graffitied an elaborate mathematical equation covering much of the painting and spilling onto the wall in large thick, dripping black spraypaint. there is a graffittied signature near the bottom. text all in black."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Unnatural Formations"
+SET_NAME="unnatural-formations-tires"
+PROMPT="a mountainous landscape, made of discarded tires."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Calaveras"
+SET_NAME="sign-calaveras"
+PROMPT="a closeup iphone photograph of a white street sign that has been tagged with graffiti of a calaveras, a skull covered in colorful, symmetric, patterns."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Audiobooks"
+SET_NAME="audiobooks"
+PROMPT="An old radio sits in an alaborate maroon leather chair. The chair is a wingback style chair, like for contemplative reading. The leather is smooth and elegant, but also worn with scuff marks and some small tears. The room is dark, the chair and radio lit by a nearby overhanging brass floor lamp next to the chair. the dark black wall behind the scene has some visible, elaborate, paisley patterned designs in gold."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Job Application"
+SET_NAME="job-application"
+PROMPT="a silver mesh wastepaper basket is full of white paper and overflowing. there is straight paper, shredded paper, and paper crumpled up into balls. shreds and balled up paper trash accumulate on the floor it is so full. plain plush grey large loop carpet. closeup, 35mm photography."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Exposure Therapy"
+SET_NAME="exposure-therapy"
+PROMPT="an amateur oil painting of a boat in rough seas. new england style, small open wooden boat, single person in a yellow raincoat sitting in the boat, seemingly holding on tightly to the sides. dark grey skies, rain, churning water with large waves and whitecaps. the boat appears off-kilter riding up one of the waves. the boat appears small in proportion to the waves."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Garbage"
+SET_NAME="garbage-can"
+PROMPT="an iphone photograph of an overflowing trash receptacle on a street corner. the receptacle is a cylinder of verticle black metal posts, with a solid black metal dome top above a gap overflowing with trash. trash spills out to the ground, sidewalk and curb piling up around the base of the receptacle."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Modeling"
+SET_NAME="modeling"
+PROMPT="a closeup image, as would appear online, of a model wearing clothes for sale. the top of the image starts at the model's neck, the bottom of the image shows their shoes. the clothes are luxury items, costumish, layered, and unrealistically oversized in bright primary colors. plain room/setting, light yellow or manilla walls and featureless white floor. the back wall has thin grey lines as if wallpapered with a detailed technical flowchart and some mathematical equations, completely covering the background view. professional photography."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Accurate History"
+SET_NAME="accurate-history"
+PROMPT="broken elaborate pottery on a vertical stand in a well-lit museum room. the stand is roughly a cube, and plain beige-white. the broken pottery is resting sideways on its shards. we can see shards of pottery covered in colorful elegant and intricate designs on the stand. a quarter or half of the pottery is intact with the rest shattered. some shards have fallen to the floor.the floor is plain white tile."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Calaveras"
+SET_NAME="memento-mori-mashup"
+PROMPT="A classical (17-18th century) memento mori painting focusing on a skull, open ancient book, and a candle; dark chiaroscuro theme. the skull rests on the open book and is decorated like a calaveras, with intricate symmetrically designed patterns using bright colors. neon colors, pink, blue, light green covering the entire skull. the skull's teeth, eye sockets, and nose socket are covered in byzantine gold foil. text on the open book pages are visible and completely covered in highlights from highlighters in similar neon colors"
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Positioning"
+SET_NAME="positioning"
+PROMPT="a screenshot from a nice podcast between two faceless mannequins. the mannequins are a light, white-ish tan one wearing a dark hoodie one business casual attire. they sit in minimalist chairs partially facing each other with black microphones in front of them. there is a small, short, round table inbetween the chairs with plain white mugs on it. there is a persian style rug under the chairs and table. there are shelves behind the mannequins with books, plants, and award sculptures."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Mid Life"
+SET_NAME="mid-life"
+PROMPT="a large white banner hangs from a freeway overpass, almost to the cars. written on it in large font is the word 'MID LIFE' in dripping black spraypaint. there is considerable traffic on the freeway below."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Individual"
+SET_NAME="individual"
+PROMPT="a selfie taken in a bathroom mirror. white tile, mirror in a black frame, entire mirror is visible. the taker's face is blocked by the phone. a stainless steel sink is partially visible in the mirror reflection. focused, square view on the mirror frame."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Misunderstanding"
+SET_NAME="misunderstanding"
+PROMPT="a cubist-style charcoal drawing of a wide, thick candle in a clay pot; darker background seemingly lit by the candle. tiny cubes of wax drip down the candle."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
+POST_TITLE="Triple Point"
+SET_NAME="triple-point"
+PROMPT="an empty square room with olive green tiles on the walls ceiling and floor, like an industrial bathroom or hospital. a small circular steel drainage grate sits in the middle of the floor. a single tubular flourescent bulb is mounted on the ceiling, horizontally. rectangular view looking directly at the back wall. there appears to be some smoke billowing up from the drain, and we can see reflections of puddles of water on the floor. some of the puddle water appears crystalized as if frozen and melting."
+MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
+
 POST_TITLE="Dumpster Fire"
 SET_NAME="dumpster-fire-watercolor"
 PROMPT="a watercolor painting of an industrial dumpster on fire in an empty parking lot. in the distance there are grass and trees in washed out green and brown."

@@ -358,3 +358,93 @@ sets:
     manifest: /assets/streams/triple-point.json
     meta: /assets/img/2026-10-19-triple-point/{id}.json
     thumb: 0b913f54-4d46-4e5c-b076-d80a0d1cb0ba
+  misunderstanding:
+    base: https://theunending.ai/assets/img/2026-10-20-misunderstanding/
+    manifest: /assets/streams/misunderstanding.json
+    meta: /assets/img/2026-10-20-misunderstanding/{id}.json
+    thumb: 00be8622-cab5-439b-8033-575835f9c8d5
+  individual:
+    base: https://theunending.ai/assets/img/2026-10-20-individual/
+    manifest: /assets/streams/individual.json
+    meta: /assets/img/2026-10-20-individual/{id}.json
+    thumb: 004cf9ef-7ed5-43a5-9e57-e3a91aada3f6
+  mid-life:
+    base: https://theunending.ai/assets/img/2026-10-20-mid-life/
+    manifest: /assets/streams/mid-life.json
+    meta: /assets/img/2026-10-20-mid-life/{id}.json
+    thumb: 00580c02-8d65-44da-814d-9a555edae5b6
+  positioning:
+    base: https://theunending.ai/assets/img/2026-10-21-positioning/
+    manifest: /assets/streams/positioning.json
+    meta: /assets/img/2026-10-21-positioning/{id}.json
+    thumb: 025b2c12-97a3-4722-a1ca-7d4eb7deb221
+  memento-mori-mashup:
+    base: https://theunending.ai/assets/img/2026-10-21-memento-mori-mashup/
+    manifest: /assets/streams/memento-mori-mashup.json
+    meta: /assets/img/2026-10-21-memento-mori-mashup/{id}.json
+    thumb: 0036e78b-42b3-461a-9480-9944b8a19e1b
+  accurate-history:
+    base: https://theunending.ai/assets/img/2026-10-21-accurate-history/
+    manifest: /assets/streams/accurate-history.json
+    meta: /assets/img/2026-10-21-accurate-history/{id}.json
+    thumb: 0119eb47-bed6-4a42-8c68-34ef06730a9f
+  modeling:
+    base: https://theunending.ai/assets/img/2026-10-22-modeling/
+    manifest: /assets/streams/modeling.json
+    meta: /assets/img/2026-10-22-modeling/{id}.json
+    thumb: 001fae4b-082d-4525-9ee5-c54a67e17bcf
+  garbage-can:
+    base: https://theunending.ai/assets/img/2026-10-22-garbage-can/
+    manifest: /assets/streams/garbage-can.json
+    meta: /assets/img/2026-10-22-garbage-can/{id}.json
+    thumb: 0004c2a2-1783-4b7f-8069-699566c1a001
+  exposure-therapy:
+    base: https://theunending.ai/assets/img/2026-10-22-exposure-therapy/
+    manifest: /assets/streams/exposure-therapy.json
+    meta: /assets/img/2026-10-22-exposure-therapy/{id}.json
+    thumb: 012f240f-c0c5-4f47-963f-767d25e922d0
+  job-application:
+    base: https://theunending.ai/assets/img/2026-10-26-job-application/
+    manifest: /assets/streams/job-application.json
+    meta: /assets/img/2026-10-26-job-application/{id}.json
+    thumb: 04254c21-859c-42ed-95d1-e5d4d88ee2dd
+  audiobooks:
+    base: https://theunending.ai/assets/img/2026-10-28-audiobooks/
+    manifest: /assets/streams/audiobooks.json
+    meta: /assets/img/2026-10-28-audiobooks/{id}.json
+    thumb: 06cf6300-d448-4995-bcbf-01fb7d192092
+  sign-calaveras:
+    base: https://theunending.ai/assets/img/2026-10-28-sign-calaveras/
+    manifest: /assets/streams/sign-calaveras.json
+    meta: /assets/img/2026-10-28-sign-calaveras/{id}.json
+    thumb: 00a9c2d7-45da-41e0-bfab-6a88240f531e
+  unnatural-formations-tires:
+    base: https://theunending.ai/assets/img/2026-10-28-unnatural-formations-tires/
+    manifest: /assets/streams/unnatural-formations-tires.json
+    meta: /assets/img/2026-10-28-unnatural-formations-tires/{id}.json
+    thumb: 00dc2bc9-34bf-46c8-9dd9-f2d784bb7af4
+  modern-painting-abstract:
+    base: https://theunending.ai/assets/img/2026-10-29-modern-painting-abstract/
+    manifest: /assets/streams/modern-painting-abstract.json
+    meta: /assets/img/2026-10-29-modern-painting-abstract/{id}.json
+    thumb: 0017ece0-d408-4866-bbf1-f040df6b73f4
+  after-sheeler:
+    base: https://theunending.ai/assets/img/2026-10-30-after-sheeler/
+    manifest: /assets/streams/after-sheeler.json
+    meta: /assets/img/2026-10-30-after-sheeler/{id}.json
+    thumb: 02775a8b-31b9-4da8-9b48-35af104d8ac1
+  invisible-office:
+    base: https://theunending.ai/assets/img/2026-10-30-invisible-office/
+    manifest: /assets/streams/invisible-office.json
+    meta: /assets/img/2026-10-30-invisible-office/{id}.json
+    thumb: 002c107e-cc9d-4429-9e57-ee0008f83558
+  easy-out:
+    base: https://theunending.ai/assets/img/2026-10-30-easy-out/
+    manifest: /assets/streams/easy-out.json
+    meta: /assets/img/2026-10-30-easy-out/{id}.json
+    thumb: 090b466e-6ca4-4b5f-b72d-2ebcdb5ab590
+  poltergeist:
+    base: https://theunending.ai/assets/img/2026-10-30-poltergeist/
+    manifest: /assets/streams/poltergeist.json
+    meta: /assets/img/2026-10-30-poltergeist/{id}.json
+    thumb: 002e3900-9128-4942-b31e-bd25c147ae73

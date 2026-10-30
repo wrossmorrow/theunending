@@ -1,5 +1,5 @@
 # define these
-POST_TITLE="Triple Point"
-SET_NAME="triple-point"
-PROMPT="an empty square room with olive green tiles on the walls ceiling and floor, like an industrial bathroom or hospital. a small circular steel drainage grate sits in the middle of the floor. a single tubular flourescent bulb is mounted on the ceiling, horizontally. rectangular view looking directly at the back wall. there appears to be some smoke billowing up from the drain, and we can see reflections of puddles of water on the floor. some of the puddle water appears crystalized as if frozen and melting."
+POST_TITLE="Poltergeist"
+SET_NAME="poltergeist"
+PROMPT="photograph in a foggy rainforest in the pacific northwest, like the ho river trail, dense with tall trees. deep undergrowth of ferns, with rotting fallen tree carcases with almost maroon bark overgrown with moss and yound ferns. numerous sneakers hang by their tied-together shoelaces over tree branches overhead."
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"

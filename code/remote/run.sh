@@ -33,6 +33,13 @@ PROMPT_HASH=$( echo -n "${PROMPT}" | sha256sum | cut -d ' ' -f 1 )
 RAW_BUCKET="${RAW_BUCKET:-$DEFAULT_RAW_BUCKET}"
 RAW_PREFIX="runs/${PROMPT_HASH}"
 
+SITE_OG_IMAGE_PREFIX="s3://${SITE_BUCKET}/assets/og"
+SITE_POSTER_RAW_PREFIX="s3://${SITE_BUCKET}/assets/img/posters/raw"
+SITE_POSTER_PREVIEW_PREFIX="s3://${SITE_BUCKET}/assets/img/posters/previews"
+SITE_POSTER_THUMBS_PREFIX="s3://${SITE_BUCKET}/assets/img/posters/thumbs"
+
+PYTHON_EXE="${HOME}/.venv/bin/python"
+
 declare -A POSTER_SIZES=(
     ["12x18"]="portrait"
     ["18x24"]="portrait"
@@ -78,11 +85,15 @@ EOF
 
 # EXECUTE!!!!!!
 
-"${HOME}/.venv/bin/python" "${HOME}/src/imagen/cspworker.py" \
+# make the images
+
+uv run python src/imagen/cspworker.py \
     --prompt "${PROMPT}" \
     --s3-bucket "${RAW_BUCKET}" \
     --s3-prefix "${RAW_PREFIX}" \
     --model-id "${MODEL_ID}"
+
+# embed for similar images
 
 uv run embed embed --batch-size 16 --out embeddings.npy images
 uv run embed review --input embeddings.npy --output similar
@@ -92,20 +103,19 @@ aws s3 sync similar/ "${SITE_IMG_ASSETS}" --exclude "*" --include "*.json"
 
 aws s3 ls "${SITE_IMG_ASSETS}" \
     | awk '{ print $4 }' | grep '\.png$' | sed 's/\.png$//' \
-    | "${HOME}/.venv/bin/python" -c 'import sys,json; json.dump([l.strip() for l in sys.stdin if l.strip()], sys.stdout)' \
+    | uv run python -c 'import sys,json; json.dump([l.strip() for l in sys.stdin if l.strip()], sys.stdout)' \
     > ${SET_NAME}.json
 
-# create OG image
+# create OG image, upload to S3
 
-"${HOME}/.venv/bin/python" "${HOME}/og_tiles.py" \
+uv run python og_tiles.py \
     --set "${SET_NAME}" \
     --prefix "${RAW_PREFIX}" \
     --source ./images \
     --out og
+aws s3 cp "og/${SET_NAME}.jpg" "${SITE_OG_IMAGE_PREFIX}/${SET_NAME}.jpg"
 
-aws s3 cp "og/${SET_NAME}.jpg" "s3://${SITE_BUCKET}/assets/og/${SET_NAME}.jpg"
-
-# create posters
+# create posters, upload raw to S3
 
 for SIZE in "${!POSTER_SIZES[@]}"; do
     OUTPUT_NAME="posters/${SIZE}/${POST_NAME}.png"
@@ -120,11 +130,18 @@ for SIZE in "${!POSTER_SIZES[@]}"; do
             --title "${POST_TITLE}" \
             "${SITE_IMG_ASSETS}" \
             ${OUTPUT_NAME}
-        aws s3 cp "${OUTPUT_NAME}" "s3://${SITE_BUCKET}/assets/img/posters/raw/${POST_NAME}/${SIZE}.png"
+        aws s3 cp "${OUTPUT_NAME}" "${SITE_POSTER_RAW_PREFIX}/${POST_NAME}/${SIZE}.png"
     fi
 done
 
-# webp's for poster printable page
+# webp's for poster printable page, upload previews and thumbs to s3
 
 uv run python web-posters.py posters
-
+aws s3 cp \
+    "posters/previews/${POST_DATE}-${SET_NAME}/" \
+    "${SITE_POSTER_PREVIEW_PREFIX}/${POST_DATE}-${SET_NAME}/" \
+    --recursive --exclude "*" --include "*.webp"
+aws s3 cp \
+    "posters/thumbs/${POST_DATE}-${SET_NAME}/" \
+    "${SITE_POSTER_THUMBS_PREFIX}/${POST_DATE}-${SET_NAME}/" \
+    --recursive --exclude "*" --include "*.webp"

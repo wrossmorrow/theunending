@@ -11,7 +11,7 @@ permalink: /about/
 
 I should probably explain what this is about. If you're looking it can obviously be about anything you like, not only my half-baked view. I have to admit I also believe explaining at all defeats the purpose. Or maybe put another way if I _have_ to explain I've failed in communicating whatever it is I'm trying to find already. 
 
-I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit fraught. Maybe that alone is part of my goal, exploring that discomfort.
+I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit fraught. Maybe that alone is part of my goal, exploring that discomfort, and in a setting openly emphasizing its use.
 
 You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything. The intent can be in the action alone more than an outcome, reclaiming process from the answer-me-now-make-no-mistakes mechanics of contemporary AI.
 
@@ -43,15 +43,17 @@ If you click on an image and see the "similar" results,
 
 you can evaluate uniqueness yourself. If the stream has an exact duplicate image, it is guaranteed to appear there. And it likely won't.
 
-I'm occasionally playing with arbitrary themes too. That's more "traditional" and worth less explanation being closer to how you yourself reflect on the specific content of a given image. If so, the content and the titles should work together to point out what I'm exploring. This all sounds objectively silly and I know that; in fact I hope you can find some humor hiding in some of the themes.
+An uncanny valley in the volume, as opposed to the acknowledged on in a given result, feels missing and unexpressed. 
 
-Unlike much of the work I have done, work that focuses more on singular subject matter or process outcome, the title text also presents an opportunity to inject meaning beyond identification. I certainly don't provide something like a description the prompts naturally provide. Several of the streams here are not themselves without the title, and possibly also the prompt.
+I'm occasionally playing with arbitrary themes too. That's more "traditional" and worth less explanation being closer to how you yourself reflect on the specific content of a given image. If so, the content and the titles should work together to point out what I'm exploring. This all sounds objectively silly and I know that; in fact I hope you can find some humor hiding in some of the themes. I'm interested in art and art history, so there are unavoidable attempts at reflection there you can hopefully tease out. There are also reflections on the models and methods, theft, the mundane, social media, the industry I work in, and just uncorrelated ideas that came to me. 
 
-Besides exploring what I can find in being able to "just" generate digital images, maybe "as a medium," I am curious about the specific format communicating them. The streams are intended to supply an accompanying sense of drowning in a content stream we can't stop of cheap variations of visually rendered ideas. To be clear, I hope this _isn't_ a "medium" for one-off substitutes for human production; but part of the "medium" existing is reflective exploration of it, as it exists, with its own intended properties. The voluminous production, the minor variations lacking some unique selected reification, the unstoppability, all feel aligned with the expectations around these tools, what the zeitgeist (so to speak) behind them points to.
+Unlike much of the work I have done, work that focuses more on singular subject matter or process outcome, the title text also presents an opportunity to inject meaning beyond the boundaries of the visual. I certainly don't otherwise provide something like a description the prompts naturally provide. Several of the streams here are not themselves without the title, and possibly also the prompt, in a way I avoid "on canvas."
+
+Besides exploring what I can find in being able to "just" generate digital images, maybe "as a medium," I am curious about the specific format communicating them. The streams are intended to supply an accompanying sense of drowning in a content stream we can't stop of cheap variations of visually rendered ideas. To be clear, I hope this _isn't_ a "medium" for one-off substitutes for human production; but part of the "medium" existing is reflective exploration of it, as it exists, with its own intended properties. The voluminous production, the minor variations lacking some unique selected reification, the unstoppability, all feel aligned with the expectations around these tools, what the zeitgeist (so to speak) behind them points to. Existence is enough to motivate engagement, thus here we are. 
 
 ---
 
-There's something particularly evocative, to me at least, about the inexpensive and relentless volume. In contrast larger, single images don't quite do it. Consider
+I've made clear there's something particularly evocative, to me at least, about the inexpensive, relentless, and uncontrollable volume. In contrast larger, single images don't quite do it. Consider
 
 ![memento mori]({{ "assets/img/about/single-graffiti-painting.png" | relative_url }}){:width="75%"}
 

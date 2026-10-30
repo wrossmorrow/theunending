@@ -11,6 +11,7 @@
   const SWAP_MS  = cfg.swapMs   || 620;    // average gap between swaps
   const FADE_MS  = cfg.fadeMs   || 900;
   const MAX_LOAD = cfg.maxLoads || 3;      // concurrent image fetches
+  const MIN_COLS = cfg.minCols || 3;        // next to the other consts
 
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   root.style.setProperty('--fade', FADE_MS + 'ms');
@@ -82,7 +83,8 @@
   let cols = 0, rows = 0, cells = [], inflight = 0, timer = null;
 
   const build = () => {
-    const c = Math.max(2, Math.round(innerWidth / TILE));
+    // const c = Math.max(2, Math.round(innerWidth / TILE));
+    const c = Math.max(MIN_COLS, Math.round(innerWidth / TILE));   // was Math.max(2, ...)
     const edge = innerWidth / c;
     const r = Math.max(2, Math.ceil(innerHeight / edge));
     if (c === cols && r === rows && cells.length) return;
