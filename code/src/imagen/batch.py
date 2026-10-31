@@ -129,7 +129,7 @@ def handle(
 
     os.makedirs(args.outdir, exist_ok=True)
 
-    existing = count_s3_prefix_objects(args.s3_bucket, args.s3_prefix)
+    existing = count_s3_prefix_objects(args.s3_bucket, args.s3_prefix, s3=s3)
     total = args.max_images - existing
 
     print(f"Progress: {existing}/{args.max_images} already exist; work on {total}.")

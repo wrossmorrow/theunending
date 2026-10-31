@@ -118,6 +118,7 @@ def cmd_similar(args: argparse.Namespace) -> int:
     order = np.argsort(-scores)[: args.k]
     for rank, idx in enumerate(order, start=1):
         print(f"{rank:2d}. {scores[idx]:.4f}  {paths[idx]}")
+    
     return 0
 
 
