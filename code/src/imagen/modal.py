@@ -75,10 +75,10 @@ def handle_test(args: argparse.Namespace) -> None:
 def _parse_args(
     parser: argparse.ArgumentParser, 
     flags: Iterable[str] = (),
-    **overrides,
+    **kwargs,
 ) -> argparse.Namespace:
     argv: list[str] = [f"--{f.replace('_', '-')}" for f in flags]
-    for k, v in overrides.items():
+    for k, v in kwargs.items():
         argv += [f"--{k.replace('_', '-')}", str(v)]
     return parser.parse_args(argv)
 
