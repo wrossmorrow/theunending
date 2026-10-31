@@ -8,4 +8,4 @@ uv run imagen modal batch \
   --s3-bucket wrossmorrow-genai-repetitions-use1 \
   --s3-prefix "runs/${PROMPT_HASH}" \
   --prompt "${PROMPT}" \
-  --max-images 50
+  --max-images 100
