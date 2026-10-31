@@ -12,9 +12,9 @@ build env="production":
     bash scripts/build-landing-pool.sh
     JEKYLL_ENV={{env}} bundle exec jekyll build
 
-sync: build
-    aws s3 sync _site/ s3://{{site_s3_bucket}}/ # --delete
-    aws cloudfront create-invalidation --distribution-id {{cloudfront_dist_id}} --paths "/*"
+# build, then upload without listing the whole bucket (never deletes); `just sync --dryrun` to preview
+sync *args: build
+    BUCKET={{site_s3_bucket}} DIST={{cloudfront_dist_id}} bash scripts/deploy.sh {{args}}
 
 # one small WebP per set (streams.yml `thumb:`) for the index; extra args pass through
 thumbs *args:
