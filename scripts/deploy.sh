@@ -31,6 +31,8 @@ BUCKET="${BUCKET:?set BUCKET}"
 DIST="${DIST:-}"
 SITE="${SITE:-_site}"
 EXTRA=("$@")
+# ${EXTRA[@]+"${EXTRA[@]}"} below, not "${EXTRA[@]}": macOS bash 3.2 calls an
+# empty array unbound under set -u.
 
 # Prefixes walked level by level rather than synced whole. "" is the root.
 DESCEND=("" "assets" "assets/img")
@@ -45,7 +47,7 @@ level() {
   dst="s3://$BUCKET/${rel:+$rel/}"
 
   echo "files $dst"
-  aws s3 cp "$src" "$dst" --recursive --exclude "*/*" --no-progress "${EXTRA[@]}"
+  aws s3 cp "$src" "$dst" --recursive --exclude "*/*" --no-progress ${EXTRA[@]+"${EXTRA[@]}"}
 
   for d in "$src"*/; do
     sub="${d%/}"; sub="${sub#"$SITE/"}"
@@ -53,7 +55,7 @@ level() {
       level "$sub"
     else
       echo "sync  s3://$BUCKET/$sub/"
-      aws s3 sync "$SITE/$sub" "s3://$BUCKET/$sub" --no-progress "${EXTRA[@]}"
+      aws s3 sync "$SITE/$sub" "s3://$BUCKET/$sub" --no-progress ${EXTRA[@]+"${EXTRA[@]}"}
     fi
   done
 }
