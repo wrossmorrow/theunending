@@ -71,6 +71,13 @@ def handle_test(args: argparse.Namespace) -> None:
         print("the square is", result)
 
 
+def _parse_args(parser: argparse.ArgumentParser, **overrides) -> argparse.Namespace:
+    argv: list[str] = []
+    for k, v in overrides.items():
+        argv += [f"--{k.replace('_', '-')}", str(v)]
+    return parser.parse_args(argv)
+
+
 @app.function(
     gpu=EVAL_GPU,
     volumes={
@@ -78,8 +85,12 @@ def handle_test(args: argparse.Namespace) -> None:
     },
     timeout=EVAL_TIMEOUT_SEC,
 )
-def evaluate(args: argparse.Namespace) -> None:
+def evaluate(args: dict | argparse.Namespace) -> None:
     from .evaluate import handle as _handle_eval
+
+    if isinstance(args, dict):
+        parser = eval_command(argparse.ArgumentParser())
+        args = _parse_args(parser, **args)
 
     # NOTE!: get client on remote for OIDC
     _handle_eval(_sanitize_args(args), s3=_s3_client())
