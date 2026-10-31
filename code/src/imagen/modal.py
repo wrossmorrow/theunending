@@ -1,5 +1,6 @@
 import argparse
 import os
+from typing import Iterable
 
 import boto3
 
@@ -71,8 +72,12 @@ def handle_test(args: argparse.Namespace) -> None:
         print("the square is", result)
 
 
-def _parse_args(parser: argparse.ArgumentParser, **overrides) -> argparse.Namespace:
-    argv: list[str] = []
+def _parse_args(
+    parser: argparse.ArgumentParser, 
+    flags: Iterable[str] = (),
+    **overrides,
+) -> argparse.Namespace:
+    argv: list[str] = [f"--{f.replace('_', '-')}" for f in flags]
     for k, v in overrides.items():
         argv += [f"--{k.replace('_', '-')}", str(v)]
     return parser.parse_args(argv)
@@ -90,7 +95,11 @@ def evaluate(args: dict | argparse.Namespace) -> None:
 
     if isinstance(args, dict):
         parser = eval_command(argparse.ArgumentParser())
-        args = _parse_args(parser, **args)
+        args = _parse_args(
+            parser, 
+            flags=args.get("flags", ()),
+            **args.get("kwargs", {}),
+        )
 
     # NOTE!: get client on remote for OIDC
     _handle_eval(_sanitize_args(args), s3=_s3_client())
@@ -113,7 +122,11 @@ def batch(args: dict | argparse.Namespace) -> None:
 
     if isinstance(args, dict):
         parser = batch_command(argparse.ArgumentParser())
-        args = _parse_args(parser, **args)
+        args = _parse_args(
+            parser, 
+            flags=args.get("flags", ()),
+            **args.get("kwargs", {}),
+        )
 
     # NOTE!: get client on remote for OIDC
     _handle_batch(_sanitize_args(args), s3=_s3_client())
@@ -136,7 +149,11 @@ def embed(args: dict | argparse.Namespace) -> None:
 
     if isinstance(args, dict):
         parser = embed_command(argparse.ArgumentParser())
-        args = _parse_args(parser, **args)
+        args = _parse_args(
+            parser, 
+            flags=args.get("flags", ()),
+            **args.get("kwargs", {}),
+        )
 
     # NOTE!: get client on remote for OIDC
     _handle_embed(_sanitize_args(args), s3=_s3_client())
