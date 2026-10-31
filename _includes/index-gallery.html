@@ -1,0 +1,58 @@
+{%- comment -%}
+  Gallery index: one square image per set with a wall label beneath it
+  (title, date, prompt). Revealed in batches by assets/js/show-more.js, so
+  whatever follows the list (the prompt-idea button) stays within reach.
+
+  The label is always visible rather than revealed on hover: the prompt is
+  part of the piece, and touch screens have no hover.
+
+  Image, in order of preference:
+    1. /assets/img/index-thumbs/<thumb id>.webp, made by
+       scripts/make-index-thumbs.py (`just thumbs`)
+    2. the full-size image of that id from the set's base URL
+  The id is `thumb:` in streams.yml, else the first id in
+  _data/stream_ids/<set>.json.
+
+  Usage:
+    {% include index-gallery.html posts=site.categories.unending %}
+{%- endcomment -%}
+
+{%- assign posts = include.posts | default: site.posts -%}
+{%- assign have = site.static_files | where_exp: "f", "f.path contains '/assets/img/index-thumbs/'" | map: "basename" -%}
+
+<ol class="gal" id="gallery" data-batch="12" data-batch-narrow="6">
+{%- for post in posts -%}
+  {%- assign set = post.set -%}
+  {%- assign cfg = site.data.streams.sets[set] -%}
+  {%- assign id = cfg.thumb -%}
+  {%- if id == nil and set -%}
+    {%- assign pool = site.data.stream_ids[set] -%}
+    {%- if pool -%}{%- assign id = pool | first -%}{%- endif -%}
+  {%- endif -%}
+
+  {%- assign src = '' -%}
+  {%- if id and have contains id -%}
+    {%- assign src = '/assets/img/index-thumbs/' | append: id | append: '.webp' | relative_url -%}
+  {%- elsif id and cfg.base -%}
+    {%- assign src = cfg.base | append: id | append: '.png' -%}
+  {%- endif -%}
+
+  {%- assign prompt = post.subtitle | default: post.description | strip_html -%}
+
+  <li class="gal-item">
+    <a class="gal-img" href="{{ post.url | relative_url }}" tabindex="-1" aria-hidden="true">
+      {%- if src != '' -%}
+      <img src="{{ src }}" alt="" loading="lazy" decoding="async" width="640" height="640">
+      {%- endif -%}
+    </a>
+    <div class="gal-label">
+      <a class="gal-title" href="{{ post.url | relative_url }}">{{ post.title }}</a>
+      <time class="gal-date" datetime="{{ post.date | date: '%Y-%m-%d' }}">{{ post.date | date: "%Y-%m-%d" }}</time>
+      {%- if prompt and prompt != '' %}
+      <p class="gal-prompt" title="{{ prompt | escape }}">{{ prompt }}</p>
+      {%- endif %}
+    </div>
+  </li>
+{%- endfor -%}
+</ol>
+<script src="{{ '/assets/js/show-more.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>

@@ -15,7 +15,7 @@ These are randomly drawn grids of images made for the "unending" pages. Each is 
 
 <link rel="stylesheet" href="{{ '/assets/css/posters.css' | relative_url }}?v={{ site.time | date: '%s' }}">
 
-<div class="poster-index" data-batch="24">
+<div class="poster-index" id="printables" data-batch="24" data-batch-narrow="12">
 {%- for e in site.data.poster_index %}
   <a class="poster-tile" href="{{ e.url | relative_url }}">
     <img src="{{ '/assets/img/posters/' | append: e.thumb.src | relative_url }}" width="{{ e.thumb.w }}" height="{{ e.thumb.h }}" loading="lazy" alt="">
@@ -24,4 +24,4 @@ These are randomly drawn grids of images made for the "unending" pages. Each is 
 {%- endfor %}
 </div>
 
-<script src="{{ '/assets/js/posters.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
+<script src="{{ '/assets/js/show-more.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
