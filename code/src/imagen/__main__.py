@@ -1,10 +1,3 @@
-from .cli import cli
+from .main import main
 
-
-def main():
-    args = cli()
-    args.func(args)
-
-
-if __name__ == "__main__":
-    main()
+main()

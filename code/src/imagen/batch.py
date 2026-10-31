@@ -1,35 +1,38 @@
+from __future__ import annotations
+
 import argparse
 import io
 import os
-from concurrent.futures import ThreadPoolExecutor
-from typing import Sequence
-from uuid import uuid4
 import random
 import threading
+from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable
+from uuid import uuid4
 
 import boto3
 import torch
-from diffusers import FluxPipeline, Flux2KleinPipeline
+from diffusers import Flux2KleinPipeline, FluxPipeline
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
 
 from .constants import DEVICE, TORCH_DTYPE
 
-
-MAX_PENDING = int(os.environ.get("MAX_PENDING", 16))
-UPLOAD_OS_THREADS = int(os.environ.get("UPLOAD_OS_THREADS", 8))
+MAX_PENDING = int(os.environ.get("MAX_PENDING", "16"))
+UPLOAD_OS_THREADS = int(os.environ.get("UPLOAD_OS_THREADS", "8"))
 
 
 _slots = threading.Semaphore(MAX_PENDING)
-_failures = []
+_failures: list[Any] = []  # really Exception of BaseException
 _lock = threading.Lock()
 
-
-default_s3_client = boto3.client("s3")
 
 pool = ThreadPoolExecutor(max_workers=UPLOAD_OS_THREADS)
 
 
-def load_pipeline(model_id):
+def load_pipeline(model_id) -> Callable:
     pipe = (
         FluxPipeline.from_pretrained(
             model_id,
@@ -45,10 +48,10 @@ def load_pipeline(model_id):
 
 
 def count_s3_prefix_objects(
+    s3: S3Client,
     bucket: str,
     prefix: str,
     suffix: str | Sequence[str] | None = ".png",
-    s3: boto3.client = default_s3_client,
 ) -> int:
     
     # Ensure prefix ends with a slash if targeting a "folder"
@@ -82,8 +85,8 @@ def save_image_and_upload(
     s3_bucket: str,
     s3_prefix: str,
     metadata: dict,
-    s3: boto3.client = default_s3_client,
-):
+    s3: S3Client,
+) -> None:
 
     ext = {"PNG": "png", "JPEG": "jpg", "WEBP": "webp"}[format.upper()]
 
@@ -108,7 +111,7 @@ def save_image_and_upload(
     )
 
 
-def _done(fut):
+def _done(fut) -> None:
     _slots.release()
     exc = fut.exception()
     if exc:
@@ -117,19 +120,23 @@ def _done(fut):
         print(f"  upload failed: {exc!r}", flush=True)
 
 
-def submit_upload(*a, s3: boto3.client = default_s3_client):
+def submit_upload(*a) -> None:
     _slots.acquire()
-    pool.submit(save_image_and_upload, *a, s3=s3).add_done_callback(_done)
+    pool.submit(save_image_and_upload, *a).add_done_callback(_done)
 
 
 def handle(
     args: argparse.Namespace,
-    s3: boto3.client = default_s3_client,
+    s3: S3Client | None,
 ) -> None:
+
+    if s3 is None:
+        handle(args, boto3.client("s3"))
+        return
 
     os.makedirs(args.outdir, exist_ok=True)
 
-    existing = count_s3_prefix_objects(args.s3_bucket, args.s3_prefix, s3=s3)
+    existing = count_s3_prefix_objects(s3, args.s3_bucket, args.s3_prefix)
     total = args.max_images - existing
 
     print(f"Progress: {existing}/{args.max_images} already exist; work on {total}.")
@@ -161,7 +168,7 @@ def handle(
                 "seed": str(seed),
                 "prompt": chopped_prompt,
             },
-            s3=s3,
+            s3,
         )
 
         if (idx + 1) % 50 == 0 or (idx + 1) == total:
@@ -176,7 +183,7 @@ def handle(
     print("All tasks finished and synced to S3.")
 
 
-def command(parser: argparse.ArgumentParser) -> argparse.Namespace:
+def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--prompt", type=str, required=True)
     parser.add_argument("--s3-bucket", type=str, default=os.environ.get("AWS_S3_BUCKET_NAME"))
     parser.add_argument("--s3-prefix", type=str, required=True)
@@ -188,13 +195,14 @@ def command(parser: argparse.ArgumentParser) -> argparse.Namespace:
     parser.add_argument("--outdir", type=str, default="images")
     parser.add_argument("--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B")
     parser.set_defaults(func=handle)
+    return parser
 
 
 def cli() -> argparse.Namespace:
     return command(argparse.ArgumentParser()).parse_args()
 
 
-def main():
+def main() -> None:
     args = cli()
     args.func(args)
 

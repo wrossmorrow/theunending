@@ -1,14 +1,12 @@
 import argparse
-import glob
-import hashlib
 import os
 
 import boto3
+
 import modal
 
-from .evaluate import command as eval_command
 from .batch import command as batch_command
-
+from .evaluate import command as eval_command
 
 DEFAULT_IGNORE_ARGS = {"func", "command"}
 EVAL_TIMEOUT_SEC = 600  # 10 minutes
@@ -103,7 +101,7 @@ def handle_batch(args: argparse.Namespace) -> None:
         batch.remote(args)
 
 
-def command(parser: argparse.ArgumentParser) -> argparse.Namespace:
+def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
 
@@ -112,11 +110,11 @@ def command(parser: argparse.ArgumentParser) -> argparse.Namespace:
     parser.set_defaults(func=handle_test)
 
     parser = subparsers.add_parser("eval", help="Evaluate on modal")
-    eval_command(parser)
+    parser = eval_command(parser)
     parser.set_defaults(func=handle_eval)
 
     parser = subparsers.add_parser("batch", help="Batch on modal")
-    batch_command(parser)
+    parser = batch_command(parser)
     parser.set_defaults(func=handle_batch)
 
     return parser
