@@ -22,6 +22,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* --- Sticky nav bar --- */
+/* The title scrolls away; the nav row and its rule stay pinned. Opaque
+ * background so content passes underneath cleanly. Modals use showModal()
+ * (top layer) and theater mode is z-index 9998, so 10 is safely below both. */
+.site-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-color);
+  padding-top: 0.6em;
+}
+.site-bar hr { margin: 0.6em 0 0; }
+
+/* In-page jumps (footnotes, #anchors) land below the bar, not under it */
+html { scroll-padding-top: 4.5rem; }
+
 /* --- Typography --- */
 
 /* Page Titles & Headers */
