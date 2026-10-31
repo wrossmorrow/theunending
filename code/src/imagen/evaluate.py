@@ -106,22 +106,20 @@ def copy_to_s3(
     if args.s3_bucket is None:
         return
     
-    hash = hashlib.sha256(args.prompt.encode('utf-8')).hexdigest()
-    prefix = f"{args.s3_prefix}/{hash}"
     with open("prompt.txt", "w") as f:
         f.write(args.prompt)
 
     s3.upload_file(
         Filename="prompt.txt",
         Bucket=args.s3_bucket,
-        Key=f"{prefix}/prompt.txt",
+        Key=f"{args.s3_prefix}/prompt.txt",
     )
 
     for r in range(args.repetitions):
         s3.upload_file(
             Filename=f"{args.outdir}/thematic-grid-0.png",
             Bucket=args.s3_bucket,
-            Key=f"{prefix}/thematic-grid-{r}.png",
+            Key=f"{args.s3_prefix}/thematic-grid-{r}.png",
         )
 
     for f in glob.glob(f"{args.tiles}/*.png"):
@@ -129,7 +127,7 @@ def copy_to_s3(
         s3.upload_file(
             Filename=f"{args.outdir}/thematic-grid-0.png",
             Bucket=args.s3_bucket,
-            Key=f"{prefix}/tiles/{fn}",
+            Key=f"{args.s3_prefix}/tiles/{fn}",
         )
 
 

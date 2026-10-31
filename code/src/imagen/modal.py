@@ -11,9 +11,10 @@ from .batch import command as batch_command
 
 
 DEFAULT_IGNORE_ARGS = {"func", "command"}
-DEFAULT_TIMEOUT_SEC = 1500
+EVAL_TIMEOUT_SEC = 600  # 10 minutes
+BATCH_TIMEOUT_SEC = 3600  # 1 hour
 AWS_OIDC_ROLE_ARN = "arn:aws:iam::396610714890:role/modal-oidc-access"
-AWS_OIDC_SESSION_DURATION_SECONDS = 3600
+AWS_OIDC_SESSION_DURATION_SECONDS = 7200  # 2 hours; check IAM limits
 
 
 def _aws_creds(role_arn: str = AWS_OIDC_ROLE_ARN):
@@ -69,11 +70,12 @@ def handle_test(args: argparse.Namespace) -> None:
     volumes={
         "/cache": vol,
     },
-    timeout=DEFAULT_TIMEOUT_SEC,
+    timeout=EVAL_TIMEOUT_SEC,
 )
 def evaluate(args: argparse.Namespace) -> None:
     from .evaluate import handle as _handle_eval
 
+    # NOTE!: get client on remote for OIDC
     _handle_eval(_sanitize_args(args), s3=_s3_client())
 
 
@@ -87,13 +89,13 @@ def handle_eval(args: argparse.Namespace) -> None:
     volumes={
         "/cache": vol,
     },
-    timeout=DEFAULT_TIMEOUT_SEC,
+    timeout=BATCH_TIMEOUT_SEC,
 )
-def batch(args: argparse.Namespace, s3: boto3.client) -> None:
+def batch(args: argparse.Namespace) -> None:
     from .batch import handle as _handle_batch
 
-    s3 = _s3_client()  # important: get client on remote for OIDC
-    _handle_batch(_sanitize_args(args), s3=s3)
+    # NOTE!: get client on remote for OIDC
+    _handle_batch(_sanitize_args(args), s3=_s3_client())
 
 
 def handle_batch(args: argparse.Namespace) -> None:
