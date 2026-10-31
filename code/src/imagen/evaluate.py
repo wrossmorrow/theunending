@@ -1,22 +1,24 @@
+from __future__ import annotations
+
 import argparse
-import hashlib
 import glob
-import os
 import math
+import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import boto3
 import torch
-from diffusers import FluxPipeline, Flux2KleinPipeline
+from diffusers import Flux2KleinPipeline, FluxPipeline
 from PIL import Image
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
 
 from .constants import DEVICE, TORCH_DTYPE
 
 
-default_s3_client = boto3.client("s3")
-
-
-def load_pipeline(model_id: str):
+def load_pipeline(model_id: str) -> FluxPipeline | Flux2KleinPipeline:
     pipe = (
         FluxPipeline.from_pretrained(
             model_id,
@@ -101,37 +103,38 @@ def stitch_grid(output, images, grid_cols=None, padding=8, bg_color=(255, 255, 2
 
 def copy_to_s3(
     args: argparse.Namespace,
-    s3: boto3.client = default_s3_client,
+    s3: S3Client,
 ) -> None:
     if args.s3_bucket is None:
         return
     
-    with open("prompt.txt", "w") as f:
-        f.write(args.prompt)
-
-    s3.upload_file(
-        Filename="prompt.txt",
+    s3.put_object(
         Bucket=args.s3_bucket,
         Key=f"{args.s3_prefix}/prompt.txt",
+        Body=args.prompt.encode(),
     )
 
     for r in range(args.repetitions):
         s3.upload_file(
-            Filename=f"{args.outdir}/thematic-grid-0.png",
+            Filename=f"{args.outdir}/thematic-grid-{r}.png",
             Bucket=args.s3_bucket,
             Key=f"{args.s3_prefix}/thematic-grid-{r}.png",
         )
 
-    for f in glob.glob(f"{args.tiles}/*.png"):
-        fn = f.split("/")[-1]
+    for tile in glob.glob(f"{args.tiles}/*.png"):
+        fn = Path(tile).name
         s3.upload_file(
-            Filename=f"{args.outdir}/thematic-grid-0.png",
+            Filename=tile,
             Bucket=args.s3_bucket,
             Key=f"{args.s3_prefix}/tiles/{fn}",
         )
 
 
-def handle(args: argparse.Namespace, s3: boto3.client = default_s3_client) -> None:
+def handle(args: argparse.Namespace, s3: S3Client | None) -> None:
+
+    if s3 is None:
+        handle(args, boto3.client("s3"))
+        return
 
     Path(args.tiles).mkdir(parents=True, exist_ok=True)
     Path(args.outdir).mkdir(parents=True, exist_ok=True)
@@ -150,10 +153,10 @@ def handle(args: argparse.Namespace, s3: boto3.client = default_s3_client) -> No
         filename = f"{args.outdir}/thematic-grid-{r}.png"
         stitch_grid(filename, generated_tiles, grid_cols=args.cols, padding=12)
 
-    copy_to_s3(args, s3=s3)
+    copy_to_s3(args, s3)
 
 
-def command(parser: argparse.ArgumentParser) -> argparse.Namespace:
+def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--prompt", type=str, required=True)
     parser.add_argument("--width", type=int, default=512)
     parser.add_argument("--height", type=int, default=512)
@@ -174,7 +177,7 @@ def cli() -> argparse.Namespace:
     return command(argparse.ArgumentParser()).parse_args()
 
 
-def main():
+def main() -> None:
     args = cli()
     args.func(args)
 

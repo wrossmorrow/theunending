@@ -1,7 +1,7 @@
 import argparse
 
-from .evaluate import command as eval_command
 from .batch import command as batch_command
+from .evaluate import command as eval_command
 from .modal import command as modal_command
 
 
