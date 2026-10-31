@@ -33,6 +33,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "boto3-stubs[s3]>=1.43.123",
+    "fastapi>=0.162.0",
     "mypy>=2.4.1",
     "ruff>=0.17.3",
 ]
