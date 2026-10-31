@@ -115,10 +115,11 @@ def copy_to_s3(
     )
 
     for r in range(args.repetitions):
+        fn = f"thematic-grid-{r}.png"
         s3.upload_file(
-            Filename=f"{args.outdir}/thematic-grid-{r}.png",
+            Filename=f"{args.outdir}/{fn}",
             Bucket=args.s3_bucket,
-            Key=f"{args.s3_prefix}/thematic-grid-{r}.png",
+            Key=f"{args.s3_prefix}/{fn}",
         )
 
     for tile in glob.glob(f"{args.tiles}/*.png"):

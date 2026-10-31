@@ -101,7 +101,7 @@ def handle_batch(args: argparse.Namespace) -> None:
         batch.remote(args)
 
 
-def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+def commands(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
 
@@ -121,9 +121,13 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 
 def cli() -> argparse.Namespace:
-    return command(argparse.ArgumentParser()).parse_args()
+    return commands(argparse.ArgumentParser()).parse_args()
 
 
 def main():
     args = cli()
     args.func(args)
+
+
+if __name__ == "__main__":
+    main()
