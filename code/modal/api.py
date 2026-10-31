@@ -8,13 +8,18 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import modal
 
+DEFAULT_S3_BUCKET_NAME = "wrossmorrow-genai-repetitions-use1"
+AUTH_TOKEN_HEADER_NAME = "MODAL_ENDPOINT_AUTH_TOKEN"
+
+MODAL_APP_NAME = "theunending"
+
 
 api = FastAPI()
 auth_scheme = HTTPBearer()
 
 
 def _check_auth(request: Request, token: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> bool:
-    if token.credentials != os.environ["MODAL_ENDPOINT_AUTH_TOKEN"]:
+    if token.credentials != os.environ[AUTH_TOKEN_HEADER_NAME]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect bearer token",
@@ -48,13 +53,15 @@ def _evaluate(payload: dict, authed: bool = Depends(_check_auth)):
 
     prompt = payload["prompt"]
 
-    target = modal.Function.from_name("theunending", "evaluate")
+    target = modal.Function.from_name(MODAL_APP_NAME, "evaluate")
     
     hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+    bucket = payload.get("s3_bucket", DEFAULT_S3_BUCKET_NAME)
+    prefix = payload["s3_prefix"] if "s3_prefix" in payload else f"drafts/{hash}"
     fcall = target.spawn({
         "kwargs": {
-            "s3_bucket": "wrossmorrow-genai-repetitions-use1",
-            "s3_prefix": f"drafts/{hash}",
+            "s3_bucket": bucket,
+            "s3_prefix": prefix,
             "prompt": prompt,
         },
     })
@@ -64,6 +71,10 @@ def _evaluate(payload: dict, authed: bool = Depends(_check_auth)):
         "details": {
             "prompt": prompt,
             "prompt_hash": hash,
+            "destination_bucket": bucket,
+            "destination_prefix": prefix,
+            "modal_app_name": MODAL_APP_NAME,
+            "modal_app_function": "evaluate",
             "modal_id": fcall.object_id,
         }
     }
@@ -80,16 +91,18 @@ def _batch(payload: dict, authed: bool = Depends(_check_auth)):
 
     prompt = payload["prompt"]
 
-    target = modal.Function.from_name("theunending", "batch")
+    target = modal.Function.from_name(MODAL_APP_NAME, "batch")
     
     hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+    bucket = payload.get("s3_bucket", DEFAULT_S3_BUCKET_NAME)
+    prefix = payload["s3_prefix"] if "s3_prefix" in payload else f"runs/{hash}"
     fcall = target.spawn({
         "flags": (
             "embed",
         ),
         "kwargs": {
-            "s3_bucket": "wrossmorrow-genai-repetitions-use1",
-            "s3_prefix": f"runs/{hash}",
+            "s3_bucket": bucket,
+            "s3_prefix": prefix,
             "prompt": prompt,
             "max_images": payload.get("max_images", 5000),
         }
@@ -100,6 +113,10 @@ def _batch(payload: dict, authed: bool = Depends(_check_auth)):
         "details": {
             "prompt": prompt,
             "prompt_hash": hash,
+            "destination_bucket": bucket,
+            "destination_prefix": prefix,
+            "modal_app_name": MODAL_APP_NAME,
+            "modal_app_function": "batch",
             "modal_id": fcall.object_id,
         }
     }
