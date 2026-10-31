@@ -8,6 +8,7 @@ layout: default
       {{ page.date | date: "%Y-%m-%d" }} 
       {% if page.location %} • {{ page.location }}{% endif %}
       {% if page.categories.size > 0 %} • {{ page.categories | join: ", " }}{% endif %}
+      {% if page.printable_url %} • <a href="{{ page.printable_url | relative_url }}">printable</a>{% endif %}
     </div>
 
     <h1>{{ page.title }}</h1>
