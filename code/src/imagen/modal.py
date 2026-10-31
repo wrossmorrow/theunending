@@ -7,10 +7,18 @@ import modal
 
 from .batch import command as batch_command
 from .evaluate import command as eval_command
+from .similarity.embed import command as embed_command
 
 DEFAULT_IGNORE_ARGS = {"func", "command"}
+
+EVAL_GPU = "A100"
+BATCH_GPU = "A100"
+EMBED_GPU = "A100"  # overkill for PE, if not also flux
+
 EVAL_TIMEOUT_SEC = 600  # 10 minutes
 BATCH_TIMEOUT_SEC = 3600  # 1 hour
+EMBED_TIMEOUT_SEC = 600  # 10 minutes
+
 AWS_OIDC_ROLE_ARN = "arn:aws:iam::396610714890:role/modal-oidc-access"
 AWS_OIDC_SESSION_DURATION_SECONDS = 7200  # 2 hours; check IAM limits
 
@@ -64,7 +72,7 @@ def handle_test(args: argparse.Namespace) -> None:
 
 
 @app.function(
-    gpu="A100",
+    gpu=EVAL_GPU,
     volumes={
         "/cache": vol,
     },
@@ -83,7 +91,7 @@ def handle_eval(args: argparse.Namespace) -> None:
 
 
 @app.function(
-    gpu="A100",
+    gpu=BATCH_GPU,
     volumes={
         "/cache": vol,
     },
@@ -101,6 +109,25 @@ def handle_batch(args: argparse.Namespace) -> None:
         batch.remote(args)
 
 
+@app.function(
+    gpu=EMBED_GPU,
+    volumes={
+        "/cache": vol,
+    },
+    timeout=EMBED_TIMEOUT_SEC,
+)
+def embed(args: argparse.Namespace) -> None:
+    from .similarity.embed import handle as _handle_embed
+
+    # NOTE!: get client on remote for OIDC
+    _handle_embed(_sanitize_args(args), s3=_s3_client())
+
+
+def handle_embed(args: argparse.Namespace) -> None:
+    with app.run():
+        embed.remote(args)
+
+
 def commands(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
@@ -116,6 +143,10 @@ def commands(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser = subparsers.add_parser("batch", help="Batch on modal")
     parser = batch_command(parser)
     parser.set_defaults(func=handle_batch)
+
+    parser = subparsers.add_parser("embed", help="Embed on modal")
+    parser = embed_command(parser)
+    parser.set_defaults(func=handle_embed)
 
     return parser
 
