@@ -6,6 +6,7 @@ default:
     just --list
 
 serve:
+    bash scripts/build-landing-pool.sh
     bundle exec jekyll serve --livereload --drafts --future
 
 build env="production":
