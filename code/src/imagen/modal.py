@@ -108,8 +108,12 @@ def handle_eval(args: argparse.Namespace) -> None:
     },
     timeout=BATCH_TIMEOUT_SEC,
 )
-def batch(args: argparse.Namespace) -> None:
+def batch(args: dict | argparse.Namespace) -> None:
     from .batch import handle as _handle_batch
+
+    if isinstance(args, dict):
+        parser = batch_command(argparse.ArgumentParser())
+        args = _parse_args(parser, **args)
 
     # NOTE!: get client on remote for OIDC
     _handle_batch(_sanitize_args(args), s3=_s3_client())
@@ -127,8 +131,12 @@ def handle_batch(args: argparse.Namespace) -> None:
     },
     timeout=EMBED_TIMEOUT_SEC,
 )
-def embed(args: argparse.Namespace) -> None:
+def embed(args: dict | argparse.Namespace) -> None:
     from .similarity.embed import handle as _handle_embed
+
+    if isinstance(args, dict):
+        parser = embed_command(argparse.ArgumentParser())
+        args = _parse_args(parser, **args)
 
     # NOTE!: get client on remote for OIDC
     _handle_embed(_sanitize_args(args), s3=_s3_client())
