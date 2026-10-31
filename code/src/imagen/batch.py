@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
 from .constants import DEVICE, TORCH_DTYPE
+from .similarity.embed import command as embed_command
+from .similarity.embed import handle as embed
 
 MAX_PENDING = int(os.environ.get("MAX_PENDING", "16"))
 UPLOAD_OS_THREADS = int(os.environ.get("UPLOAD_OS_THREADS", "8"))
@@ -182,6 +184,20 @@ def handle(
     
     print("All tasks finished and synced to S3.")
 
+    if args.embed:
+        print("Starting embedding on local images.")
+        del pipe
+        embed_parser = embed_command(argparse.ArgumentParser())
+        embed_argv = [
+            args.outdir,
+            "--device", DEVICE,
+            "--s3-bucket", args.s3_bucket,
+            "--s3-prefix", args.s3_prefix,
+        ]
+        embed_args = embed_parser.parse_args(embed_argv)
+        embed(embed_args, s3)
+        print("Finished embedding and synced to S3.")
+
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--prompt", type=str, required=True)
@@ -194,6 +210,7 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--steps", type=int, default=4)
     parser.add_argument("--outdir", type=str, default="images")
     parser.add_argument("--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B")
+    parser.add_argument("--embed", action="store_true", default=False)
     parser.set_defaults(func=handle)
     return parser
 

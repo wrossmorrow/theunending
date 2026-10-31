@@ -27,7 +27,16 @@ def _progress(done: int, total: int) -> None:
     print(f"\r  embedded {done}/{total}", end="", file=sys.stderr, flush=True)
 
 
-def copy_to_s3(
+def _dedup_trailing_slashes(prefix: str) -> str:
+    while prefix.endswith("/"):
+        if len(prefix) == 0:
+            break
+        prefix = prefix[:-1]
+
+    return f"{prefix}/" if prefix else ""
+
+
+def _copy_to_s3(
     out: Path,
     s3_bucket: str | None,
     s3_prefix: str | None,
@@ -36,8 +45,7 @@ def copy_to_s3(
     if s3_bucket is None:
         return
 
-    prefix = f"{s3_prefix}/" if s3_prefix else ""
-    # TODO: maybe, reduce multiple trailing slashes
+    prefix = _dedup_trailing_slashes(f"{s3_prefix}/" if s3_prefix else "")
 
     s3.upload_file(
         Filename=str(out.resolve()),
@@ -53,13 +61,59 @@ def copy_to_s3(
     )
 
 
+def _get_ext(format: str) -> str:
+    return {"PNG": "png", "JPEG": "jpg", "WEBP": "webp"}[format.upper()]
+
+
+def _list_s3(s3: S3Client, bucket: str, prefix: str, ext: str) -> list[str]:
+    keys = []
+    for page in s3.get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix):
+        for obj in page.get("Contents", []):
+            if obj["Key"].lower().endswith(ext):
+                keys.append(obj["Key"])
+    keys.sort()
+    return keys
+
+
+def _get_from_s3(
+    s3: S3Client,
+    s3_bucket: str | None,
+    s3_prefix: str | None,
+    local_path: str,
+    format: str,
+) -> None:
+    if s3_bucket is None:
+        raise ValueError("Cannot source from S3 without a bucket name")
+
+    prefix = _dedup_trailing_slashes(f"{s3_prefix}/" if s3_prefix else "")
+    ext = _get_ext(format)
+    keys = _list_s3(s3, s3_bucket, prefix, ext)
+    for key in keys:
+        fn = key.split("/")[-1]
+        s3.download_file(
+            Bucket=s3_bucket,
+            Key=key,
+            Filename=f"{local_path}/{fn}",
+        )
+
+
 def handle(args: argparse.Namespace, s3: S3Client) -> int:
 
     if s3 is None:
         handle(args, boto3.client("s3"))
         return
 
-    paths = iter_images(args.paths, recursive=not args.no_recursive)
+    # get data from S3 if we've been asked to, store in _first_ path arg
+    if args.source_from_s3:
+        _get_from_s3(
+            s3, 
+            args.s3_bucket,
+            args.s3_prefix,
+            args.format,
+            args.paths[0],
+        )
+
+    paths = iter_images(args.paths, recursive=(not args.no_recursive))
     if not paths:
         print("No images found.", file=sys.stderr)
         return 1
@@ -117,7 +171,7 @@ def handle(args: argparse.Namespace, s3: S3Client) -> int:
     )
     print(f"Wrote {saved} ({len(paths)} x {vectors.shape[1]}) and {_sidecar(saved)}")
 
-    copy_to_s3(out, args.s3_bucket, args.s3_prefix, s3)
+    _copy_to_s3(out, args.s3_bucket, args.s3_prefix, s3)
 
     return 0
 
@@ -126,6 +180,7 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("paths", nargs="+", help="image files and/or directories")
     parser.add_argument("-o", "--out", default="embeddings.npy", help="output path")
     parser.add_argument("--batch-size", type=int, default=8, help="images per batch [8]")
+    parser.add_argument("--format", type=str, default="PNG", help="image format")
     parser.add_argument(
         "--no-normalize", action="store_true", help="skip L2 normalization"
     )
@@ -152,8 +207,24 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         choices=["float32", "float16", "bfloat16"],
         help="model precision [float32]",
     )
-    parser.add_argument("--s3-bucket", type=str, default=os.environ.get("AWS_S3_BUCKET_NAME"))
-    parser.add_argument("--s3-prefix", type=str, default="drafts")
+    parser.add_argument(
+        "--s3-bucket", 
+        type=str, 
+        default=os.environ.get("AWS_S3_BUCKET_NAME"),
+        help="S3 bucket name for upload and potentially sourcing images",
+    )
+    parser.add_argument(
+        "--s3-prefix",
+        type=str,
+        default="runs/",
+        help="S3 prefix for upload and potentially sourcing images",
+    )
+    parser.add_argument(
+        "--source-from-s3",
+        action="store_true",
+        default=False,
+        help="source images from the named s3 paths",
+    )
     parser.set_defaults(func=handle)
     return parser
 

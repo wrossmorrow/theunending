@@ -77,6 +77,7 @@ def iter_images(paths: Iterable[str | Path], recursive: bool = True) -> list[Pat
             found.append(path)
         else:
             raise FileNotFoundError(path)
+    
     # Deduplicate while keeping a stable, reproducible order.
     return sorted({p.resolve() for p in found})
 

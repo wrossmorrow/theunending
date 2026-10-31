@@ -52,6 +52,7 @@ declare -A POSTER_SIZES=(
 
 mkdir -p "images" "similar" "posters" "og"
 
+# NOTE: check/gate is still valuable, but code may do this now
 echo "${PROMPT}" > prompt.txt
 if aws s3api head-object --bucket "${RAW_BUCKET}" --key "${RAW_PREFIX}/prompt.txt" >/dev/null 2>&1; then
     aws s3 cp "s3://${RAW_BUCKET}/${RAW_PREFIX}/prompt.txt" prompt-s3.txt
@@ -87,16 +88,18 @@ EOF
 
 # make the images
 
-uv run python src/imagen/cspworker.py \
+# uv run python src/imagen/cspworker.py \
+uv run imagen batch \
     --prompt "${PROMPT}" \
     --s3-bucket "${RAW_BUCKET}" \
     --s3-prefix "${RAW_PREFIX}" \
-    --model-id "${MODEL_ID}"
+    --model-id "${MODEL_ID}" \
+    --outdir images
 
 # embed for similar images
 
-uv run embed embed --batch-size 16 --out embeddings.npy images
-uv run embed review --input embeddings.npy --output similar
+uv run imagen similarity embed --batch-size 16 --out embeddings.npy images
+uv run imagen similarity review --input embeddings.npy --output similar
 
 aws s3 sync images/ "${SITE_IMG_ASSETS}" --exclude "*" --include "*.png"
 aws s3 sync similar/ "${SITE_IMG_ASSETS}" --exclude "*" --include "*.json"
@@ -108,11 +111,12 @@ aws s3 ls "${SITE_IMG_ASSETS}" \
 
 # create OG image, upload to S3
 
-uv run python og_tiles.py \
+uv run imagen og-tiles \
     --set "${SET_NAME}" \
     --prefix "${RAW_PREFIX}" \
     --source ./images \
     --out og
+
 aws s3 cp "og/${SET_NAME}.jpg" "${SITE_OG_IMAGE_PREFIX}/${SET_NAME}.jpg"
 
 # create posters, upload raw to S3
@@ -122,7 +126,7 @@ for SIZE in "${!POSTER_SIZES[@]}"; do
     ORIENTATION="${POSTER_SIZES[${SIZE}]}"
     if [ ! -f "${OUTPUT_NAME}" ]; then
         mkdir -p "posters/${SIZE}"
-        uv run python poster.py \
+        uv run imagen full-posters \
             --poster "${SIZE}" \
             --orientation "${ORIENTATION}" \
             --dpi 150 \
@@ -136,7 +140,7 @@ done
 
 # webp's for poster printable page, upload previews and thumbs to s3
 
-uv run python web-posters.py posters
+uv run imagen web-posters posters
 aws s3 cp \
     "posters/previews/${POST_DATE}-${SET_NAME}/" \
     "${SITE_POSTER_PREVIEW_PREFIX}/${POST_DATE}-${SET_NAME}/" \
