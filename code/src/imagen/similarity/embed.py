@@ -4,11 +4,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+import boto3
 import numpy as np
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
 
 from .encoder import DEFAULT_MODEL, MODELS, PEEncoder, iter_images
 
@@ -21,7 +27,38 @@ def _progress(done: int, total: int) -> None:
     print(f"\r  embedded {done}/{total}", end="", file=sys.stderr, flush=True)
 
 
-def handle(args: argparse.Namespace) -> int:
+def copy_to_s3(
+    out: Path,
+    s3_bucket: str | None,
+    s3_prefix: str | None,
+    s3: S3Client,
+) -> None:
+    if s3_bucket is None:
+        return
+
+    prefix = f"{s3_prefix}/" if s3_prefix else ""
+    # TODO: maybe, reduce multiple trailing slashes
+
+    s3.upload_file(
+        Filename=str(out.resolve()),
+        Bucket=s3_bucket,
+        Key=f"{prefix}{out.name}",
+    )
+
+    sdc = _sidecar(out)
+    s3.upload_file(
+        Filename=str(sdc.resolve()),
+        Bucket=s3_bucket,
+        Key=f"{prefix}{sdc.name}",
+    )
+
+
+def handle(args: argparse.Namespace, s3: S3Client) -> int:
+
+    if s3 is None:
+        handle(args, boto3.client("s3"))
+        return
+
     paths = iter_images(args.paths, recursive=not args.no_recursive)
     if not paths:
         print("No images found.", file=sys.stderr)
@@ -33,6 +70,7 @@ def handle(args: argparse.Namespace) -> int:
 
     model = args.model or DEFAULT_MODEL
     print(f"Loading {model} ...", file=sys.stderr)
+
     started = time.perf_counter()
     encoder = PEEncoder.load(model, device=args.device, dtype=args.dtype)
     print(
@@ -61,30 +99,25 @@ def handle(args: argparse.Namespace) -> int:
         file=sys.stderr,
     )
 
-    if args.format == "jsonl":
-        with out.open("w") as handle:
-            for path, vector in zip(paths, vectors):
-                handle.write(
-                    json.dumps({"path": str(path), "embedding": vector.tolist()}) + "\n"
-                )
-        print(f"Wrote {out} ({len(paths)} x {vectors.shape[1]})")
-    else:
-        np.save(out, vectors)
-        # np.save *appends* .npy when the name lacks it ("v1.dat" -> "v1.dat.npy"),
-        # so mirror that rather than replacing the existing suffix.
-        saved = out if out.suffix == ".npy" else out.with_name(out.name + ".npy")
-        _sidecar(saved).write_text(
-            json.dumps(
-                {
-                    "model": encoder.model_id,
-                    "dim": int(vectors.shape[1]),
-                    "normalized": not args.no_normalize,
-                    "paths": [str(p) for p in paths],
-                },
-                indent=2,
-            )
+    np.save(out, vectors)
+
+    # np.save *appends* .npy when the name lacks it ("v1.dat" -> "v1.dat.npy"),
+    # so mirror that rather than replacing the existing suffix.
+    saved = out if out.suffix == ".npy" else out.with_name(out.name + ".npy")
+    _sidecar(saved).write_text(
+        json.dumps(
+            {
+                "model": encoder.model_id,
+                "dim": int(vectors.shape[1]),
+                "normalized": not args.no_normalize,
+                "paths": [str(p) for p in paths],
+            },
+            indent=2,
         )
-        print(f"Wrote {saved} ({len(paths)} x {vectors.shape[1]}) and {_sidecar(saved)}")
+    )
+    print(f"Wrote {saved} ({len(paths)} x {vectors.shape[1]}) and {_sidecar(saved)}")
+
+    copy_to_s3(out, args.s3_bucket, args.s3_prefix, s3)
 
     return 0
 
@@ -92,9 +125,6 @@ def handle(args: argparse.Namespace) -> int:
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("paths", nargs="+", help="image files and/or directories")
     parser.add_argument("-o", "--out", default="embeddings.npy", help="output path")
-    parser.add_argument(
-        "--format", default="npy", choices=["npy", "jsonl"], help="output format [npy]"
-    )
     parser.add_argument("--batch-size", type=int, default=8, help="images per batch [8]")
     parser.add_argument(
         "--no-normalize", action="store_true", help="skip L2 normalization"
@@ -122,6 +152,8 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         choices=["float32", "float16", "bfloat16"],
         help="model precision [float32]",
     )
+    parser.add_argument("--s3-bucket", type=str, default=os.environ.get("AWS_S3_BUCKET_NAME"))
+    parser.add_argument("--s3-prefix", type=str, default="drafts")
     parser.set_defaults(func=handle)
     return parser
 

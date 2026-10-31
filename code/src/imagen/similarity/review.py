@@ -4,7 +4,7 @@ import json
 import numpy as np
 
 
-def clean_path(p: str) -> str:
+def _clean_path(p: str) -> str:
     return p.split("/")[-1].split(".")[0]
 
 
@@ -24,10 +24,10 @@ def handle(input: str, output: str) -> None:
 
     for i, p in enumerate(paths):
         indices = idx[i]
-        path = clean_path(p)
+        path = _clean_path(p)
         with open(f"{output}/{path}.json", "w") as f:
             f.write(json.dumps({
-                "similar": [clean_path(paths[int(j)]) for j in indices]
+                "similar": [_clean_path(paths[int(j)]) for j in indices]
             }))
 
 
