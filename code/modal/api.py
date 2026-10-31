@@ -1,58 +1,88 @@
 import hashlib
+import os
 
-from fastapi import HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 import modal
 
-image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]")
 
-app = modal.App("theunending-api")
-
-# @app.function(image=image)
-# @modal.fastapi_endpoint()
-# def f():
-
-#     try:
-#         # Fetch and list all active handles for live Apps
-#         values = {
-#             app.name: app.app_id 
-#             for app in modal.Environment.from_name("main").apps.list()
-#         }
-#         return f"Hello world! {values}"
-#     except Exception as e:
-#         return f"Oops: {e.__class__.__name__} {e}"
+api = FastAPI()
+auth_scheme = HTTPBearer()
 
 
-@app.function(image=image)
-@modal.fastapi_endpoint(
-    method="POST",
-    label="evaluate",
-)
-def evaluate_handler(payload: dict):
+def _check_auth(request: Request, token: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> bool:
+    if token.credentials != os.environ["MODAL_ENDPOINT_AUTH_TOKEN"]:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return True
+
+
+@api.exception_handler(Exception)
+async def _exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, (HTTPException, StarletteHTTPException)):
+        raise exc
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": str(exc),
+            "error_class": exc.__class__.__name__,
+        },
+    )
+
+
+@api.post("/evaluate")
+def _evaluate(payload: dict, authed: bool = Depends(_check_auth)):
 
     if "prompt" not in payload:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
     prompt = payload["prompt"]
 
-    # 1. Look up the deployed target function by its App name and Function name
     target = modal.Function.from_name("theunending", "evaluate")
     
-    # 2. Trigger the target function
-    # Use .spawn() to trigger it in the background and return immediately
     hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
-    target.spawn({
+    fcall = target.spawn({
         "s3_bucket": "wrossmorrow-genai-repetitions-use1",
         "s3_prefix": f"drafts/{hash}",
         "prompt": prompt,
     })
     
-    # Or use .remote() if you need to wait for and return its result:
-    # result = target_func.remote(data=...)
-
     return {
         "message": "Successfully launched target app function!",
         "details": {
             "prompt": prompt,
             "prompt_hash": hash,
+            "modal_id": fcall.object_id,
         }
     }
+
+
+@api.post("/batch")
+def _batch(authed: bool = Depends(_check_auth)):
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+
+
+@api.post("/embed")
+def _embed(authed: bool = Depends(_check_auth)):
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+
+
+image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]")
+
+app = modal.App("theunending-api")
+
+
+@app.function(
+    image=image,
+    secrets=[modal.Secret.from_name("theunending-auth-token")]
+)
+@modal.asgi_app()
+def entrypoint():
+    return api
