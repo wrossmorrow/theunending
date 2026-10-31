@@ -33,22 +33,6 @@
 .poster-tile:focus-visible img { outline-color: var(--accent-color); }
 .poster-tile:hover .poster-tile-title { color: var(--accent-color); }
 
-/* same look as the interest button (.pi-open) */
-.poster-more {
-  display: block;
-  margin: 0 auto 2.5rem;
-  font: inherit;
-  font-size: .9rem;
-  cursor: pointer;
-  color: inherit;
-  background: none;
-  border: 1px solid currentColor;
-  border-radius: 3px;
-  padding: .5rem .9rem;
-  transition: background-color .15s;
-}
-.poster-more:hover { background: rgba(128,128,128,.12); }
-
 /* ---- per-set page ---- */
 .poster-page .post-header h1 { margin-bottom: .25em; }
 .poster-links { margin: 0 0 2rem; font-size: .95rem; }

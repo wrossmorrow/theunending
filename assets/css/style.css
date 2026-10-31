@@ -213,3 +213,19 @@ details.cw-spoiler summary {
 details.cw-spoiler summary:hover {
   color: #1e293b;
 }
+
+/* "Show more" (assets/js/show-more.js): same look as the interest button */
+.show-more {
+  display: block;
+  margin: 2.75rem auto 2.75rem;
+  font: inherit;
+  font-size: .9rem;
+  cursor: pointer;
+  color: inherit;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: .5rem .9rem;
+  transition: background-color .15s;
+}
+.show-more:hover { background: rgba(128,128,128,.12); }

@@ -1,0 +1,81 @@
+/* Gallery index: square image + wall label per set. Page content, so it inherits the site's type and styles
+ * only its own classes. */
+
+.gal {
+  list-style: none;
+  margin: 1.6rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem 1.25rem;
+}
+
+.gal-item { margin: 0; min-width: 0; }
+
+.gal-img {
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  line-height: 0;
+  background: #f4f4f2;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
+}
+
+.gal-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* the host theme puts margins on bare img; stated, not assumed */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  max-width: none;
+  transition: opacity 140ms ease;
+}
+
+@media (hover: hover) {
+  .gal-img img { opacity: 0.88; }
+  .gal-item:hover .gal-img img,
+  .gal-item:focus-within .gal-img img { opacity: 1; }
+}
+
+.gal-label { margin-top: 0.55rem; line-height: 1.3; }
+
+.gal-title { text-decoration: none; }
+.gal-title:hover { opacity: 0.7; }
+
+.gal-date {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--meta-color);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the prompt: part of the piece, so always shown, just quieter */
+.gal-prompt {
+  margin: 0.4rem 0 0;
+  font-size: 0.86rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: #4f4f4f;              /* a step darker than --meta-color: this is content */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+/* Phones: one column, bigger image, more of the prompt -- walking the wall.
+ * For two columns instead: repeat(2, 1fr), and clamp back to 3. */
+@media (max-width: 560px) {
+  .gal { grid-template-columns: 1fr; gap: 2.5rem; }
+  .gal-prompt { font-size: 0.95rem; -webkit-line-clamp: 4; line-clamp: 4; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .gal-img { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.16); }
+}
