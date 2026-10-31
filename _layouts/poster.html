@@ -1,0 +1,61 @@
+---
+layout: default
+---
+{%- assign p = site.data["unending-posters"][page.poster_name] -%}
+<link rel="stylesheet" href="{{ '/assets/css/posters.css' | relative_url }}?v={{ site.time | date: '%s' }}">
+
+<article class="poster-page">
+  <header class="post-header">
+    <div class="kicker">
+      {% if page.set_date %}{{ page.set_date | date: "%Y-%m-%d" }} • {% endif %}printable
+    </div>
+    <h1>{{ page.heading }}</h1>
+    <p class="poster-links">
+      {% if page.post_url %}<a href="{{ page.post_url | relative_url }}">See the set</a> · {% endif %}
+      <a href="{{ '/printable/' | relative_url }}">All printables</a>
+    </p>
+  </header>
+
+  <div class="poster-grid">
+  {%- for version in p -%}
+    {%- assign size = version[0] -%}
+    {%- assign v = version[1] -%}
+    {%- if v.thumb.w <= v.thumb.h %}
+    <figure>
+      <a href="{{ '/assets/img/posters/' | append: v.preview.src | relative_url }}">
+        <img src="{{ '/assets/img/posters/' | append: v.thumb.src | relative_url }}" width="{{ v.thumb.w }}" height="{{ v.thumb.h }}" loading="lazy" alt="{{ page.heading | escape }}, {{ size | replace: 'x', '×' }} in">
+      </a>
+      <figcaption>{{ size | replace: "x", " × " }}″</figcaption>
+    </figure>
+    {%- endif -%}
+  {%- endfor %}
+  </div>
+
+  {%- for version in p -%}
+    {%- assign size = version[0] -%}
+    {%- assign v = version[1] -%}
+    {%- if v.thumb.w > v.thumb.h %}
+  <figure class="poster-wide">
+    <a href="{{ '/assets/img/posters/' | append: v.preview.src | relative_url }}">
+      <img src="{{ '/assets/img/posters/' | append: v.thumb.src | relative_url }}" width="{{ v.thumb.w }}" height="{{ v.thumb.h }}" loading="lazy" alt="{{ page.heading | escape }}, {{ size | replace: 'x', '×' }} in">
+    </a>
+    <figcaption>{{ size | replace: "x", " × " }}″</figcaption>
+  </figure>
+    {%- endif -%}
+  {%- endfor %}
+
+  <p class="poster-note">Every square is 1.5″ × 1.5″. Previews are scaled, so they aren't fully faithful to the printable source.</p>
+
+  <div class="poster-interest-row">
+    {% include poster-interest.html theme=page.set label="I like this one" cost_note="estimated for professional print on cold-press art paper" %}
+  </div>
+
+  <nav class="poster-pager" aria-label="More printables">
+    {% if page.newer %}<a href="{{ page.newer.url | relative_url }}" rel="prev">&larr; {{ page.newer.title }}</a>{% else %}<span></span>{% endif %}
+    <span class="poster-pager-pos">{{ page.position }} / {{ page.count }}</span>
+    {% if page.older %}<a href="{{ page.older.url | relative_url }}" rel="next">{{ page.older.title }} &rarr;</a>{% else %}<span></span>{% endif %}
+  </nav>
+</article>
+
+<dialog id="lightbox"><img alt=""></dialog>
+<script src="{{ '/assets/js/posters.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
