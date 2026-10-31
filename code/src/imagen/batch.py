@@ -12,18 +12,21 @@ import boto3
 import torch
 from diffusers import FluxPipeline, Flux2KleinPipeline
 
+from .constants import DEVICE, TORCH_DTYPE
 
-DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
-TORCH_DTYPE = torch.bfloat16 if DEVICE in ("cuda", "mps") else torch.float32
-MAX_PENDING = 16
+
+MAX_PENDING = int(os.environ.get("MAX_PENDING", 16))
+UPLOAD_OS_THREADS = int(os.environ.get("UPLOAD_OS_THREADS", 8))
+
 
 _slots = threading.Semaphore(MAX_PENDING)
 _failures = []
 _lock = threading.Lock()
 
 
-s3 = boto3.client("s3")
-pool = ThreadPoolExecutor(max_workers=8)
+default_s3_client = boto3.client("s3")
+
+pool = ThreadPoolExecutor(max_workers=UPLOAD_OS_THREADS)
 
 
 def load_pipeline(model_id):
@@ -41,7 +44,13 @@ def load_pipeline(model_id):
     return pipe
 
 
-def count_s3_prefix_objects(bucket: str, prefix: str, suffix: str | Sequence[str] | None = ".png") -> int:
+def count_s3_prefix_objects(
+    bucket: str,
+    prefix: str,
+    suffix: str | Sequence[str] | None = ".png",
+    s3: boto3.client = default_s3_client,
+) -> int:
+    
     # Ensure prefix ends with a slash if targeting a "folder"
     if prefix and not prefix.endswith("/"):
         prefix += "/"
@@ -73,6 +82,7 @@ def save_image_and_upload(
     s3_bucket: str,
     s3_prefix: str,
     metadata: dict,
+    s3: boto3.client = default_s3_client,
 ):
 
     ext = {"PNG": "png", "JPEG": "jpg", "WEBP": "webp"}[format.upper()]
@@ -107,26 +117,15 @@ def _done(fut):
         print(f"  upload failed: {exc!r}", flush=True)
 
 
-def submit_upload(*a):
+def submit_upload(*a, s3: boto3.client = default_s3_client):
     _slots.acquire()
-    pool.submit(save_image_and_upload, *a).add_done_callback(_done)
+    pool.submit(save_image_and_upload, *a, s3=s3).add_done_callback(_done)
 
 
-def main():
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--prompt", type=str, required=True)
-    parser.add_argument("--s3-bucket", type=str, required=True)
-    parser.add_argument("--s3-prefix", type=str, required=True)
-    parser.add_argument("--max-images", type=int, default=5_000)
-    parser.add_argument("--format", type=str, default="PNG", choices=["PNG", "JPEG", "WEBP"])
-    parser.add_argument("--width", type=int, default=512)
-    parser.add_argument("--height", type=int, default=512)
-    parser.add_argument("--steps", type=int, default=4)
-    parser.add_argument("--outdir", type=str, default="images")
-    parser.add_argument("--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B")
-
-    args = parser.parse_args()
+def handle(
+    args: argparse.Namespace,
+    s3: boto3.client = default_s3_client,
+) -> None:
 
     os.makedirs(args.outdir, exist_ok=True)
 
@@ -162,6 +161,7 @@ def main():
                 "seed": str(seed),
                 "prompt": chopped_prompt,
             },
+            s3=s3,
         )
 
         if (idx + 1) % 50 == 0 or (idx + 1) == total:
@@ -174,6 +174,29 @@ def main():
         raise SystemExit(1)
     
     print("All tasks finished and synced to S3.")
+
+
+def command(parser: argparse.ArgumentParser) -> argparse.Namespace:
+    parser.add_argument("--prompt", type=str, required=True)
+    parser.add_argument("--s3-bucket", type=str, default=os.environ.get("AWS_S3_BUCKET_NAME"))
+    parser.add_argument("--s3-prefix", type=str, required=True)
+    parser.add_argument("--max-images", type=int, default=5_000)
+    parser.add_argument("--format", type=str, default="PNG", choices=["PNG", "JPEG", "WEBP"])
+    parser.add_argument("--width", type=int, default=512)
+    parser.add_argument("--height", type=int, default=512)
+    parser.add_argument("--steps", type=int, default=4)
+    parser.add_argument("--outdir", type=str, default="images")
+    parser.add_argument("--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B")
+    parser.set_defaults(func=handle)
+
+
+def cli() -> argparse.Namespace:
+    return command(argparse.ArgumentParser()).parse_args()
+
+
+def main():
+    args = cli()
+    args.func(args)
 
 
 if __name__ == "__main__":
