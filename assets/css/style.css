@@ -33,7 +33,7 @@ body {
   background: var(--bg-color);
   padding-top: 0.6em;
 }
-.site-bar hr { margin: 0.6em 0 0; }
+.site-bar hr { margin: 0.6em 0 0.5em; }   /* bottom matches the default hr gap below */
 
 /* In-page jumps (footnotes, #anchors) land below the bar, not under it */
 html { scroll-padding-top: 4.5rem; }
