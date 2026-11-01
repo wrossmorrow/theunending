@@ -9,39 +9,39 @@ default:
     just --list
 
 run prompt rows cols width="512" height="512" model_id=flux2:
-    PROMPT="{{prompt}}" \
-    ROWS={{rows}} \
-    COLS={{cols}} \
-    WIDTH={{width}} \
-    HEIGHT={{height}} \
-    MODEL_ID="{{model_id}}" \
+    PROMPT="{{ prompt }}" \
+    ROWS={{ rows }} \
+    COLS={{ cols }} \
+    WIDTH={{ width }} \
+    HEIGHT={{ height }} \
+    MODEL_ID="{{ model_id }}" \
         ./remote/prompt.sh
 
 run-flux1 prompt rows cols width="512" height="512":
-    just run {{prompt}} {{rows}} {{cols}} {{width}} {{height}} {{flux1}}
+    just run {{ prompt }} {{ rows }} {{ cols }} {{ width }} {{ height }} {{ flux1 }}
 
 run-flux2 prompt rows cols width="512" height="512":
-    just run {{prompt}} {{rows}} {{cols}} {{width}} {{height}} {{flux2}}
+    just run {{ prompt }} {{ rows }} {{ cols }} {{ width }} {{ height }} {{ flux2 }}
 
 regen prompt regen loc width="512" height="512":
     #!/bin/bash
-    HASH=$( printf "%s" "{{prompt}}" | sha256sum | awk '{print $1}' )
-    COUNT=$( cat {{regen}} | wc -l | sed -E 's/[^0-9]//g' )
+    HASH=$( printf "%s" "{{ prompt }}" | sha256sum | awk '{print $1}' )
+    COUNT=$( cat {{ regen }} | wc -l | sed -E 's/[^0-9]//g' )
 
     echo "Directory: ${HASH} (${COUNT})"
 
     TILES="generated-tiles/${HASH}"
     mkdir -p ${TILES}
-    echo "{{prompt}}" > "${TILES}/prompt.txt"
+    echo "{{ prompt }}" > "${TILES}/prompt.txt"
     uv run imagen \
-        --prompt="{{prompt}}" \
-        --width {{width}} \
-        --height {{height}} \
+        --prompt="{{ prompt }}" \
+        --width {{ width }} \
+        --height {{ height }} \
         --rows 1 \
         --cols ${COUNT} \
         --tiles ${TILES}
 
-    exec 3< {{regen}}
+    exec 3< {{ regen }}
     for FILE in ${TILES}/*.png; do
         # Read the next line from names.txt
         if read -r NEW_NAME <&3; then
@@ -54,84 +54,84 @@ regen prompt regen loc width="512" height="512":
 
     aws s3 cp \
         ${TILES} \
-        s3://dac2ef3da2-exercises-or-excuses-site-content-use1/assets/img/{{loc}}/ \
+        s3://dac2ef3da2-exercises-or-excuses-site-content-use1/assets/img/{{ loc }}/ \
         --exclude "*" --include "*.png" --recursive
 
 ssh ip ssh_key=ssh_key user="ubuntu" *flags="":
-    ssh -i ~/.ssh/{{ssh_key}} {{user}}@{{ip}} {{flags}}
+    ssh -i ~/.ssh/{{ ssh_key }} {{ user }}@{{ ip }} {{ flags }}
 
 scp ip ssh_key=ssh_key user="ubuntu" *flags="":
-    scp -i ~/.ssh/{{ssh_key}} {{flags}} pyproject.toml uv.lock README.md {{user}}@{{ip}}:~/
-    scp -i ~/.ssh/{{ssh_key}} {{flags}} remote/.env remote/.run remote/*.sh {{user}}@{{ip}}:~/
-    scp -r -i ~/.ssh/{{ssh_key}} {{flags}} src {{user}}@{{ip}}:~/
-    scp -i ~/.ssh/{{ssh_key}} {{flags}} poster.py og_tiles.py web-posters.py {{user}}@{{ip}}:~/
+    scp -i ~/.ssh/{{ ssh_key }} {{ flags }} pyproject.toml uv.lock README.md {{ user }}@{{ ip }}:~/
+    scp -i ~/.ssh/{{ ssh_key }} {{ flags }} remote/.env remote/.run remote/*.sh {{ user }}@{{ ip }}:~/
+    scp -r -i ~/.ssh/{{ ssh_key }} {{ flags }} src {{ user }}@{{ ip }}:~/
+    scp -i ~/.ssh/{{ ssh_key }} {{ flags }} poster.py og_tiles.py web-posters.py {{ user }}@{{ ip }}:~/
 
 prompt ip prompt ssh_key=ssh_key user="ubuntu":
-    ssh -i ~/.ssh/{{ssh_key}} {{user}}@{{ip}} 'PROMPT="{{prompt}}" OUTDIR="demo" bash -lc ./prompt.sh'
-    scp -i ~/.ssh/{{ssh_key}} {{user}}@{{ip}}:~/demo/thematic-grid-0.png images/thematic-grid-0.png
+    ssh -i ~/.ssh/{{ ssh_key }} {{ user }}@{{ ip }} 'PROMPT="{{ prompt }}" OUTDIR="demo" bash -lc ./prompt.sh'
+    scp -i ~/.ssh/{{ ssh_key }} {{ user }}@{{ ip }}:~/demo/thematic-grid-0.png images/thematic-grid-0.png
 
 boot ip ssh_key=ssh_key user="ubuntu":
-    just scp {{ip}} {{ssh_key}} {{user}} \
+    just scp {{ ip }} {{ ssh_key }} {{ user }} \
         -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null
-    ssh -i ~/.ssh/{{ssh_key}} \
+    ssh -i ~/.ssh/{{ ssh_key }} \
         -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null \
-        {{user}}@{{ip}} "bash setup.sh"
-    just ssh {{ip}} {{ssh_key}} {{user}} \
+        {{ user }}@{{ ip }} "bash setup.sh"
+    just ssh {{ ip }} {{ ssh_key }} {{ user }} \
         -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null
 
 scp-run ip ssh_key=ssh_key user="ubuntu":
-    scp -i ~/.ssh/{{ssh_key}} remote/.run {{user}}@{{ip}}:~/
+    scp -i ~/.ssh/{{ ssh_key }} remote/.run {{ user }}@{{ ip }}:~/
 
 copy-vast ip port:
-    scp -P {{port}} pyproject.toml uv.lock README.md root@{{ip}}:~/
-    scp -P {{port}} remote/.env remote/*.sh root@{{ip}}:~/
-    scp -r -P {{port}} src root@{{ip}}:~/
-    scp -P {{port}} poster.py og_tiles.py web-posters.py root@{{ip}}:~/
+    scp -P {{ port }} pyproject.toml uv.lock README.md root@{{ ip }}:~/
+    scp -P {{ port }} remote/.env remote/*.sh root@{{ ip }}:~/
+    scp -r -P {{ port }} src root@{{ ip }}:~/
+    scp -P {{ port }} poster.py og_tiles.py web-posters.py root@{{ ip }}:~/
 
 ssh-runpod ip port user="root":
-    ssh -i ~/.ssh/id_ed25519 -p {{port}} {{user}}@{{ip}}
+    ssh -i ~/.ssh/id_ed25519 -p {{ port }} {{ user }}@{{ ip }}
 
 copy-runpod ip port user="root":
-    scp -P {{port}} -i ~/.ssh/id_ed25519 pyproject.toml uv.lock README.md {{user}}@{{ip}}:/workspace/
-    scp -P {{port}} -i ~/.ssh/id_ed25519 remote/.env.runpod {{user}}@{{ip}}:/workspace/.env
-    scp -P {{port}} remote/*.sh {{user}}@{{ip}}:/workspace/
-    scp -r -P {{port}} -i ~/.ssh/id_ed25519 src {{user}}@{{ip}}:/workspace/
-    scp -P {{port}} -i ~/.ssh/id_ed25519 poster.py og_tiles.py web-posters.py {{user}}@{{ip}}:/workspace/
+    scp -P {{ port }} -i ~/.ssh/id_ed25519 pyproject.toml uv.lock README.md {{ user }}@{{ ip }}:/workspace/
+    scp -P {{ port }} -i ~/.ssh/id_ed25519 remote/.env.runpod {{ user }}@{{ ip }}:/workspace/.env
+    scp -P {{ port }} remote/*.sh {{ user }}@{{ ip }}:/workspace/
+    scp -r -P {{ port }} -i ~/.ssh/id_ed25519 src {{ user }}@{{ ip }}:/workspace/
+    scp -P {{ port }} -i ~/.ssh/id_ed25519 poster.py og_tiles.py web-posters.py {{ user }}@{{ ip }}:/workspace/
     # mkdir -p /workspace/.cache/{huggingface,torch,uv}
 
 prepopulate runname postdate setname:
     #!/bin/bash
-    POST_NAME="{{postdate}}-{{setname}}"
-    FROM_S3="s3://{{raw_S3_bucket}}/runs/{{runname}}"
-    TO_S3="s3://{{site_s3_bucket}}/assets/img/${POST_NAME}"
+    POST_NAME="{{ postdate }}-{{ setname }}"
+    FROM_S3="s3://{{ raw_S3_bucket }}/runs/{{ runname }}"
+    TO_S3="s3://{{ site_s3_bucket }}/assets/img/${POST_NAME}"
     echo "Syncing \"${FROM_S3}\" to \"${TO_S3}\""
     aws s3 sync "${FROM_S3}" "${TO_S3}"
     aws s3 ls "${TO_S3}/" \
         | awk '{ print $4 }' | grep '\.png$' | sed 's/\.png$//' \
         | python3 -c 'import sys,json; json.dump([l.strip() for l in sys.stdin if l.strip()], sys.stdout)' \
-        > ../assets/streams/{{setname}}.json
+        > ../assets/streams/{{ setname }}.json
 
 syncback ip postdate setname ssh_key=ssh_key user="ubuntu":
-    scp -i ~/.ssh/{{ssh_key}} \
-        {{user}}@{{ip}}:~/{{postdate}}-{{setname}}.md \
-        ../_drafts/{{postdate}}-{{setname}}.md
-    scp -i ~/.ssh/{{ssh_key}} \
-        {{user}}@{{ip}}:~/{{setname}}.json \
-        ../assets/streams/{{setname}}.json
-    scp -i ~/.ssh/{{ssh_key}} \
-        {{user}}@{{ip}}:~/og/{{setname}}.jpg \
-        ../assets/og/{{setname}}.jpg
-    scp -r -i ~/.ssh/{{ssh_key}} \
-        {{user}}@{{ip}}:~/posters/previews/{{postdate}}-{{setname}}/ \
-        ../assets/img/posters/previews/{{postdate}}-{{setname}}/
-    scp -r -i ~/.ssh/{{ssh_key}} \
-        {{user}}@{{ip}}:~/posters/thumbs/{{postdate}}-{{setname}}/ \
-        ../assets/img/posters/thumbs/{{postdate}}-{{setname}}/
-    scp -i ~/.ssh/{{ssh_key}} \
-        {{user}}@{{ip}}:~/posters/*.json \
+    scp -i ~/.ssh/{{ ssh_key }} \
+        {{ user }}@{{ ip }}:~/{{ postdate }}-{{ setname }}.md \
+        ../_drafts/{{ postdate }}-{{ setname }}.md
+    scp -i ~/.ssh/{{ ssh_key }} \
+        {{ user }}@{{ ip }}:~/{{ setname }}.json \
+        ../assets/streams/{{ setname }}.json
+    scp -i ~/.ssh/{{ ssh_key }} \
+        {{ user }}@{{ ip }}:~/og/{{ setname }}.jpg \
+        ../assets/og/{{ setname }}.jpg
+    scp -r -i ~/.ssh/{{ ssh_key }} \
+        {{ user }}@{{ ip }}:~/posters/previews/{{ postdate }}-{{ setname }}/ \
+        ../assets/img/posters/previews/{{ postdate }}-{{ setname }}/
+    scp -r -i ~/.ssh/{{ ssh_key }} \
+        {{ user }}@{{ ip }}:~/posters/thumbs/{{ postdate }}-{{ setname }}/ \
+        ../assets/img/posters/thumbs/{{ postdate }}-{{ setname }}/
+    scp -i ~/.ssh/{{ ssh_key }} \
+        {{ user }}@{{ ip }}:~/posters/*.json \
         ./
     cp ../_data/unending-posters.json \
         unending-posters.json.orig
