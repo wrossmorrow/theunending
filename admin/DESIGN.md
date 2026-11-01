@@ -71,7 +71,7 @@ We're going to use :
     * slug (optional, string/text)
     * name (optional, string/text)
     * prompt (nullable, string/text, set when committed)
-    * prompt_hash (generated when prompt is set, defined as sha256(model::prompt))
+    * model_prompt_hash (generated when prompt is set, defined as sha256(model::prompt))
     * post_date (nullable string/text, set when committed; YYYY-MM-DD style string in LA/Pacific TZ)
     * status (DRAFT, ABANDONED, COMMITTED, COMPLETED, FAILED)
     * created_at (generated on creation, UTC timestamp)
@@ -82,7 +82,7 @@ We're going to use :
     * draft_id (PK, uuidv7)
     * set_id (FK, uuidv7)
     * prompt (required, string/text)
-    * prompt_hash (generated on creation, defined as sha256(sets[set_id].model::prompt))
+    * model_prompt_hash (generated on creation, defined as sha256(sets[set_id].model::prompt))
     * status (PENDING, IN_PROGRESS, FAILED, COMPLETED)
     * created_at (generated on creation, UTC timestamp)
 * "runs"
@@ -140,6 +140,7 @@ We're going to use :
 * A set can only be marked ABANDONED (DELETE call) while in DRAFT status
 * The DELETE implementation will be _soft_: mark ABANDONED, leave in database
 * set "COMPLETION" will happen based on the result on an external job and handled with run updates described below
+* set semantics: a set is a named container for many images (thousands); COMMITTED means "ready to execute the creation of thousands", COMPLETED means "we've done it, we have all our images". A set has one commit and should be immutable after that, up to reconciling batch job failures that change state.
 * set status flow:
     * DRAFT -> COMMITTED (when a draft is committed, see below)
     * DRAFT -> ABANDONED (when DELETE /api/v0/sets/{set_id} called)
@@ -165,14 +166,15 @@ We're going to use :
 * To create a draft the set_id referenced in the path must exist, and be in status: DRAFT
 * To create a draft we have to submit a prompt and get back a uuidv7 draft_id
 * drafts are otherwise immutable except for system-updatable status field
-* The system creates the prompt hash from the prompt in the create request
-* prompt hashes must be globally unique over all drafts
+* The system creates the model_prompt_hash from the prompt in the create request
+* model_prompt_hashes must be globally unique over all drafts
 * The valid draft status transitions are:
     * PENDING -> IN_PROGRESS (external job started)
     * PENDING -> FAILED (external job created, but failed to start)
     * IN_PROGRESS -> COMPLETED | FAILED (external job finished, with success or error)
     * FAILED -> COMPLETED (a re-run of the external job finished successfully)
     * implement any X -> X state transition (same state as current) as a no-op success
+* drafts are the way to evaluate options before committing a set; drafts associated with a set are the "drafting" phase. Holding "commit" at the draft level lets the user pick the draft that works best, and "commit" the set with that draft's prompt, model_prompt_hash, and the commit "post_date".
 * There is no "direct" way to update a draft status, the system will do this as described elsewhere
 * when we create a draft _and_ successfully trigger the external job
     * we create a run for this set/draft storing:
@@ -185,7 +187,7 @@ We're going to use :
     * we will need to copy S3 assets from one bucket to another (owned by the same account)
     * "job" bucket /job prefix -> "site" bucket / site prefix
     * probably one file, but we should implement generally
-    * the job and site prefixes are likely to involve the prompt hash like {prefix}/{prompt_hash}
+    * the job and site prefixes are likely to involve the model_prompt_hash like {prefix}/{model_prompt_hash}
 * "committing" (with the /commit endpoint) is how sets are COMMITTED
     * the set referenced by the path must be in status: DRAFT (not committed in particular)
     * the set referenced by the path must have both a slug and name stored
