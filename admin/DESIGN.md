@@ -56,6 +56,7 @@ We're going to use :
     * 400 when a request is accepted but fails other constraints not validatable by the JSON alone
         * e.g., the failure is after a database lookup given the request
     * 501 when an endpoint is available but has no implementation yet
+    * NOTE: if specific examples below seem to deviate from this, prefer these rules
 * timestamps should all be no-timezone UTC timestamps.
     * client applications are responsible for timezoning correctly, if needed
     * `post_date` is an exception, it's a literal string used for other purposes
@@ -81,7 +82,7 @@ We're going to use :
     * draft_id (PK, uuidv7)
     * set_id (FK, uuidv7)
     * prompt (required, string/text)
-    * prompt_hash (generated on creation, defined as sha256(model::prompt))
+    * prompt_hash (generated on creation, defined as sha256(sets[set_id].model::prompt))
     * status (PENDING, IN_PROGRESS, FAILED, COMPLETED)
     * created_at (generated on creation, UTC timestamp)
 * "runs"
@@ -182,14 +183,14 @@ We're going to use :
     * "job" bucket /job prefix -> "site" bucket / site prefix
     * probably one file, but we should implement generally
     * the job and site prefixes are likely to involve the prompt hash like {prefix}/{prompt_hash}
-* "commiting" (with the /commit endpoint) is how sets are COMMITTED
+* "committing" (with the /commit endpoint) is how sets are COMMITTED
     * the set referenced by the path must be in status: DRAFT (not committed in particular)
     * the set referenced by the path must have both a slug and name stored
     * the draft referenced must be in status: COMPLETED
     * if so, the commit call assigns:
         * set[set_id].prompt <- draft.prompt
         * set[set_id].post_date <- current date in YYYY-MM-DD format for Los Angeles/Pacific TZ
-        * set[set_id].commited_at <- current UTC timestamp
+        * set[set_id].committed_at <- current UTC timestamp
         * set[set_id].status <- COMMITTED
         * runs an external job
             * we create a run for this set/draft storing the set_id/draft_id FK's and the external_run_id
@@ -211,7 +212,7 @@ We're going to use :
 
 ### Details
 
-* run objects should only be created by the code, from draft creation, set commiting, and internally for "redos"
+* run objects should only be created by the code, from draft creation, set committing, and internally for "redos"
 * runs are immutable except timestamps and status
 * run statuses are linear: PENDING -> IN_PROGRESS -> COMPLETED | FAILED are the only valid changes
     * PENDING -> IN_PROGRESS (we are signalled an external job we created has started)
@@ -236,19 +237,19 @@ user -> create set (POST /api/v0/sets)
 user -> create draft (POST /api/v0/sets/{set_id}/drafts)
     -> create/store a type: EVALUATION run object
     -> kick off external EVALUATION job (HTTP POST request)  with a run_id
-    <- 201 if ok, 400 if invalid set, 500 if creating job fails, ...
+    <- 201 if created, 400 if invalid set, 500 if creating job fails, ...
     ("in the background")
         <- external job starts, calls PUT /api/v0/runs/{run_id}/status ("IN_PROGRESS")
         <- external job fails, calls PUT /api/v0/runs/{run_id}/status ("FAILED")
         <- external job completes, calls PUT /api/v0/runs/{run_id}/status ("COMPLETED")
-        on COMPLETED, set the draft.status to COMPLETED, on FAILED, set the draft.sttus to FAILED
+        on COMPLETED, set the draft.status to COMPLETED, on FAILED, set the draft.status to FAILED
 
 user -> create draft (POST /api/v0/sets/{set_id}/drafts)
     -> kick off external job (HTTP POST request) -> store draft.run_id
     ... same
 
 user -> commit set (POST /api/v0/sets/{set_id}/drafts/{draft_id}/commit)
-    <- 400, slug/name not set
+    <- 400, set invalid: slug/name not set yet
 
 user -> update set (PATCH /api/v0/sets/{set_id}) with slug/name
     <- 200 if ok, 400/422 if validation fails, 404 not found
