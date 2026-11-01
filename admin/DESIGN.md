@@ -7,6 +7,8 @@ We're going to work on an HTTP API we'll run in AWS to
 * commit a "draft" as "the" "set"
 * store and surface data through the API we can build an interactive webpage over
 
+**Goal:** This is to be a deployed API a team of maintainers will depend on working reliably for as long as a project lasts. We are not scripting, we are building a business application.
+
 # Toolchain
 
 We're going to use :
