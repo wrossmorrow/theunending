@@ -26,7 +26,9 @@ We're going to use :
         * the maintainer is used to RDBMS
         * there are transcational data updates, immutable stores will not work
         * there are obvious "relations" between the resources
-    * assuming that, lets use SQLModel and psycopg3
+    * assuming that, lets use SQLModel with an async engine
+        * tests: SQLite via aiosqlite
+        * presume postgres via asyncpg
 
 # General
 
@@ -72,6 +74,7 @@ We're going to use :
 * Do not pass a database _session_ to an API route handler
     * pass a _session factory_ not a session
     * the route handler will have to decide on session management
+    * the session factory yields an async session (async_sessionmaker[AsyncSession]) and handlers manage it via `async with`
 * When writing tests avoid mocks at all costs.
     * Mocking makes tests complex, brittle and it is easy to test trivialities
     * One exception here may be a mock response from an external job system with an external_job_id
@@ -358,7 +361,7 @@ Derived from the resolved design decisions in this document.
 
 ### Phase 1 — Data model and sets
 
-* SQLModel entities for Set, Draft, Run (Postgres; SQLite for tests; UUIDs as uuidv7).
+* SQLModel entities for Set, Draft, Run (async engine; Postgres; SQLite for tests; UUIDs as uuidv7).
 * Sets: create (DRAFT, model required, optional slug/name), list (filters), get, patch (DRAFT only, slug/name), delete (soft → ABANDONED).
 * Commit path: single transaction over set update + run creation; idempotent; external job call outside transaction; failure → reject/no changes.
 

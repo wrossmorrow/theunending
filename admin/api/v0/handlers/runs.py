@@ -62,7 +62,7 @@ async def redo_run(
             )
 
         try:
-            external_run_id = job_client.create_job(
+            external_run_id = await job_client.create_job(
                 {
                     "set_id": str(run.set_id),
                     "draft_id": str(run.draft_id),

@@ -56,7 +56,7 @@ async def create_draft(
         await session.refresh(draft)
 
     try:
-        external_run_id = job_client.create_job(
+        external_run_id = await job_client.create_job(
             {
                 "set_id": str(set_id),
                 "draft_id": str(draft_id),
@@ -152,7 +152,7 @@ async def commit_draft(
             )
 
     try:
-        external_run_id = job_client.create_job(
+        external_run_id = await job_client.create_job(
             {
                 "set_id": str(set_id),
                 "draft_id": str(draft_id),

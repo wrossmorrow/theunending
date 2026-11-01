@@ -11,7 +11,7 @@ from api.utils.jobs import ExternalJobClient, get_job_client
 class MockExternalJobClient(ExternalJobClient):
     """Mock external job client returning a fixed external run id."""
 
-    def create_job(self, payload: dict) -> str:
+    async def create_job(self, payload: dict) -> str:
         """Return a fixed external run id without calling the job system."""
         return "mock-external-run-id"
 
