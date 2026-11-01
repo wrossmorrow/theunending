@@ -289,6 +289,40 @@ Notes:
 * the "external jobs" referenced below are triggerable by a plain HTTP call. We will need to align on the payloads through working on the design, but triggering them won't be any more complicated than this.
 * a successfully drafted, commited, and completed set will require other actions we can consider later.
 
+# API Implementation Plan
+
+Derived from the resolved design decisions in this document.
+
+## Scope
+
+* Deliver an HTTP API (FastAPI, containerized with Docker, IAM role, no auth, HTTP/1.1, env vars, no `.env`) in AWS that makes sets, makes set drafts, commits a draft as the set, and stores/surfaces data through the API over which an interactive webpage can later be built.
+
+## Phases
+
+### Phase 1 — Data model and sets
+
+* SQLModel entities for Set, Draft, Run (Postgres; SQLite for tests; UUIDs as uuidv7).
+* Sets: create (DRAFT, model required, optional slug/name), list (filters), get, patch (DRAFT only, slug/name), delete (soft → ABANDONED).
+* Commit path: single transaction over set update + run creation; idempotent; external job call outside transaction; failure → reject/no changes.
+
+### Phase 2 — Drafts and commit flow
+
+* Draft create (set must exist and be DRAFT; prompt required; hash = sha256(sets[set_id].model::prompt)); trigger EVALUATION job; run created (EVALUATION, PENDING).
+* Draft status transitions; on COMPLETED copy S3 assets; on FAILED draft status FAILED.
+* Commit (DRAFT set + COMPLETED draft; slug/name set) → assign set fields; trigger BATCH job; run created (BATCH, PENDING); status updates; set COMPLETED/FAILED.
+
+### Phase 3 — Runs and orchestration
+
+* Runs endpoints; redo (FAILED → new run); status updates (match draft status); `external_run_id` from job system response.
+
+### Phase 4 — Tooling, errors, tests, deploy
+
+* FastAPI/Pydantic/etc.; status codes policy; timestamps; prompt hash; error handler; ruff/mypy; justfile; unit tests; Docker/IAM/HTTP.
+
+## Open items carried forward
+
+* None of the top-10 design questions remain open; implementation planning can proceed against the resolved decisions.
+
 # Abbreviations 
 
 * PK: primary key
