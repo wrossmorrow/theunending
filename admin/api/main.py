@@ -37,7 +37,7 @@ api = FastAPI(title="Unending Admin API", lifespan=lifespan)
 @api.get(
     "/api/v0/sets", response_model=models.SetsResponse, status_code=status.HTTP_200_OK
 )
-def list_sets(
+async def list_sets(
     db: Annotated[Session, Depends(get_db)],
     status: models.SetStatus | None = None,
     post_date: str | None = None,
@@ -53,7 +53,7 @@ def list_sets(
 @api.post(
     "/api/v0/sets", response_model=models.Set, status_code=status.HTTP_201_CREATED
 )
-def create_set(
+async def create_set(
     body: models.SetCreate, db: Annotated[Session, Depends(get_db)]
 ) -> models.Set:
     """Create a set (DRAFT status); requires model, optional slug/name."""
@@ -63,7 +63,7 @@ def create_set(
 @api.get(
     "/api/v0/sets/{set_id}", response_model=models.Set, status_code=status.HTTP_200_OK
 )
-def get_set(set_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.Set:
+async def get_set(set_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.Set:
     """Get one set (or 404)."""
     return sets_handlers.get_set(set_id=set_id, db=db)
 
@@ -71,7 +71,7 @@ def get_set(set_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.Set
 @api.patch(
     "/api/v0/sets/{set_id}", response_model=models.Set, status_code=status.HTTP_200_OK
 )
-def patch_set(
+async def patch_set(
     set_id: UUID, update: models.Set, db: Annotated[Session, Depends(get_db)]
 ) -> models.Set:
     """Update set fields (only slug/name; DRAFT only)."""
@@ -81,7 +81,9 @@ def patch_set(
 @api.delete(
     "/api/v0/sets/{set_id}", response_model=models.Set, status_code=status.HTTP_200_OK
 )
-def delete_set(set_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.Set:
+async def delete_set(
+    set_id: UUID, db: Annotated[Session, Depends(get_db)]
+) -> models.Set:
     """Mark set ABANDONED (soft; DRAFT only)."""
     return sets_handlers.delete_set(set_id=set_id, db=db)
 
@@ -91,7 +93,7 @@ def delete_set(set_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.
     response_model=models.Draft,
     status_code=status.HTTP_201_CREATED,
 )
-def create_draft(
+async def create_draft(
     set_id: UUID, body: models.DraftCreate, db: Annotated[Session, Depends(get_db)]
 ) -> models.Draft:
     """Create a set draft; set must exist and be DRAFT; prompt required."""
@@ -103,7 +105,7 @@ def create_draft(
     response_model=models.DraftsResponse,
     status_code=status.HTTP_200_OK,
 )
-def list_drafts(
+async def list_drafts(
     set_id: UUID, db: Annotated[Session, Depends(get_db)]
 ) -> models.DraftsResponse:
     """List set drafts (created_at desc)."""
@@ -115,7 +117,7 @@ def list_drafts(
     response_model=models.Draft,
     status_code=status.HTTP_200_OK,
 )
-def get_draft(
+async def get_draft(
     set_id: UUID, draft_id: UUID, db: Annotated[Session, Depends(get_db)]
 ) -> models.Draft:
     """Get a specific set draft (or 404)."""
@@ -127,7 +129,7 @@ def get_draft(
     response_model=models.Set,
     status_code=status.HTTP_200_OK,
 )
-def commit_draft(
+async def commit_draft(
     set_id: UUID, draft_id: UUID, db: Annotated[Session, Depends(get_db)]
 ) -> models.Set:
     """Commit a draft set."""
@@ -137,7 +139,7 @@ def commit_draft(
 @api.get(
     "/api/v0/runs", response_model=models.RunsResponse, status_code=status.HTTP_200_OK
 )
-def list_runs(
+async def list_runs(
     db: Annotated[Session, Depends(get_db)],
     status: models.RunStatus | None = None,
     set_id: str | None = None,
@@ -152,7 +154,7 @@ def list_runs(
 @api.get(
     "/api/v0/runs/{run_id}", response_model=models.Run, status_code=status.HTTP_200_OK
 )
-def get_run(run_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.Run:
+async def get_run(run_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.Run:
     """Get a specific run by id alone (or 404)."""
     return runs_handlers.get_run(run_id=run_id, db=db)
 
@@ -162,7 +164,7 @@ def get_run(run_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.Run
     response_model=models.Run,
     status_code=status.HTTP_201_CREATED,
 )
-def redo_run(run_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.Run:
+async def redo_run(run_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.Run:
     """Redo a run (requires FAILED status; creates a distinct run)."""
     return runs_handlers.redo_run(run_id=run_id, db=db)
 
@@ -172,7 +174,7 @@ def redo_run(run_id: UUID, db: Annotated[Session, Depends(get_db)]) -> models.Ru
     response_model=models.Run,
     status_code=status.HTTP_200_OK,
 )
-def update_run_status(
+async def update_run_status(
     run_id: UUID,
     update: models.RunStatusUpdate,
     db: Annotated[Session, Depends(get_db)],
