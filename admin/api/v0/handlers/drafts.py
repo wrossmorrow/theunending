@@ -6,12 +6,13 @@ from fastapi import HTTPException
 from fastapi import status as http_status
 from sqlmodel import Session
 
-from api import models
+from api.database import models as database
+from api.v0.schema import models
 
 
 async def create_draft(
     set_id: UUID, body: models.DraftCreate, db: Session
-) -> models.Draft:
+) -> database.Draft:
     """Create a set draft; set must exist and be DRAFT; prompt required."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -27,7 +28,7 @@ async def list_drafts(set_id: UUID, db: Session) -> models.DraftsResponse:
     )
 
 
-async def get_draft(set_id: UUID, draft_id: UUID, db: Session) -> models.Draft:
+async def get_draft(set_id: UUID, draft_id: UUID, db: Session) -> database.Draft:
     """Get a specific set draft (or 404)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -35,7 +36,7 @@ async def get_draft(set_id: UUID, draft_id: UUID, db: Session) -> models.Draft:
     )
 
 
-async def commit_draft(set_id: UUID, draft_id: UUID, db: Session) -> models.Set:
+async def commit_draft(set_id: UUID, draft_id: UUID, db: Session) -> database.Set:
     """Commit a draft set."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,

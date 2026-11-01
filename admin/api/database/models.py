@@ -1,4 +1,4 @@
-"""Data models for the Unending Admin API."""
+"""Database models for the Unending Admin API."""
 
 from datetime import UTC, datetime
 from enum import Enum
@@ -82,48 +82,3 @@ class Run(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime | None = Field(default=None)
     finished_at: datetime | None = Field(default=None)
-
-
-class SetsResponse(SQLModel, table=False):
-    """Response wrapper: a collection of sets."""
-
-    sets: list[Set] = Field(default_factory=list)
-
-
-class DraftsResponse(SQLModel, table=False):
-    """Response wrapper: a collection of drafts."""
-
-    drafts: list[Draft] = Field(default_factory=list)
-
-
-class RunsResponse(SQLModel, table=False):
-    """Response wrapper: a collection of runs."""
-
-    runs: list[Run] = Field(default_factory=list)
-
-
-class SetCreate(SQLModel, table=False):
-    """Create a set; requires model, optional slug/name."""
-
-    model: str = Field()
-    slug: str | None = Field(default=None)
-    name: str | None = Field(default=None)
-
-
-class DraftCreate(SQLModel, table=False):
-    """Create a draft; prompt required."""
-
-    prompt: str = Field()
-
-
-class SetUpdate(SQLModel, table=False):
-    """Update a set; only slug and name may be changed."""
-
-    slug: str | None = Field(default=None)
-    name: str | None = Field(default=None)
-
-
-class RunStatusUpdate(SQLModel, table=False):
-    """Update a run status."""
-
-    status: RunStatus = Field()
