@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import inspect
 import math
 import os
 from pathlib import Path
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
 from .constants import DEVICE, TORCH_DTYPE
+from .progress import Status, update_progress
 
 
 def load_pipeline(model_id: str) -> FluxPipeline | Flux2KleinPipeline:
@@ -101,7 +103,7 @@ def stitch_grid(output, images, grid_cols=None, padding=8, bg_color=(255, 255, 2
     print(f"\nFinal composite saved to {output} ({canvas_w}x{canvas_h})")
 
 
-def copy_to_s3(
+def _copy_to_s3(
     args: argparse.Namespace,
     s3: S3Client,
 ) -> None:
@@ -131,30 +133,73 @@ def copy_to_s3(
         )
 
 
-def handle(args: argparse.Namespace, s3: S3Client | None) -> None:
+def handle(args: argparse.Namespace, s3: S3Client | None) -> int:
 
     if s3 is None:
-        handle(args, boto3.client("s3"))
-        return
+        return handle(args, boto3.client("s3"))
 
-    Path(args.tiles).mkdir(parents=True, exist_ok=True)
-    Path(args.outdir).mkdir(parents=True, exist_ok=True)
+    try:
 
-    img_size = {
-        "width": args.width,
-        "height": args.height,
-    }
+        if args.status_update_url is not None:
+            update_progress(
+                url=args.status_update_url,
+                status=Status.IN_PROGRESS,
+                message="job has launched successfully",
+            )
 
-    pipeline = load_pipeline(args.model_id)
-    for r in range(args.repetitions):
-        prompts = [
-            f"{args.prompt}" for _ in range(args.rows * args.cols)
-        ]
-        generated_tiles = generate_images(pipeline, prompts, img_size, args.steps, args.tiles)
-        filename = f"{args.outdir}/thematic-grid-{r}.png"
-        stitch_grid(filename, generated_tiles, grid_cols=args.cols, padding=12)
+        Path(args.tiles).mkdir(parents=True, exist_ok=True)
+        Path(args.outdir).mkdir(parents=True, exist_ok=True)
 
-    copy_to_s3(args, s3)
+        img_size = {
+            "width": args.width,
+            "height": args.height,
+        }
+
+        pipeline = load_pipeline(args.model_id)
+        for r in range(args.repetitions):
+            prompts = [
+                f"{args.prompt}" for _ in range(args.rows * args.cols)
+            ]
+            generated_tiles = generate_images(pipeline, prompts, img_size, args.steps, args.tiles)
+            filename = f"{args.outdir}/thematic-grid-{r}.png"
+            stitch_grid(filename, generated_tiles, grid_cols=args.cols, padding=12)
+
+            if args.status_update_url is not None:
+                update_progress(
+                    url=args.status_update_url,
+                    status=Status.IN_PROGRESS,
+                    message=f"sample {r+1}/{args.repetitions} completed",
+                )
+
+        _copy_to_s3(args, s3)
+
+        if args.status_update_url is not None:
+            update_progress(
+                url=args.status_update_url,
+                status=Status.COMPLETED,
+                message="image generation and s3 upload completed",
+            )
+
+    except Exception as e:  # noqa: BLE001
+        frame = inspect.currentframe()
+        fname = frame.f_code.co_name if frame is not None else "<unknown>"
+        print(f"An error occurred in {fname}: {e.__class__.__name__} {e}")
+        if args.status_update_url is not None:
+            update_progress(
+                url=args.status_update_url,
+                status=Status.FAILED,
+                message="An uncaught error occurred during processing",
+                details={
+                    "function_name": fname,
+                    "error": str(e),
+                    "error_class": e.__class__.__name__,
+                    "args": {k: v for k, v in vars(args).items()}
+                }
+            )
+
+        return 1
+
+    return 0
 
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
