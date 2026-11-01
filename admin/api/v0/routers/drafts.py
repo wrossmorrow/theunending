@@ -4,11 +4,12 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session
 
 from api.database import models as database
+from api.database.db import get_session_factory
 from api.v0.handlers import drafts as drafts_handlers
-from api.v0.handlers.db import get_db
 from api.v0.schema import models
 
 drafts_router = APIRouter()
@@ -20,10 +21,12 @@ drafts_router = APIRouter()
     status_code=status.HTTP_201_CREATED,
 )
 async def create_draft(
-    set_id: UUID, body: models.DraftCreate, db: Annotated[Session, Depends(get_db)]
+    set_id: UUID,
+    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    body: models.DraftCreate,
 ) -> database.Draft:
     """Create a set draft; set must exist and be DRAFT; prompt required."""
-    return await drafts_handlers.create_draft(set_id=set_id, body=body, db=db)
+    return await drafts_handlers.create_draft(set_id, body, session_factory)
 
 
 @drafts_router.get(
@@ -32,10 +35,11 @@ async def create_draft(
     status_code=status.HTTP_200_OK,
 )
 async def list_drafts(
-    set_id: UUID, db: Annotated[Session, Depends(get_db)]
+    set_id: UUID,
+    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
 ) -> models.DraftsResponse:
     """List set drafts (created_at desc)."""
-    return await drafts_handlers.list_drafts(set_id=set_id, db=db)
+    return await drafts_handlers.list_drafts(set_id, session_factory)
 
 
 @drafts_router.get(
@@ -44,10 +48,12 @@ async def list_drafts(
     status_code=status.HTTP_200_OK,
 )
 async def get_draft(
-    set_id: UUID, draft_id: UUID, db: Annotated[Session, Depends(get_db)]
+    set_id: UUID,
+    draft_id: UUID,
+    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
 ) -> database.Draft:
     """Get a specific set draft (or 404)."""
-    return await drafts_handlers.get_draft(set_id=set_id, draft_id=draft_id, db=db)
+    return await drafts_handlers.get_draft(set_id, draft_id, session_factory)
 
 
 @drafts_router.post(
@@ -56,7 +62,9 @@ async def get_draft(
     status_code=status.HTTP_200_OK,
 )
 async def commit_draft(
-    set_id: UUID, draft_id: UUID, db: Annotated[Session, Depends(get_db)]
+    set_id: UUID,
+    draft_id: UUID,
+    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
 ) -> database.Set:
     """Commit a draft set."""
-    return await drafts_handlers.commit_draft(set_id=set_id, draft_id=draft_id, db=db)
+    return await drafts_handlers.commit_draft(set_id, draft_id, session_factory)

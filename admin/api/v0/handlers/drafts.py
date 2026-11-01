@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from fastapi import status as http_status
+from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session
 
 from api.database import models as database
@@ -11,7 +12,7 @@ from api.v0.schema import models
 
 
 async def create_draft(
-    set_id: UUID, body: models.DraftCreate, db: Session
+    set_id: UUID, body: models.DraftCreate, session_factory: sessionmaker[Session]
 ) -> database.Draft:
     """Create a set draft; set must exist and be DRAFT; prompt required."""
     raise HTTPException(
@@ -20,7 +21,9 @@ async def create_draft(
     )
 
 
-async def list_drafts(set_id: UUID, db: Session) -> models.DraftsResponse:
+async def list_drafts(
+    set_id: UUID, session_factory: sessionmaker[Session]
+) -> models.DraftsResponse:
     """List set drafts (created_at desc)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -28,7 +31,9 @@ async def list_drafts(set_id: UUID, db: Session) -> models.DraftsResponse:
     )
 
 
-async def get_draft(set_id: UUID, draft_id: UUID, db: Session) -> database.Draft:
+async def get_draft(
+    set_id: UUID, draft_id: UUID, session_factory: sessionmaker[Session]
+) -> database.Draft:
     """Get a specific set draft (or 404)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -36,7 +41,9 @@ async def get_draft(set_id: UUID, draft_id: UUID, db: Session) -> database.Draft
     )
 
 
-async def commit_draft(set_id: UUID, draft_id: UUID, db: Session) -> database.Set:
+async def commit_draft(
+    set_id: UUID, draft_id: UUID, session_factory: sessionmaker[Session]
+) -> database.Set:
     """Commit a draft set."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,

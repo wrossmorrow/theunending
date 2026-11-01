@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from fastapi import status as http_status
+from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session
 
 from api.database import models as database
@@ -11,7 +12,7 @@ from api.v0.schema import models
 
 
 async def list_sets(
-    db: Session,
+    session_factory: sessionmaker[Session],
     status: database.SetStatus | None = None,
     post_date: str | None = None,
     slug: str | None = None,
@@ -24,7 +25,9 @@ async def list_sets(
     )
 
 
-async def create_set(db: Session, body: models.SetCreate) -> database.Set:
+async def create_set(
+    session_factory: sessionmaker[Session], body: models.SetCreate
+) -> database.Set:
     """Create a set (DRAFT status); requires model, optional slug/name."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -32,7 +35,7 @@ async def create_set(db: Session, body: models.SetCreate) -> database.Set:
     )
 
 
-async def get_set(set_id: UUID, db: Session) -> database.Set:
+async def get_set(set_id: UUID, session_factory: sessionmaker[Session]) -> database.Set:
     """Get one set (or 404)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -41,7 +44,7 @@ async def get_set(set_id: UUID, db: Session) -> database.Set:
 
 
 async def patch_set(
-    set_id: UUID, update: models.SetUpdate, db: Session
+    set_id: UUID, update: models.SetUpdate, session_factory: sessionmaker[Session]
 ) -> database.Set:
     """Update set fields (only slug/name; DRAFT only)."""
     raise HTTPException(
@@ -50,7 +53,9 @@ async def patch_set(
     )
 
 
-async def delete_set(set_id: UUID, db: Session) -> database.Set:
+async def delete_set(
+    set_id: UUID, session_factory: sessionmaker[Session]
+) -> database.Set:
     """Mark set ABANDONED (soft; DRAFT only)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
