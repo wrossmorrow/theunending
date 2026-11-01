@@ -1,12 +1,8 @@
-"""Data models for the Unending Admin API.
+"""Data models for the Unending Admin API."""
 
-Aligned with the resources in ``admin/DESIGN.md``: sets, drafts, and runs.
-"""
-
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
-from uuid import uuid4
+from uuid import UUID, uuid7
 
 from sqlmodel import Field, SQLModel
 
@@ -43,18 +39,18 @@ class Set(SQLModel, table=True):
 
     __tablename__ = "sets"
 
-    set_id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    set_id: UUID = Field(default_factory=uuid7, primary_key=True)
     model: str = Field(index=True)
-    slug: Optional[str] = Field(default=None, index=True)
-    name: Optional[str] = Field(default=None)
-    prompt: Optional[str] = Field(default=None)
+    slug: str | None = Field(default=None, index=True)
+    name: str | None = Field(default=None)
+    prompt: str | None = Field(default=None)
     model_prompt_hash: str = Field(index=True)
-    post_date: Optional[str] = Field(default=None)
+    post_date: str | None = Field(default=None)
     status: SetStatus = Field(default=SetStatus.DRAFT)
-    created_at: Optional[datetime] = Field(default=None)
-    updated_at: Optional[datetime] = Field(default=None)
-    committed_at: Optional[datetime] = Field(default=None)
-    abandoned_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime | None = Field(default=None)
+    committed_at: datetime | None = Field(default=None)
+    abandoned_at: datetime | None = Field(default=None)
 
 
 class Draft(SQLModel, table=True):
@@ -62,12 +58,13 @@ class Draft(SQLModel, table=True):
 
     __tablename__ = "drafts"
 
-    draft_id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    draft_id: UUID = Field(default_factory=uuid7, primary_key=True)
     set_id: str = Field(index=True)
     prompt: str = Field()
     model_prompt_hash: str = Field(index=True)
     status: DraftStatus = Field(default=DraftStatus.PENDING)
-    created_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime | None = Field(default=None)
 
 
 class Run(SQLModel, table=True):
@@ -75,13 +72,51 @@ class Run(SQLModel, table=True):
 
     __tablename__ = "runs"
 
-    run_id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    run_id: UUID = Field(default_factory=uuid7, primary_key=True)
     external_run_id: str = Field()
     set_id: str = Field(index=True)
     draft_id: str = Field(index=True)
     type: RunType = Field()
     status: RunStatus = Field(default=RunStatus.PENDING)
-    details: Optional[str] = Field(default=None)
-    created_at: Optional[datetime] = Field(default=None)
-    updated_at: Optional[datetime] = Field(default=None)
-    finished_at: Optional[datetime] = Field(default=None)
+    details: str | None = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime | None = Field(default=None)
+    finished_at: datetime | None = Field(default=None)
+
+
+class SetsResponse(SQLModel, table=False):
+    """Response wrapper: a collection of sets."""
+
+    sets: list[Set] = Field(default_factory=list)
+
+
+class DraftsResponse(SQLModel, table=False):
+    """Response wrapper: a collection of drafts."""
+
+    drafts: list[Draft] = Field(default_factory=list)
+
+
+class RunsResponse(SQLModel, table=False):
+    """Response wrapper: a collection of runs."""
+
+    runs: list[Run] = Field(default_factory=list)
+
+
+class SetCreate(SQLModel, table=False):
+    """Create a set; requires model, optional slug/name."""
+
+    model: str = Field()
+    slug: str | None = Field(default=None)
+    name: str | None = Field(default=None)
+
+
+class DraftCreate(SQLModel, table=False):
+    """Create a draft; prompt required."""
+
+    prompt: str = Field()
+
+
+class RunStatusUpdate(SQLModel, table=False):
+    """Update a run status."""
+
+    status: RunStatus = Field()
