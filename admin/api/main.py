@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlmodel import SQLModel
+from sqlmodel import Session, SQLModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.health import health_router
@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     engine = create_engine(settings.database_url)
     SQLModel.metadata.create_all(engine)
     app.state.engine = engine
-    app.state.session_factory = sessionmaker(engine, class_=SQLModel)
+    app.state.session_factory = sessionmaker(class_=Session, bind=engine)
     yield
     engine.dispose()
 
