@@ -1,6 +1,6 @@
 """Data models for the Unending Admin API."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from uuid import UUID, uuid7
 
@@ -47,7 +47,7 @@ class Set(SQLModel, table=True):
     model_prompt_hash: str = Field(index=True)
     post_date: str | None = Field(default=None)
     status: SetStatus = Field(default=SetStatus.DRAFT)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime | None = Field(default=None)
     committed_at: datetime | None = Field(default=None)
     abandoned_at: datetime | None = Field(default=None)
@@ -63,7 +63,7 @@ class Draft(SQLModel, table=True):
     prompt: str = Field()
     model_prompt_hash: str = Field(index=True)
     status: DraftStatus = Field(default=DraftStatus.PENDING)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime | None = Field(default=None)
 
 
@@ -79,7 +79,7 @@ class Run(SQLModel, table=True):
     type: RunType = Field()
     status: RunStatus = Field(default=RunStatus.PENDING)
     details: str | None = Field(default=None)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime | None = Field(default=None)
     finished_at: datetime | None = Field(default=None)
 
