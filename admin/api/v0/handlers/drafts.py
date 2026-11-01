@@ -59,7 +59,7 @@ async def create_draft(
                 "model_prompt_hash": draft_model_prompt_hash,
             },
         )
-    except (httpx.HTTPError, KeyError):
+    except httpx.HTTPError, KeyError:
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create external job.",
@@ -83,20 +83,41 @@ async def list_drafts(
     set_id: UUID, session_factory: async_sessionmaker[AsyncSession]
 ) -> models.DraftsResponse:
     """List set drafts (created_at desc)."""
-    raise HTTPException(
-        status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Draft listing is not implemented yet.",
-    )
+    async with session_factory() as session:
+        table = database.Draft.metadata.tables[database.Draft.__tablename__]
+        stmt = (
+            select(database.Draft)
+            .where(table.c.set_id == set_id)
+            .order_by(table.c.created_at.desc())
+        )
+        drafts = list((await session.execute(stmt)).scalars().all())
+    return models.DraftsResponse(drafts=drafts)
 
 
 async def get_draft(
     set_id: UUID, draft_id: UUID, session_factory: async_sessionmaker[AsyncSession]
 ) -> database.Draft:
     """Get a specific set draft (or 404)."""
-    raise HTTPException(
-        status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Draft retrieval is not implemented yet.",
-    )
+    async with session_factory() as session:
+        table = database.Draft.metadata.tables[database.Draft.__tablename__]
+        draft = (
+            (
+                await session.execute(
+                    select(database.Draft).where(
+                        table.c.set_id == set_id,
+                        table.c.draft_id == draft_id,
+                    )
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if draft is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Draft {draft_id} not found.",
+            )
+        return draft
 
 
 async def commit_draft(
@@ -152,7 +173,7 @@ async def commit_draft(
                 "model_prompt_hash": draft.model_prompt_hash,
             },
         )
-    except (httpx.HTTPError, KeyError):
+    except httpx.HTTPError, KeyError:
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create external job.",

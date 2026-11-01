@@ -123,15 +123,123 @@ def test_create_draft_with_empty_prompt_returns_422() -> None:
         assert response.status_code == 422
 
 
-def test_list_sets_not_implemented_returns_501() -> None:
+def test_list_sets_returns_created_set() -> None:
     with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
         response = client.get("/api/v0/sets")
-        assert response.status_code == 501
-        assert "detail" in response.json()
+        assert response.status_code == 200
+        body = response.json()
+        assert any(s["set_id"] == set_id for s in body["sets"])
 
 
-def test_get_set_not_implemented_returns_501() -> None:
+def test_get_set_returns_created_set() -> None:
     with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        response = client.get(f"/api/v0/sets/{set_id}")
+        assert response.status_code == 200
+        assert response.json()["set_id"] == set_id
         response = client.get(f"/api/v0/sets/{uuid4()}")
-        assert response.status_code == 501
-        assert "detail" in response.json()
+        assert response.status_code == 404
+
+
+def test_list_drafts_returns_created_draft() -> None:
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        api.dependency_overrides[get_job_client] = lambda: MockExternalJobClient(
+            base_url="http://localhost:8080"
+        )
+        try:
+            response = client.post(
+                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+            )
+        finally:
+            api.dependency_overrides.pop(get_job_client, None)
+        assert response.status_code == 201
+        draft_id = response.json()["draft_id"]
+        response = client.get(f"/api/v0/sets/{set_id}/drafts")
+        assert response.status_code == 200
+        body = response.json()
+        assert any(d["draft_id"] == draft_id for d in body["drafts"])
+
+
+def test_get_draft_returns_created_draft() -> None:
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        api.dependency_overrides[get_job_client] = lambda: MockExternalJobClient(
+            base_url="http://localhost:8080"
+        )
+        try:
+            response = client.post(
+                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+            )
+        finally:
+            api.dependency_overrides.pop(get_job_client, None)
+        assert response.status_code == 201
+        draft_id = response.json()["draft_id"]
+        response = client.get(f"/api/v0/sets/{set_id}/drafts/{draft_id}")
+        assert response.status_code == 200
+        assert response.json()["draft_id"] == draft_id
+        response = client.get(f"/api/v0/sets/{set_id}/drafts/{uuid4()}")
+        assert response.status_code == 404
+
+
+def test_list_runs_returns_created_run() -> None:
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        api.dependency_overrides[get_job_client] = lambda: MockExternalJobClient(
+            base_url="http://localhost:8080"
+        )
+        try:
+            response = client.post(
+                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+            )
+        finally:
+            api.dependency_overrides.pop(get_job_client, None)
+        assert response.status_code == 201
+        draft_id = response.json()["draft_id"]
+        response = client.get("/api/v0/runs", params={"draft_id": draft_id})
+        assert response.status_code == 200
+        body = response.json()
+        assert any(r["draft_id"] == str(draft_id) for r in body["runs"])
+
+
+def test_get_run_returns_created_run() -> None:
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        api.dependency_overrides[get_job_client] = lambda: MockExternalJobClient(
+            base_url="http://localhost:8080"
+        )
+        try:
+            response = client.post(
+                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+            )
+        finally:
+            api.dependency_overrides.pop(get_job_client, None)
+        assert response.status_code == 201
+        draft_id = response.json()["draft_id"]
+        response = client.get("/api/v0/runs", params={"draft_id": draft_id})
+        assert response.status_code == 200
+        run_id = response.json()["runs"][0]["run_id"]
+        response = client.get(f"/api/v0/runs/{run_id}")
+        assert response.status_code == 200
+        assert response.json()["run_id"] == run_id
+        response = client.get(f"/api/v0/runs/{uuid4()}")
+        assert response.status_code == 404

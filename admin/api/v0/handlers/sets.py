@@ -20,10 +20,19 @@ async def list_sets(
     name: str | None = None,
 ) -> models.SetsResponse:
     """List sets with query filters."""
-    raise HTTPException(
-        status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Set listing is not implemented yet.",
-    )
+    async with session_factory() as session:
+        table = database.Set.metadata.tables[database.Set.__tablename__]
+        stmt = select(database.Set)
+        if status is not None:
+            stmt = stmt.where(table.c.status == status)
+        if post_date is not None:
+            stmt = stmt.where(table.c.post_date == post_date)
+        if slug is not None:
+            stmt = stmt.where(table.c.slug == slug)
+        if name is not None:
+            stmt = stmt.where(table.c.name == name)
+        sets = list((await session.execute(stmt)).scalars().all())
+    return models.SetsResponse(sets=sets)
 
 
 async def create_set(
@@ -52,10 +61,14 @@ async def get_set(
     set_id: UUID, session_factory: async_sessionmaker[AsyncSession]
 ) -> database.Set:
     """Get one set (or 404)."""
-    raise HTTPException(
-        status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Set retrieval is not implemented yet.",
-    )
+    async with session_factory() as session:
+        set_ = await session.get(database.Set, set_id)
+        if set_ is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Set {set_id} not found.",
+            )
+        return set_
 
 
 async def patch_set(

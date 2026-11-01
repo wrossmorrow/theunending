@@ -7,6 +7,7 @@ import httpx
 from fastapi import HTTPException
 from fastapi import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlmodel import select
 
 from api.database import models as database
 from api.utils.jobs import ExternalJobClient
@@ -16,24 +17,35 @@ from api.v0.schema import models
 async def list_runs(
     session_factory: async_sessionmaker[AsyncSession],
     status: database.RunStatus | None = None,
-    set_id: str | None = None,
-    draft_id: str | None = None,
+    set_id: UUID | None = None,
+    draft_id: UUID | None = None,
 ) -> models.RunsResponse:
     """List runs with query filters."""
-    raise HTTPException(
-        status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Run listing is not implemented yet.",
-    )
+    async with session_factory() as session:
+        table = database.Run.metadata.tables[database.Run.__tablename__]
+        stmt = select(database.Run)
+        if status is not None:
+            stmt = stmt.where(table.c.status == status)
+        if set_id is not None:
+            stmt = stmt.where(table.c.set_id == set_id)
+        if draft_id is not None:
+            stmt = stmt.where(table.c.draft_id == draft_id)
+        runs = list((await session.execute(stmt)).scalars().all())
+    return models.RunsResponse(runs=runs)
 
 
 async def get_run(
     run_id: UUID, session_factory: async_sessionmaker[AsyncSession]
 ) -> database.Run:
     """Get a specific run by id alone (or 404)."""
-    raise HTTPException(
-        status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Run retrieval is not implemented yet.",
-    )
+    async with session_factory() as session:
+        run = await session.get(database.Run, run_id)
+        if run is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Run {run_id} not found.",
+            )
+        return run
 
 
 async def redo_run(
@@ -70,7 +82,7 @@ async def redo_run(
                     "model_prompt_hash": draft.model_prompt_hash,
                 },
             )
-        except (httpx.HTTPError, KeyError):
+        except httpx.HTTPError, KeyError:
             raise HTTPException(
                 status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create external job.",
