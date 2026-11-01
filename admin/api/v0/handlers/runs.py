@@ -155,4 +155,19 @@ async def update_run_status(
         await session.commit()
         await session.refresh(draft)
 
+        if run.type == database.RunType.BATCH and update.status in (
+            database.RunStatus.COMPLETED,
+            database.RunStatus.FAILED,
+        ):
+            committed_set = await session.get(database.Set, run.set_id)
+            if committed_set is not None:
+                committed_set.status = (
+                    database.SetStatus.COMPLETED
+                    if update.status == database.RunStatus.COMPLETED
+                    else database.SetStatus.FAILED
+                )
+                session.add(committed_set)
+                await session.commit()
+                await session.refresh(committed_set)
+
     return run
