@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import argparse
-import io
 import inspect
+import io
 import os
 import random
 import threading
@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import boto3
-import httpx
 import torch
 from diffusers import Flux2KleinPipeline, FluxPipeline
 
@@ -21,6 +20,7 @@ if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
 from .constants import DEVICE, TORCH_DTYPE
+from .progress import Status, update_progress
 from .similarity.embed import command as embed_command
 from .similarity.embed import handle as embed
 
@@ -132,22 +132,18 @@ def submit_upload(*a) -> None:
 def handle(
     args: argparse.Namespace,
     s3: S3Client | None,
-) -> None:
+) -> int:
 
     if s3 is None:
-        handle(args, boto3.client("s3"))
-        return
+        return handle(args, boto3.client("s3"))
 
     try:
 
         if args.status_update_url is not None:
-            httpx.put(
+            update_progress(
                 url=args.status_update_url,
-                headers={},
-                json={
-                    "status": "IN_PROGRESS",
-                    "state": "job has launched successfully"
-                },
+                status=Status.IN_PROGRESS,
+                message="job has launched successfully",
             )
 
         os.makedirs(args.outdir, exist_ok=True)
@@ -158,13 +154,10 @@ def handle(
         print(f"Progress: {existing}/{args.max_images} already exist; work on {total}.")
 
         if args.status_update_url is not None:
-            httpx.put(
+            update_progress(
                 url=args.status_update_url,
-                headers={},
-                json={
-                    "status": "IN_PROGRESS",
-                    "state": f"working on {total}/{args.max_images} images",
-                },
+                status=Status.IN_PROGRESS,
+                message=f"working on {total}/{args.max_images} images",
             )
 
         pipe = load_pipeline(args.model_id)
@@ -201,40 +194,41 @@ def handle(
                 message = f"Progress: [{idx + 1}/{total}] generated and queued."
                 print(message)
                 if args.status_update_url is not None:
-                    httpx.put(
+                    update_progress(
                         url=args.status_update_url,
-                        headers={},
-                        json={
-                            "status": "IN_PROGRESS",
-                            "state": message,
-                        },
+                        status=Status.IN_PROGRESS,
+                        message=message,
                     )
 
         pool.shutdown(wait=True)
 
         if _failures:
-            print(f"FAILED: {len(_failures)} uploads did not complete")
-            raise SystemExit(1)
+            message = f"FAILED: {len(_failures)} uploads did not complete"
+            print(message)
+            if args.status_update_url is not None:
+                update_progress(
+                    url=args.status_update_url,
+                    status=Status.FAILED,
+                    message=message,
+                )
+            return 1
         
         print("All tasks finished and synced to S3.")
         if not args.embed:
             if args.status_update_url is not None:
-                httpx.put(
+                update_progress(
                     url=args.status_update_url,
-                    headers={},
-                    json={
-                        "status": "COMPLETED",
-                    },
+                    status=Status.COMPLETED,
+                    message="work completed successfully",
                 )
+            
+            return 0
 
         if args.status_update_url is not None:
-            httpx.put(
+            update_progress(
                 url=args.status_update_url,
-                headers={},
-                json={
-                    "status": "IN_PROGRESS",
-                    "state": "image generation and s3 upload completed"
-                },
+                status=Status.IN_PROGRESS,
+                message="image generation and s3 upload completed",
             )
         
         print("Starting embedding on local images.")
@@ -251,31 +245,32 @@ def handle(
         print("Finished embedding and synced to S3.")
 
         if args.status_update_url is not None:
-            httpx.put(
+            update_progress(
                 url=args.status_update_url,
-                headers={},
-                json={
-                    "status": "COMPLETED",
-                },
+                status=Status.COMPLETED,
+                message="image generation, s3 upload, and embeddings completed",
             )
 
-    except Exception as e:
-        fname = inspect.currentframe().f_code.co_name
+    except Exception as e:  # noqa: BLE001
+        frame = inspect.currentframe()
+        fname = frame.f_code.co_name if frame is not None else "<unknown>"
         print(f"An error occurred in {fname}: {e.__class__.__name__} {e}")
         if args.status_update_url is not None:
-            httpx.put(
+            update_progress(
                 url=args.status_update_url,
-                headers={},
-                json={
-                    "status": "FAILED",
-                    "details": {
-                        "fname": fname,
-                        "error": str(e),
-                        "error_class": e.__class__.__name__,
-                        "args": {k: v for k, v in vars(args).items()}
-                    }
-                },
+                status=Status.FAILED,
+                message="An uncaught error occurred during processing",
+                details={
+                    "function_name": fname,
+                    "error": str(e),
+                    "error_class": e.__class__.__name__,
+                    "args": {k: v for k, v in vars(args).items()}
+                }
             )
+
+        return 1
+
+    return 0
             
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
