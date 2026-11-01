@@ -39,7 +39,7 @@ async def get_set(set_id: UUID, db: Session) -> models.Set:
     )
 
 
-async def patch_set(set_id: UUID, update: models.Set, db: Session) -> models.Set:
+async def patch_set(set_id: UUID, update: models.SetUpdate, db: Session) -> models.Set:
     """Update set fields (only slug/name; DRAFT only)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,

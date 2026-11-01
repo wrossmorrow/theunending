@@ -74,7 +74,7 @@ async def get_set(set_id: UUID, db: Annotated[Session, Depends(get_db)]) -> mode
     "/api/v0/sets/{set_id}", response_model=models.Set, status_code=status.HTTP_200_OK
 )
 async def patch_set(
-    set_id: UUID, update: models.Set, db: Annotated[Session, Depends(get_db)]
+    set_id: UUID, update: models.SetUpdate, db: Annotated[Session, Depends(get_db)]
 ) -> models.Set:
     """Update set fields (only slug/name; DRAFT only)."""
     return await sets_handlers.patch_set(set_id=set_id, update=update, db=db)

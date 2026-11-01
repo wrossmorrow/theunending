@@ -59,7 +59,7 @@ class Draft(SQLModel, table=True):
     __tablename__ = "drafts"
 
     draft_id: UUID = Field(default_factory=uuid7, primary_key=True)
-    set_id: str = Field(index=True)
+    set_id: UUID = Field(index=True)
     prompt: str = Field()
     model_prompt_hash: str = Field(index=True)
     status: DraftStatus = Field(default=DraftStatus.PENDING)
@@ -74,8 +74,8 @@ class Run(SQLModel, table=True):
 
     run_id: UUID = Field(default_factory=uuid7, primary_key=True)
     external_run_id: str = Field()
-    set_id: str = Field(index=True)
-    draft_id: str = Field(index=True)
+    set_id: UUID = Field(index=True)
+    draft_id: UUID = Field(index=True)
     type: RunType = Field()
     status: RunStatus = Field(default=RunStatus.PENDING)
     details: str | None = Field(default=None)
@@ -114,6 +114,13 @@ class DraftCreate(SQLModel, table=False):
     """Create a draft; prompt required."""
 
     prompt: str = Field()
+
+
+class SetUpdate(SQLModel, table=False):
+    """Update a set; only slug and name may be changed."""
+
+    slug: str | None = Field(default=None)
+    name: str | None = Field(default=None)
 
 
 class RunStatusUpdate(SQLModel, table=False):
