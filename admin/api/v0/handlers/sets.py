@@ -6,10 +6,9 @@ from uuid import UUID
 from fastapi import HTTPException
 from fastapi import status as http_status
 from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from api.database import models as database
-from api.utils.prompt import compute_model_prompt_hash
 from api.v0.schema import models
 
 
@@ -37,10 +36,9 @@ async def create_set(
             slug=body.slug,
             name=body.name,
             prompt=None,
-            model_prompt_hash=compute_model_prompt_hash(body.model, ""),
+            model_prompt_hash=None,
             status=database.SetStatus.DRAFT,
             created_at=datetime.now(UTC),
-            updated_at=None,
             committed_at=None,
             abandoned_at=None,
         )
@@ -63,7 +61,9 @@ async def patch_set(
 ) -> database.Set:
     """Update set fields (only slug/name; DRAFT only)."""
     with session_factory() as session:
-        set_ = session.get(database.Set, set_id)
+        table = database.Set.metadata.tables[database.Set.__tablename__]
+        stmt = select(database.Set).where(table.c.set_id == set_id).with_for_update()
+        set_ = session.exec(stmt).first()
         if set_ is None:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,

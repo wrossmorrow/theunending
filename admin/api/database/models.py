@@ -44,11 +44,11 @@ class Set(SQLModel, table=True):
     slug: str | None = Field(default=None, index=True)
     name: str | None = Field(default=None)
     prompt: str | None = Field(default=None)
-    model_prompt_hash: str = Field(index=True)
+    model_prompt_hash: str | None = Field(default=None, index=True)
     post_date: str | None = Field(default=None)
     status: SetStatus = Field(default=SetStatus.DRAFT)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    updated_at: datetime | None = Field(default=None)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     committed_at: datetime | None = Field(default=None)
     abandoned_at: datetime | None = Field(default=None)
 
@@ -64,7 +64,7 @@ class Draft(SQLModel, table=True):
     model_prompt_hash: str = Field(index=True)
     status: DraftStatus = Field(default=DraftStatus.PENDING)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    updated_at: datetime | None = Field(default=None)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class Run(SQLModel, table=True):
@@ -80,5 +80,5 @@ class Run(SQLModel, table=True):
     status: RunStatus = Field(default=RunStatus.PENDING)
     details: str | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    updated_at: datetime | None = Field(default=None)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     finished_at: datetime | None = Field(default=None)
