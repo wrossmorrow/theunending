@@ -7,5 +7,5 @@ curl -X POST "${MODAL_ENDPOINT}/batch" \
     -H 'content-type: application/json' \
     -H 'accept: application/json' \
     -H 'authorization: Bearer '${MODAL_ENDPOINT_AUTH_TOKEN} \
-    -d '{"prompt": "${PROMPT}"}' \
+    -d '{"prompt": "'"${PROMPT}"'"}' \
     -s | jq .
