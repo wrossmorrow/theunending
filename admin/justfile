@@ -18,7 +18,7 @@ typecheck:
 
 # Run the local server
 run:
-    uv run --project api uvicorn api.main:api --host 0.0.0.0 --port 8000
+    uv run uvicorn api.main:api --host 0.0.0.0 --port 8000
 
 # Run unit tests
 test:

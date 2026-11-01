@@ -1,5 +1,5 @@
 [project]
-name = "theunending-admin-api"
+name = "admin"
 version = "0.1.0"
 description = "Admin API for The Unending"
 requires-python = ">=3.14"
@@ -19,4 +19,3 @@ dev = [
     "mypy",
     "pytest",
 ]
-
