@@ -35,7 +35,7 @@ class SetCreate(BaseModel):
 
     model: str = Field(min_length=1)
     slug: str | None = Field(default=None, pattern=r"^[a-z][a-z0-9-]{1,126}[a-z]$")
-    name: str | None = Field(default=None, max_length=64)
+    name: str | None = Field(default=None, max_length=64, min_length=1)
 
 
 class DraftCreate(BaseModel):
@@ -48,7 +48,7 @@ class SetUpdate(BaseModel):
     """Update a set; only slug and name may be changed."""
 
     slug: str | None = Field(default=None, pattern=r"^[a-z][a-z0-9-]{1,126}[a-z]$")
-    name: str | None = Field(default=None, max_length=64)
+    name: str | None = Field(default=None, max_length=64, min_length=1)
 
     @model_validator(mode="after")
     def validate_at_least_one(self) -> Self:

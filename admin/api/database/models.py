@@ -45,7 +45,7 @@ class Set(SQLModel, table=True):
     slug: str | None = Field(
         default=None, index=True, regex=r"^[a-z][a-z0-9-]{1,126}[a-z]$"
     )
-    name: str | None = Field(default=None, max_length=64)
+    name: str | None = Field(default=None, max_length=64, min_length=1)
     prompt: str | None = Field(default=None)
     model_prompt_hash: str | None = Field(default=None, index=True)
     post_date: str | None = Field(default=None)
