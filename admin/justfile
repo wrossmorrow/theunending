@@ -1,25 +1,27 @@
 # Admin API just recipes
 
+source_folder := "api"
+
 # Install dependencies
 install:
     uv sync
 
 # Format code
-format:
-    uv run ruff format .
+format source=source_folder:
+    uv run ruff format {{source}}
 
 # Lint code
-lint:
-    uv run ruff check .
+lint source=source_folder:
+    uv run ruff check {{source}}
 
 # Run type checks
-typecheck:
-    uv run mypy .
+typecheck source=source_folder:
+    uv run mypy {{source}}
 
 # Run the local server
-run:
-    uv run uvicorn api.main:api --host 0.0.0.0 --port 8000
+run host="0.0.0.0" port="8000":
+    uv run uvicorn api.main:api --host {{host}} --port {{port}}
 
 # Run unit tests
-test:
-    uv run pytest
+test *flags="":
+    uv run pytest {{flags}}
