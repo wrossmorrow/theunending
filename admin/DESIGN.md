@@ -34,12 +34,15 @@ We're going to use :
 * the API will be an HTTP (HTTP/1.1) service
 * the API does _not_ need to be gated by authentication, every request to it will be valid
 * the API code needs to implement a generic error handler and through that always return valid JSON response bodies
+* POST/PUT/PATCH requests must have request bodies defined in clear pydantic classes
+* API responses cannot be lists, every response must be an object; if a list is returned that should be in a field like "items" or similar
 * API errors must all respond with a details field that described the reason for the error
 * all status code references should use enums (fastapi.status works)
 * in fact, avoid "magic numbers" everywhere in the code, use settings
 * we will not use "plain dicts", we should type all data with pydantic classes
 * all code written must be formatted/linted by ruff (uv add --dev)
 * all code written must be type-annotated and will be checked with mypy (uv add --dev)
+* use modern python type annotations, like `int | None` not `Optional[int]`
 * the project folder must have a justfile implementing important shell/terminal calls; e.g.:
     * installing
     * formatting/linting
@@ -249,7 +252,7 @@ user -> create set (POST /api/v0/sets)
 
 user -> create draft (POST /api/v0/sets/{set_id}/drafts)
     -> create/store a type: EVALUATION run object
-    -> kick off external EVALUATION job (HTTP POST request)  with a run_id
+    -> kick off external EVALUATION job (HTTP POST request)  creating a run
     <- 201 if created, 400 if invalid set, 500 if creating job fails, ...
     ("in the background")
         <- external job starts, calls PUT /api/v0/runs/{run_id}/status ("IN_PROGRESS")
@@ -258,7 +261,7 @@ user -> create draft (POST /api/v0/sets/{set_id}/drafts)
         on COMPLETED, set the draft.status to COMPLETED, on FAILED, set the draft.status to FAILED
 
 user -> create draft (POST /api/v0/sets/{set_id}/drafts)
-    -> kick off external job (HTTP POST request) -> store draft.run_id
+    -> kick off external EVALUATION job (HTTP POST request) creating a run
     ... same
 
 user -> commit set (POST /api/v0/sets/{set_id}/drafts/{draft_id}/commit)
