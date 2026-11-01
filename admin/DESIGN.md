@@ -187,6 +187,8 @@ We're going to use :
     * the set referenced by the path must be in status: DRAFT (not committed in particular)
     * the set referenced by the path must have both a slug and name stored
     * the draft referenced must be in status: COMPLETED
+    * the commit must be implemented as a single transaction covering the set update and the run creation.
+    * the commit must be idempotent; re-issuing must not create a second BATCH run or overwrite committed state.
     * if so, the commit call assigns:
         * set[set_id].prompt <- draft.prompt
         * set[set_id].post_date <- current date in YYYY-MM-DD format for Los Angeles/Pacific TZ
@@ -212,6 +214,7 @@ We're going to use :
 
 ### Details
 
+* external_run_id should be server-generated (uuid) and unique per external job, used to correlate the external job with its run.
 * run objects should only be created by the code, from draft creation, set committing, and internally for "redos"
 * runs are immutable except timestamps and status
 * run statuses are linear: PENDING -> IN_PROGRESS -> COMPLETED | FAILED are the only valid changes
