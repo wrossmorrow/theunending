@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import io
+import inspect
 import os
 import random
 import threading
@@ -12,6 +13,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import boto3
+import httpx
 import torch
 from diffusers import Flux2KleinPipeline, FluxPipeline
 
@@ -136,55 +138,105 @@ def handle(
         handle(args, boto3.client("s3"))
         return
 
-    os.makedirs(args.outdir, exist_ok=True)
+    try:
 
-    existing = count_s3_prefix_objects(s3, args.s3_bucket, args.s3_prefix)
-    total = args.max_images - existing
+        if args.status_update_url is not None:
+            httpx.put(
+                url=args.status_update_url,
+                headers={},
+                json={
+                    "status": "IN_PROGRESS",
+                    "state": "job has launched successfully"
+                },
+            )
 
-    print(f"Progress: {existing}/{args.max_images} already exist; work on {total}.")
+        os.makedirs(args.outdir, exist_ok=True)
 
-    pipe = load_pipeline(args.model_id)
+        existing = count_s3_prefix_objects(s3, args.s3_bucket, args.s3_prefix)
+        total = args.max_images - existing
 
-    chopped_prompt = args.prompt[:120]
+        print(f"Progress: {existing}/{args.max_images} already exist; work on {total}.")
 
-    for idx in range(total):
+        if args.status_update_url is not None:
+            httpx.put(
+                url=args.status_update_url,
+                headers={},
+                json={
+                    "status": "IN_PROGRESS",
+                    "state": f"working on {total}/{args.max_images} images",
+                },
+            )
 
-        seed = random.randint(0, 2**32 - 1)
+        pipe = load_pipeline(args.model_id)
 
-        gen = torch.Generator(device=DEVICE).manual_seed(seed)
-        image = pipe(
-            prompt=args.prompt,
-            num_inference_steps=args.steps,
-            generator=gen,
-            height=args.height,
-            width=args.width,
-        ).images[0]
+        chopped_prompt = args.prompt[:120]
 
-        submit_upload(
-            image,
-            args.format,
-            args.outdir,
-            args.s3_bucket,
-            args.s3_prefix,
-            {
-                "seed": str(seed),
-                "prompt": chopped_prompt,
-            },
-            s3,
-        )
+        for idx in range(total):
 
-        if (idx + 1) % 50 == 0 or (idx + 1) == total:
-            print(f"Progress: [{idx + 1}/{total}] generated and queued.")
+            seed = random.randint(0, 2**32 - 1)
 
-    pool.shutdown(wait=True)
+            gen = torch.Generator(device=DEVICE).manual_seed(seed)
+            image = pipe(
+                prompt=args.prompt,
+                num_inference_steps=args.steps,
+                generator=gen,
+                height=args.height,
+                width=args.width,
+            ).images[0]
 
-    if _failures:
-        print(f"FAILED: {len(_failures)} uploads did not complete")
-        raise SystemExit(1)
-    
-    print("All tasks finished and synced to S3.")
+            submit_upload(
+                image,
+                args.format,
+                args.outdir,
+                args.s3_bucket,
+                args.s3_prefix,
+                {
+                    "seed": str(seed),
+                    "prompt": chopped_prompt,
+                },
+                s3,
+            )
 
-    if args.embed:
+            if (idx + 1) % 50 == 0 or (idx + 1) == total:
+                message = f"Progress: [{idx + 1}/{total}] generated and queued."
+                print(message)
+                if args.status_update_url is not None:
+                    httpx.put(
+                        url=args.status_update_url,
+                        headers={},
+                        json={
+                            "status": "IN_PROGRESS",
+                            "state": message,
+                        },
+                    )
+
+        pool.shutdown(wait=True)
+
+        if _failures:
+            print(f"FAILED: {len(_failures)} uploads did not complete")
+            raise SystemExit(1)
+        
+        print("All tasks finished and synced to S3.")
+        if not args.embed:
+            if args.status_update_url is not None:
+                httpx.put(
+                    url=args.status_update_url,
+                    headers={},
+                    json={
+                        "status": "COMPLETED",
+                    },
+                )
+
+        if args.status_update_url is not None:
+            httpx.put(
+                url=args.status_update_url,
+                headers={},
+                json={
+                    "status": "IN_PROGRESS",
+                    "state": "image generation and s3 upload completed"
+                },
+            )
+        
         print("Starting embedding on local images.")
         del pipe
         embed_parser = embed_command(argparse.ArgumentParser())
@@ -198,6 +250,33 @@ def handle(
         embed(embed_args, s3)
         print("Finished embedding and synced to S3.")
 
+        if args.status_update_url is not None:
+            httpx.put(
+                url=args.status_update_url,
+                headers={},
+                json={
+                    "status": "COMPLETED",
+                },
+            )
+
+    except Exception as e:
+        fname = inspect.currentframe().f_code.co_name
+        print(f"An error occurred in {fname}: {e.__class__.__name__} {e}")
+        if args.status_update_url is not None:
+            httpx.put(
+                url=args.status_update_url,
+                headers={},
+                json={
+                    "status": "FAILED",
+                    "details": {
+                        "fname": fname,
+                        "error": str(e),
+                        "error_class": e.__class__.__name__,
+                        "args": {k: v for k, v in vars(args).items()}
+                    }
+                },
+            )
+            
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--prompt", type=str, required=True)
@@ -211,6 +290,7 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--outdir", type=str, default="images")
     parser.add_argument("--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B")
     parser.add_argument("--embed", action="store_true", default=False)
+    parser.add_argument("--status-update-url", type=str, default=None)
     parser.set_defaults(func=handle)
     return parser
 

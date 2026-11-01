@@ -20,6 +20,7 @@ dependencies = [
     "transformers>=5.17.0",
     "open_clip_torch>=2.32",
     "modal>=1.6.3",
+    "httpx>=0.28.1",
 ]
 
 [project.scripts]
