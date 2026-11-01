@@ -13,3 +13,6 @@ wheels/
 **/.env*
 
 ignore
+
+# Local databases
+*.db
