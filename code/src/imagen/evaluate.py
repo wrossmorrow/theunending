@@ -10,40 +10,13 @@ from typing import TYPE_CHECKING
 
 import boto3
 import torch
-from diffusers import Flux2KleinPipeline, FluxPipeline
 from PIL import Image
 
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
-from .constants import DEVICE, TORCH_DTYPE
+from .pipeline import load_pipeline
 from .progress import Status, update_progress
-
-
-def load_pipeline(model_id: str) -> FluxPipeline | Flux2KleinPipeline:
-    pipe = (
-        FluxPipeline.from_pretrained(
-            model_id,
-            torch_dtype=TORCH_DTYPE,
-        )
-        if "FLUX.1" in model_id else
-        Flux2KleinPipeline.from_pretrained(
-            model_id,
-            torch_dtype=TORCH_DTYPE,
-        )
-    )
-    
-    # Enable VRAM optimizations if running on consumer hardware
-    if DEVICE == "cuda":
-        vram_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
-        if vram_gb < 24:
-            pipe.enable_model_cpu_offload()
-        else:
-            pipe.to(DEVICE)
-    else:
-        pipe.to(DEVICE)
-        
-    return pipe
 
 
 def generate_images(pipe, prompts, img_size, steps, outdir):
