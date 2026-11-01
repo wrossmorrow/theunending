@@ -140,7 +140,7 @@ We're going to use :
 * A set can only be marked ABANDONED (DELETE call) while in DRAFT status
 * The DELETE implementation will be _soft_: mark ABANDONED, leave in database
 * set "COMPLETION" will happen based on the result on an external job and handled with run updates described below
-* set semantics: a set is a named container for many images (thousands); COMMITTED means "ready to execute the creation of thousands", COMPLETED means "we've done it, we have all our images". A set has one commit and should be immutable after that, up to reconciling batch job failures that change state.
+* set semantics: a set is a named container for many images (thousands); COMMITTED means "ready to execute the creation of thousands", COMPLETED means "we've done it, we have all our images". A set has one commit and should be immutable after that, up to reconciling batch job failures that change state. A COMPLETED set can be a new entry on a webpage, but that is not being discussed yet.
 * set status flow:
     * DRAFT -> COMMITTED (when a draft is committed, see below)
     * DRAFT -> ABANDONED (when DELETE /api/v0/sets/{set_id} called)
