@@ -8,6 +8,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import modal
 
+DEFAULT_MODEL = "black-forest-labs/FLUX.2-klein-4B"
 DEFAULT_S3_BUCKET_NAME = "wrossmorrow-genai-repetitions-use1"
 AUTH_TOKEN_HEADER_NAME = "MODAL_ENDPOINT_AUTH_TOKEN"
 
@@ -18,6 +19,12 @@ api = FastAPI()
 auth_scheme = HTTPBearer()
 
 
+
+def _compute_model_prompt_hash(model: str, prompt: str) -> str:
+    """Compute the model prompt hash: sha256(model::prompt)."""
+    return hashlib.sha256(f"{model}::{prompt}".encode()).hexdigest()
+
+
 def _check_auth(request: Request, token: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> bool:
     if token.credentials != os.environ[AUTH_TOKEN_HEADER_NAME]:
         raise HTTPException(
@@ -26,6 +33,31 @@ def _check_auth(request: Request, token: HTTPAuthorizationCredentials = Depends(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return True
+
+
+def _parse_prompt(payload: dict) -> str:
+
+    if "prompt" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="payload sent must have 'prompt'",
+        )
+
+    prompt = payload["prompt"]
+
+    if len(prompt) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="prompt too short",
+        )
+    
+    if len(prompt) > 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="prompt too long",
+        )
+
+    return prompt
 
 
 @api.exception_handler(Exception)
@@ -45,19 +77,13 @@ async def _exception_handler(request: Request, exc: Exception):
 @api.post("/evaluate")
 def _evaluate(payload: dict, authed: bool = Depends(_check_auth)):
 
-    if "prompt" not in payload:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="payload sent must have 'prompt'",
-        )
-
-    prompt = payload["prompt"]
+    prompt = _parse_prompt(payload)
+    model = payload.get("model", DEFAULT_MODEL)
+    bucket = payload.get("s3_bucket", DEFAULT_S3_BUCKET_NAME)
+    hash = _compute_model_prompt_hash(model, prompt)
+    prefix = payload["s3_prefix"] if "s3_prefix" in payload else f"drafts/{hash}"
 
     target = modal.Function.from_name(MODAL_APP_NAME, "evaluate")
-    
-    hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
-    bucket = payload.get("s3_bucket", DEFAULT_S3_BUCKET_NAME)
-    prefix = payload["s3_prefix"] if "s3_prefix" in payload else f"drafts/{hash}"
     fcall = target.spawn({
         "kwargs": {
             "s3_bucket": bucket,
@@ -82,20 +108,14 @@ def _evaluate(payload: dict, authed: bool = Depends(_check_auth)):
 
 @api.post("/batch")
 def _batch(payload: dict, authed: bool = Depends(_check_auth)):
-  
-    if "prompt" not in payload:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="payload sent must have 'prompt'",
-        )
 
-    prompt = payload["prompt"]
-
-    target = modal.Function.from_name(MODAL_APP_NAME, "batch")
-    
-    hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+    prompt = _parse_prompt(payload)
+    model = payload.get("model", DEFAULT_MODEL)
     bucket = payload.get("s3_bucket", DEFAULT_S3_BUCKET_NAME)
+    hash = _compute_model_prompt_hash(model, prompt)
     prefix = payload["s3_prefix"] if "s3_prefix" in payload else f"runs/{hash}"
+    
+    target = modal.Function.from_name(MODAL_APP_NAME, "batch")
     fcall = target.spawn({
         "flags": (
             "embed",
