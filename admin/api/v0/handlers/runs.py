@@ -1,5 +1,6 @@
 """Run route handlers."""
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -42,13 +43,70 @@ async def redo_run(
     )
 
 
+def _run_transition_valid(
+    current: database.RunStatus, next_status: database.RunStatus
+) -> bool:
+    """Return whether the run status transition is valid."""
+    if current == next_status:
+        # Same-state transitions are treated as no-op successes.
+        return True
+    if current == database.RunStatus.PENDING:
+        # PENDING -> IN_PROGRESS (job started) or PENDING -> FAILED (job failed to start).
+        return next_status in (
+            database.RunStatus.IN_PROGRESS,
+            database.RunStatus.FAILED,
+        )
+    if current == database.RunStatus.IN_PROGRESS:
+        # IN_PROGRESS -> COMPLETED (job finished ok) or IN_PROGRESS -> FAILED (job failed).
+        return next_status in (
+            database.RunStatus.COMPLETED,
+            database.RunStatus.FAILED,
+        )
+    return False
+
+
 async def update_run_status(
     run_id: UUID,
     update: models.RunStatusUpdate,
     session_factory: sessionmaker[Session],
 ) -> database.Run:
     """Update a run status (system call)."""
-    raise HTTPException(
-        status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Run status update is not implemented yet.",
-    )
+    with session_factory() as session:
+        run = session.get(database.Run, run_id)
+        if run is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Run {run_id} not found.",
+            )
+        if not _run_transition_valid(run.status, update.status):
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Invalid run status transition from {run.status} to {update.status}."
+                ),
+            )
+
+        run.status = update.status
+        run.updated_at = datetime.now(UTC)
+        if update.status in (
+            database.RunStatus.COMPLETED,
+            database.RunStatus.FAILED,
+        ):
+            run.finished_at = datetime.now(UTC)
+        session.add(run)
+        session.commit()
+        session.refresh(run)
+
+        draft = session.get(database.Draft, run.draft_id)
+        if draft is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Draft {run.draft_id} not found.",
+            )
+        draft.status = database.DraftStatus(update.status.value)
+        draft.updated_at = datetime.now(UTC)
+        session.add(draft)
+        session.commit()
+        session.refresh(draft)
+
+    return run
