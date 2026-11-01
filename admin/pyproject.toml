@@ -1,0 +1,24 @@
+[project]
+name = "admin"
+version = "0.1.0"
+description = "Admin API for The Unending"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi",
+    "pydantic",
+    "pydantic-settings",
+    "httpx",
+    "sqlmodel",
+    "psycopg[binary]",
+    "uvicorn>=0.54.0",
+    "greenlet>=3.5.6",
+    "aiosqlite>=0.22.1",
+    "asyncpg>=0.32.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "mypy",
+    "pytest",
+]
