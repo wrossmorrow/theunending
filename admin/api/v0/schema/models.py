@@ -34,8 +34,8 @@ class SetCreate(BaseModel):
     """Create a set; requires model, optional slug/name."""
 
     model: str = Field(min_length=1)
-    slug: str | None = Field(default=None)
-    name: str | None = Field(default=None)
+    slug: str | None = Field(default=None, pattern=r"^[a-z][a-z0-9-]{1,126}[a-z]$")
+    name: str | None = Field(default=None, max_length=64)
 
 
 class DraftCreate(BaseModel):
@@ -47,8 +47,8 @@ class DraftCreate(BaseModel):
 class SetUpdate(BaseModel):
     """Update a set; only slug and name may be changed."""
 
-    slug: str | None = Field(default=None)
-    name: str | None = Field(default=None)
+    slug: str | None = Field(default=None, pattern=r"^[a-z][a-z0-9-]{1,126}[a-z]$")
+    name: str | None = Field(default=None, max_length=64)
 
     @model_validator(mode="after")
     def validate_at_least_one(self) -> Self:

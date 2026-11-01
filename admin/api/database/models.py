@@ -4,7 +4,8 @@ from datetime import UTC, datetime
 from enum import Enum
 from uuid import UUID, uuid7
 
-from sqlmodel import Field, SQLModel
+from sqlalchemy import DateTime
+from sqlmodel import Column, Field, SQLModel
 
 
 class SetStatus(str, Enum):
@@ -41,14 +42,23 @@ class Set(SQLModel, table=True):
 
     set_id: UUID = Field(default_factory=uuid7, primary_key=True)
     model: str = Field(index=True, min_length=1)
-    slug: str | None = Field(default=None, index=True)
-    name: str | None = Field(default=None)
+    slug: str | None = Field(
+        default=None, index=True, regex=r"^[a-z][a-z0-9-]{1,126}[a-z]$"
+    )
+    name: str | None = Field(default=None, max_length=64)
     prompt: str | None = Field(default=None)
     model_prompt_hash: str | None = Field(default=None, index=True)
     post_date: str | None = Field(default=None)
     status: SetStatus = Field(default=SetStatus.DRAFT)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(),
+            default=lambda: datetime.now(UTC),
+            onupdate=lambda: datetime.now(UTC),
+        ),
+    )
     committed_at: datetime | None = Field(default=None)
     abandoned_at: datetime | None = Field(default=None)
 
@@ -64,7 +74,14 @@ class Draft(SQLModel, table=True):
     model_prompt_hash: str = Field(index=True)
     status: DraftStatus = Field(default=DraftStatus.PENDING)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(),
+            default=lambda: datetime.now(UTC),
+            onupdate=lambda: datetime.now(UTC),
+        ),
+    )
 
 
 class Run(SQLModel, table=True):
@@ -80,5 +97,12 @@ class Run(SQLModel, table=True):
     status: RunStatus = Field(default=RunStatus.PENDING)
     details: str | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(),
+            default=lambda: datetime.now(UTC),
+            onupdate=lambda: datetime.now(UTC),
+        ),
+    )
     finished_at: datetime | None = Field(default=None)
