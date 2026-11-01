@@ -192,6 +192,7 @@ We're going to use :
     * the draft referenced must be in status: COMPLETED
     * the commit must be implemented as a single transaction covering the set update and the run creation.
     * the commit must be idempotent; re-issuing must not create a second BATCH run or overwrite committed state.
+    * the single transaction covers the set update and the run creation, but the outbound HTTP call to create the external job must not run inside the database transaction; it is issued outside/after the transaction.
     * if so, the commit call assigns:
         * set[set_id].prompt <- draft.prompt
         * set[set_id].post_date <- current date in YYYY-MM-DD format for Los Angeles/Pacific TZ
