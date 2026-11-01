@@ -96,7 +96,7 @@ def _evaluate(payload: dict, authed: bool = Depends(_check_auth)):
         "message": "Successfully launched target app function!",
         "details": {
             "prompt": prompt,
-            "prompt_hash": hash,
+            "model_prompt_hash": hash,
             "destination_bucket": bucket,
             "destination_prefix": prefix,
             "modal_app_name": MODAL_APP_NAME,
@@ -132,7 +132,7 @@ def _batch(payload: dict, authed: bool = Depends(_check_auth)):
         "message": "Successfully launched target app function!",
         "details": {
             "prompt": prompt,
-            "prompt_hash": hash,
+            "model_prompt_hash": hash,
             "destination_bucket": bucket,
             "destination_prefix": prefix,
             "modal_app_name": MODAL_APP_NAME,
