@@ -15,7 +15,7 @@ I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a li
 
 You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything. The intent can be in the action alone more than an outcome, reclaiming process from the answer-me-now-make-no-mistakes mechanics of contemporary AI.
 
-If you think discussion will poison your views of these pages, [get out]({{ site.baseurl }}/). Maybe come back later. Now, or after reading, <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">tell me what you think.</a> No wrong answers.
+If you think discussion will poison your views of these pages, [get out]({{ site.baseurl }}/unending/). Go stare at them, as they're mostly intended to be experienced. For ideally unconfortably long. Maybe come back later, after. <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">Tell me what you think.</a> No wrong answers.
 
 ---
 
@@ -103,7 +103,9 @@ In any case, [here is a blast of printable style representations]({% link printa
 
 ---
 
-So all of these examples intend to be an illusion of a truly unending stream (and an uncontrollable one at that, if you didn't notice). Posing an "illusion" is apt, part of what I think is happening with all these tools anyway. Hopefully you don't take that knowledge as deflating, though that happens easily;  even if you know you can still value enough to maybe even give me some feedback. If you think the explanation ruins the effect scroll up, close the page, or [get out]({{ site.baseurl }}/).
+I'll explain more technical detail now. Again, if you think the explanation ruins the effect scroll up, close the page, or [get out]({{ site.baseurl }}/unending/).
+
+So all of these examples intend to be an illusion of a truly unending stream (and an uncontrollable one at that, if you didn't notice). Posing an "illusion" is apt, part of what I think is happening with all these tools anyway. Hopefully you don't take that knowledge as deflating, though that happens easily;  even if you know you can still value enough to maybe even give me some feedback. 
 
 These pages loop through a shuffled pre-computed array of images randomized on every page load. This array is large, typically 5000 unique images/image-variations are pre-computed for a given prompt. Creating these takes maybe a few dollars and a few hours with open (and freely licensed) models. Given the size and rate of image population it would still take a reasonable fraction of an hour to see them all, you'd download about a gigabyte of data (so heads up), and the variations should be observably different even though closely related. I would posit the stream is _perceptually_ unending, if not precisely infinite, as I'd challenge someone to perceptually identify looping without counting. One could, in principle, create a functionally unending stream running these works a different way reserving persistent compute for generation and calling up new images without end. I kind of like faking it with scale though.
 
