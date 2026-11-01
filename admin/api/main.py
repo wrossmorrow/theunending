@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from admin.api import models
+from api import models
 
 api = FastAPI(title="Unending Admin API")
 

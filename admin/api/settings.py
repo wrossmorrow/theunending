@@ -2,7 +2,7 @@
 
 from pydantic_settings import BaseSettings
 
-from admin.api import models
+from api import models
 
 
 class Settings(BaseSettings):
