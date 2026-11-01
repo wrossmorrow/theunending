@@ -1,7 +1,7 @@
 # Admin API just recipes
 
 image_name := "ghcr.io/wrossmorrow/theunending"
-image_tag := `git rev-parse HEAD --short`
+image_tag := `git rev-parse --short HEAD`
 
 # List targets and exit
 default:
