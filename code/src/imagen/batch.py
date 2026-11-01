@@ -6,7 +6,7 @@ import io
 import os
 import random
 import threading
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -14,12 +14,12 @@ from uuid import uuid4
 
 import boto3
 import torch
-from diffusers import Flux2KleinPipeline, FluxPipeline
 
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
-from .constants import DEVICE, TORCH_DTYPE
+from .constants import DEVICE
+from .pipeline import load_pipeline
 from .progress import Status, update_progress
 from .similarity.embed import command as embed_command
 from .similarity.embed import handle as embed
@@ -34,21 +34,6 @@ _lock = threading.Lock()
 
 
 pool = ThreadPoolExecutor(max_workers=UPLOAD_OS_THREADS)
-
-
-def load_pipeline(model_id) -> Callable:
-    pipe = (
-        FluxPipeline.from_pretrained(
-            model_id,
-            torch_dtype=TORCH_DTYPE,
-        )
-        if "FLUX.1" in model_id else
-        Flux2KleinPipeline.from_pretrained(
-            model_id,
-            torch_dtype=TORCH_DTYPE,
-        )
-    ).to(DEVICE)
-    return pipe
 
 
 def count_s3_prefix_objects(
