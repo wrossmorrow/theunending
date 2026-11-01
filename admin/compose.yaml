@@ -4,4 +4,4 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///./theunending_admin.db
+      - DATABASE_URL=sqlite+aiosqlite:///./theunending_admin.db

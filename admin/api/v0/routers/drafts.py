@@ -4,8 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from api.database import models as database
 from api.database.db import get_session_factory
@@ -23,7 +22,9 @@ drafts_router = APIRouter()
 )
 async def create_draft(
     set_id: UUID,
-    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
     job_client: Annotated[ExternalJobClient, Depends(get_job_client)],
     body: models.DraftCreate,
 ) -> database.Draft:
@@ -38,7 +39,9 @@ async def create_draft(
 )
 async def list_drafts(
     set_id: UUID,
-    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
 ) -> models.DraftsResponse:
     """List set drafts (created_at desc)."""
     return await drafts_handlers.list_drafts(set_id, session_factory)
@@ -52,7 +55,9 @@ async def list_drafts(
 async def get_draft(
     set_id: UUID,
     draft_id: UUID,
-    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
 ) -> database.Draft:
     """Get a specific set draft (or 404)."""
     return await drafts_handlers.get_draft(set_id, draft_id, session_factory)
@@ -66,7 +71,9 @@ async def get_draft(
 async def commit_draft(
     set_id: UUID,
     draft_id: UUID,
-    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
     job_client: Annotated[ExternalJobClient, Depends(get_job_client)],
 ) -> database.Set:
     """Commit a draft set."""

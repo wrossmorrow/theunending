@@ -4,8 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from api.database import models as database
 from api.database.db import get_session_factory
@@ -20,7 +19,9 @@ runs_router = APIRouter()
     "/runs", response_model=models.RunsResponse, status_code=status.HTTP_200_OK
 )
 async def list_runs(
-    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
     status: database.RunStatus | None = None,
     set_id: str | None = None,
     draft_id: str | None = None,
@@ -36,7 +37,9 @@ async def list_runs(
 )
 async def get_run(
     run_id: UUID,
-    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
 ) -> database.Run:
     """Get a specific run by id alone (or 404)."""
     return await runs_handlers.get_run(run_id, session_factory)
@@ -49,7 +52,9 @@ async def get_run(
 )
 async def redo_run(
     run_id: UUID,
-    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
     job_client: Annotated[ExternalJobClient, Depends(get_job_client)],
 ) -> database.Run:
     """Redo a run (requires FAILED status; creates a distinct run)."""
@@ -64,7 +69,9 @@ async def redo_run(
 async def update_run_status(
     run_id: UUID,
     update: models.RunStatusUpdate,
-    session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
 ) -> database.Run:
     """Update a run status (system call)."""
     return await runs_handlers.update_run_status(run_id, update, session_factory)

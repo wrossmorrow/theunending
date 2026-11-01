@@ -5,9 +5,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session, SQLModel
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlmodel import SQLModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.health import health_router
@@ -18,12 +21,13 @@ from api.v0.router import api_v0_router
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = Settings()
-    engine = create_engine(settings.database_url)
-    SQLModel.metadata.create_all(engine)
+    engine = create_async_engine(settings.database_url)
+    async with engine.begin() as connection:
+        await connection.run_sync(SQLModel.metadata.create_all)
     app.state.engine = engine
-    app.state.session_factory = sessionmaker(class_=Session, bind=engine)
+    app.state.session_factory = async_sessionmaker(class_=AsyncSession, bind=engine)
     yield
-    engine.dispose()
+    await engine.dispose()
 
 
 api = FastAPI(title="Unending Admin API", lifespan=lifespan)

@@ -11,6 +11,9 @@ dependencies = [
     "sqlmodel",
     "psycopg[binary]",
     "uvicorn>=0.54.0",
+    "greenlet>=3.5.6",
+    "aiosqlite>=0.22.1",
+    "asyncpg>=0.32.0",
 ]
 
 [dependency-groups]

@@ -5,15 +5,15 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from fastapi import status as http_status
-from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session, select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlmodel import select
 
 from api.database import models as database
 from api.v0.schema import models
 
 
 async def list_sets(
-    session_factory: sessionmaker[Session],
+    session_factory: async_sessionmaker[AsyncSession],
     status: database.SetStatus | None = None,
     post_date: str | None = None,
     slug: str | None = None,
@@ -27,10 +27,10 @@ async def list_sets(
 
 
 async def create_set(
-    session_factory: sessionmaker[Session], body: models.SetCreate
+    session_factory: async_sessionmaker[AsyncSession], body: models.SetCreate
 ) -> database.Set:
     """Create a set (DRAFT status); requires model, optional slug/name."""
-    with session_factory() as session:
+    async with session_factory() as session:
         set_ = database.Set(
             model=body.model,
             slug=body.slug,
@@ -43,12 +43,14 @@ async def create_set(
             abandoned_at=None,
         )
         session.add(set_)
-        session.commit()
-        session.refresh(set_)
+        await session.commit()
+        await session.refresh(set_)
         return set_
 
 
-async def get_set(set_id: UUID, session_factory: sessionmaker[Session]) -> database.Set:
+async def get_set(
+    set_id: UUID, session_factory: async_sessionmaker[AsyncSession]
+) -> database.Set:
     """Get one set (or 404)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -57,13 +59,15 @@ async def get_set(set_id: UUID, session_factory: sessionmaker[Session]) -> datab
 
 
 async def patch_set(
-    set_id: UUID, update: models.SetUpdate, session_factory: sessionmaker[Session]
+    set_id: UUID,
+    update: models.SetUpdate,
+    session_factory: async_sessionmaker[AsyncSession],
 ) -> database.Set:
     """Update set fields (only slug/name; DRAFT only)."""
-    with session_factory() as session:
+    async with session_factory() as session:
         table = database.Set.metadata.tables[database.Set.__tablename__]
         stmt = select(database.Set).where(table.c.set_id == set_id).with_for_update()
-        set_ = session.exec(stmt).first()
+        set_ = (await session.execute(stmt)).scalars().first()
         if set_ is None:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
@@ -78,17 +82,17 @@ async def patch_set(
         set_.name = update.name
         set_.updated_at = datetime.now(UTC)
         session.add(set_)
-        session.commit()
-        session.refresh(set_)
+        await session.commit()
+        await session.refresh(set_)
         return set_
 
 
 async def delete_set(
-    set_id: UUID, session_factory: sessionmaker[Session]
+    set_id: UUID, session_factory: async_sessionmaker[AsyncSession]
 ) -> database.Set:
     """Mark set ABANDONED (soft; DRAFT only)."""
-    with session_factory() as session:
-        set_ = session.get(database.Set, set_id)
+    async with session_factory() as session:
+        set_ = await session.get(database.Set, set_id)
         if set_ is None:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
@@ -102,6 +106,6 @@ async def delete_set(
         set_.status = database.SetStatus.ABANDONED
         set_.abandoned_at = datetime.now(UTC)
         session.add(set_)
-        session.commit()
-        session.refresh(set_)
+        await session.commit()
+        await session.refresh(set_)
         return set_

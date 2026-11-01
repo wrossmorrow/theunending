@@ -6,8 +6,7 @@ from uuid import UUID
 import httpx
 from fastapi import HTTPException
 from fastapi import status as http_status
-from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from api.database import models as database
 from api.utils.jobs import ExternalJobClient
@@ -15,7 +14,7 @@ from api.v0.schema import models
 
 
 async def list_runs(
-    session_factory: sessionmaker[Session],
+    session_factory: async_sessionmaker[AsyncSession],
     status: database.RunStatus | None = None,
     set_id: str | None = None,
     draft_id: str | None = None,
@@ -27,7 +26,9 @@ async def list_runs(
     )
 
 
-async def get_run(run_id: UUID, session_factory: sessionmaker[Session]) -> database.Run:
+async def get_run(
+    run_id: UUID, session_factory: async_sessionmaker[AsyncSession]
+) -> database.Run:
     """Get a specific run by id alone (or 404)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -37,12 +38,12 @@ async def get_run(run_id: UUID, session_factory: sessionmaker[Session]) -> datab
 
 async def redo_run(
     run_id: UUID,
-    session_factory: sessionmaker[Session],
+    session_factory: async_sessionmaker[AsyncSession],
     job_client: ExternalJobClient,
 ) -> database.Run:
     """Redo a run (requires FAILED status; creates a distinct run)."""
-    with session_factory() as session:
-        run = session.get(database.Run, run_id)
+    async with session_factory() as session:
+        run = await session.get(database.Run, run_id)
         if run is None:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
@@ -53,7 +54,7 @@ async def redo_run(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Run {run_id} is not in FAILED status.",
             )
-        draft = session.get(database.Draft, run.draft_id)
+        draft = await session.get(database.Draft, run.draft_id)
         if draft is None:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
@@ -82,8 +83,8 @@ async def redo_run(
             status=database.RunStatus.PENDING,
         )
         session.add(new_run)
-        session.commit()
-        session.refresh(new_run)
+        await session.commit()
+        await session.refresh(new_run)
 
     return new_run
 
@@ -113,11 +114,11 @@ def _run_transition_valid(
 async def update_run_status(
     run_id: UUID,
     update: models.RunStatusUpdate,
-    session_factory: sessionmaker[Session],
+    session_factory: async_sessionmaker[AsyncSession],
 ) -> database.Run:
     """Update a run status (system call)."""
-    with session_factory() as session:
-        run = session.get(database.Run, run_id)
+    async with session_factory() as session:
+        run = await session.get(database.Run, run_id)
         if run is None:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
@@ -139,10 +140,10 @@ async def update_run_status(
         ):
             run.finished_at = datetime.now(UTC)
         session.add(run)
-        session.commit()
-        session.refresh(run)
+        await session.commit()
+        await session.refresh(run)
 
-        draft = session.get(database.Draft, run.draft_id)
+        draft = await session.get(database.Draft, run.draft_id)
         if draft is None:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
@@ -151,7 +152,7 @@ async def update_run_status(
         draft.status = database.DraftStatus(update.status.value)
         draft.updated_at = datetime.now(UTC)
         session.add(draft)
-        session.commit()
-        session.refresh(draft)
+        await session.commit()
+        await session.refresh(draft)
 
     return run
