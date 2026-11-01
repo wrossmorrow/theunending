@@ -40,7 +40,7 @@ class Set(SQLModel, table=True):
     __tablename__ = "sets"
 
     set_id: UUID = Field(default_factory=uuid7, primary_key=True)
-    model: str = Field(index=True)
+    model: str = Field(index=True, min_length=1)
     slug: str | None = Field(default=None, index=True)
     name: str | None = Field(default=None)
     prompt: str | None = Field(default=None)
@@ -59,8 +59,8 @@ class Draft(SQLModel, table=True):
     __tablename__ = "drafts"
 
     draft_id: UUID = Field(default_factory=uuid7, primary_key=True)
-    set_id: UUID = Field(index=True)
-    prompt: str = Field()
+    set_id: UUID = Field(index=True, foreign_key="sets.set_id")
+    prompt: str = Field(min_length=1, max_length=1023)
     model_prompt_hash: str = Field(index=True)
     status: DraftStatus = Field(default=DraftStatus.PENDING)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -73,9 +73,9 @@ class Run(SQLModel, table=True):
     __tablename__ = "runs"
 
     run_id: UUID = Field(default_factory=uuid7, primary_key=True)
-    external_run_id: str = Field()
-    set_id: UUID = Field(index=True)
-    draft_id: UUID = Field(index=True)
+    external_run_id: str = Field(min_length=1)
+    set_id: UUID = Field(index=True, foreign_key="sets.set_id")
+    draft_id: UUID = Field(index=True, foreign_key="drafts.draft_id")
     type: RunType = Field()
     status: RunStatus = Field(default=RunStatus.PENDING)
     details: str | None = Field(default=None)

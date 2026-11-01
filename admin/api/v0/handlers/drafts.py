@@ -25,7 +25,7 @@ async def create_draft(
     """Create a set draft; set must exist and be DRAFT; prompt required."""
     async with session_factory() as session:
         table = database.Set.metadata.tables[database.Set.__tablename__]
-        stmt = select(database.Set).where(table.c.set_id == set_id).with_for_update()
+        stmt = select(database.Set).where(table.c.set_id == set_id)
         set_ = (await session.execute(stmt)).scalars().first()
         if set_ is None:
             raise HTTPException(
@@ -36,11 +36,6 @@ async def create_draft(
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Set {set_id} is not in DRAFT status.",
-            )
-        if len(body.prompt) >= 1024:
-            raise HTTPException(
-                status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail="Prompt must be shorter than 1024 characters.",
             )
 
         draft = database.Draft(
@@ -57,13 +52,14 @@ async def create_draft(
 
     try:
         external_run_id = await job_client.create_job(
+            database.RunType.EVALUATION,
             {
                 "set_id": str(set_id),
                 "draft_id": str(draft_id),
                 "model_prompt_hash": draft_model_prompt_hash,
-            }
+            },
         )
-    except httpx.HTTPError, KeyError:
+    except (httpx.HTTPError, KeyError):
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create external job.",
@@ -116,9 +112,10 @@ async def commit_draft(
         set_ = (
             (
                 await session.execute(
-                    select(database.Set)
-                    .where(table.c.set_id == set_id)
-                    .with_for_update()
+                    select(database.Set).where(
+                        table.c.set_id == set_id,
+                        table.c.status == database.SetStatus.DRAFT,
+                    )
                 )
             )
             .scalars()
@@ -128,11 +125,6 @@ async def commit_draft(
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Set {set_id} not found.",
-            )
-        if set_.status != database.SetStatus.DRAFT:
-            raise HTTPException(
-                status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail=f"Set {set_id} is not in DRAFT status.",
             )
         if set_.slug is None or set_.name is None:
             raise HTTPException(
@@ -153,13 +145,14 @@ async def commit_draft(
 
     try:
         external_run_id = await job_client.create_job(
+            database.RunType.BATCH,
             {
                 "set_id": str(set_id),
                 "draft_id": str(draft_id),
                 "model_prompt_hash": draft.model_prompt_hash,
-            }
+            },
         )
-    except httpx.HTTPError, KeyError:
+    except (httpx.HTTPError, KeyError):
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create external job.",

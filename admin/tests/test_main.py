@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
+from api.database.models import RunType
 from api.main import api
 from api.utils.jobs import ExternalJobClient, get_job_client
 
@@ -11,7 +12,7 @@ from api.utils.jobs import ExternalJobClient, get_job_client
 class MockExternalJobClient(ExternalJobClient):
     """Mock external job client returning a fixed external run id."""
 
-    async def create_job(self, payload: dict) -> str:
+    async def create_job(self, job_type: RunType, payload: dict) -> str:
         """Return a fixed external run id without calling the job system."""
         return "mock-external-run-id"
 
@@ -88,7 +89,7 @@ def test_create_draft_returns_201_with_pending_run() -> None:
         assert body["status"] == "PENDING"
 
 
-def test_create_draft_with_long_prompt_returns_400() -> None:
+def test_create_draft_with_long_prompt_returns_422() -> None:
     with TestClient(api) as client:
         created = client.post(
             "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
@@ -103,7 +104,23 @@ def test_create_draft_with_long_prompt_returns_400() -> None:
             )
         finally:
             api.dependency_overrides.pop(get_job_client, None)
-        assert response.status_code == 400
+        assert response.status_code == 422
+
+
+def test_create_draft_with_empty_prompt_returns_422() -> None:
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        api.dependency_overrides[get_job_client] = lambda: MockExternalJobClient(
+            base_url="http://localhost:8080"
+        )
+        try:
+            response = client.post(f"/api/v0/sets/{set_id}/drafts", json={"prompt": ""})
+        finally:
+            api.dependency_overrides.pop(get_job_client, None)
+        assert response.status_code == 422
 
 
 def test_list_sets_not_implemented_returns_501() -> None:

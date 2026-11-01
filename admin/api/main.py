@@ -5,27 +5,23 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from api.database.db import create_session_factory
 from api.health import health_router
-from api.settings import Settings
+from api.settings import settings
 from api.v0.router import api_v0_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    settings = Settings()
     engine = create_async_engine(settings.database_url)
     async with engine.begin() as connection:
         await connection.run_sync(SQLModel.metadata.create_all)
     app.state.engine = engine
-    app.state.session_factory = async_sessionmaker(class_=AsyncSession, bind=engine)
+    app.state.session_factory = create_session_factory(engine)
     yield
     await engine.dispose()
 

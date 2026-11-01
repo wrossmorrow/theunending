@@ -63,13 +63,14 @@ async def redo_run(
 
         try:
             external_run_id = await job_client.create_job(
+                run.type,
                 {
                     "set_id": str(run.set_id),
                     "draft_id": str(run.draft_id),
                     "model_prompt_hash": draft.model_prompt_hash,
-                }
+                },
             )
-        except httpx.HTTPError, KeyError:
+        except (httpx.HTTPError, KeyError):
             raise HTTPException(
                 status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create external job.",

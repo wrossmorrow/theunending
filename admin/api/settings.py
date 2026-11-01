@@ -14,3 +14,6 @@ class Settings(BaseSettings):
     run_status: RunStatus = RunStatus.PENDING
     database_url: str = "sqlite+aiosqlite:///./theunending_admin.db"
     job_base_url: str = "http://localhost:8080"
+
+
+settings = Settings()
