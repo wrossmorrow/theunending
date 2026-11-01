@@ -13,3 +13,4 @@ class Settings(BaseSettings):
     run_type: RunType = RunType.EVALUATION
     run_status: RunStatus = RunStatus.PENDING
     database_url: str = "sqlite:///./theunending_admin.db"
+    job_base_url: str = "http://localhost:8080"

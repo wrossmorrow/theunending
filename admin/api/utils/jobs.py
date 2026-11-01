@@ -2,6 +2,8 @@
 
 import httpx
 
+from api.settings import Settings
+
 
 class ExternalJobClient:
     """Client for triggering external jobs through the job system."""
@@ -15,3 +17,8 @@ class ExternalJobClient:
         response = self._client.post("/jobs", json=payload)
         response.raise_for_status()
         return str(response.json()["external_run_id"])
+
+
+def get_job_client() -> ExternalJobClient:
+    """Return the external job system client."""
+    return ExternalJobClient(base_url=Settings().job_base_url)

@@ -5,6 +5,15 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 
 from api.main import api
+from api.utils.jobs import ExternalJobClient, get_job_client
+
+
+class MockExternalJobClient(ExternalJobClient):
+    """Mock external job client returning a fixed external run id."""
+
+    def create_job(self, payload: dict) -> str:
+        """Return a fixed external run id without calling the job system."""
+        return "mock-external-run-id"
 
 
 def test_get_set_with_invalid_uuid_returns_422() -> None:
@@ -57,6 +66,44 @@ def test_delete_set_marks_abandoned() -> None:
         response = client.delete(f"/api/v0/sets/{set_id}")
         assert response.status_code == 200
         assert response.json()["status"] == "ABANDONED"
+
+
+def test_create_draft_returns_201_with_pending_run() -> None:
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        api.dependency_overrides[get_job_client] = lambda: MockExternalJobClient(
+            base_url="http://localhost:8080"
+        )
+        try:
+            response = client.post(
+                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+            )
+        finally:
+            api.dependency_overrides.pop(get_job_client, None)
+        assert response.status_code == 201
+        body = response.json()
+        assert body["status"] == "PENDING"
+
+
+def test_create_draft_with_long_prompt_returns_400() -> None:
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        api.dependency_overrides[get_job_client] = lambda: MockExternalJobClient(
+            base_url="http://localhost:8080"
+        )
+        try:
+            response = client.post(
+                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a" * 1024}
+            )
+        finally:
+            api.dependency_overrides.pop(get_job_client, None)
+        assert response.status_code == 400
 
 
 def test_list_sets_not_implemented_returns_501() -> None:

@@ -9,6 +9,7 @@ from sqlmodel import Session
 
 from api.database import models as database
 from api.database.db import get_session_factory
+from api.utils.jobs import ExternalJobClient, get_job_client
 from api.v0.handlers import drafts as drafts_handlers
 from api.v0.schema import models
 
@@ -23,10 +24,11 @@ drafts_router = APIRouter()
 async def create_draft(
     set_id: UUID,
     session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    job_client: Annotated[ExternalJobClient, Depends(get_job_client)],
     body: models.DraftCreate,
 ) -> database.Draft:
     """Create a set draft; set must exist and be DRAFT; prompt required."""
-    return await drafts_handlers.create_draft(set_id, body, session_factory)
+    return await drafts_handlers.create_draft(set_id, body, session_factory, job_client)
 
 
 @drafts_router.get(
