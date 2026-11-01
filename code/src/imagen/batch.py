@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 from .constants import DEVICE
 from .pipeline import load_pipeline
-from .progress import Status, update_progress
+from .progress import AdminAPI, Status
 from .similarity.embed import command as embed_command
 from .similarity.embed import handle as embed
 
@@ -121,15 +121,20 @@ def handle(
 
     if s3 is None:
         return handle(args, boto3.client("s3"))
+    
+    admin_api = AdminAPI(
+        url=args.status_update_url,
+        auth_secret_name=args.status_update_auth_secret_name,
+        auth_secret_type=args.status_update_auth_secret_type,
+        admin_run_id=args.status_update_admin_run_id,
+    )
 
     try:
 
-        if args.status_update_url is not None:
-            update_progress(
-                url=args.status_update_url,
-                status=Status.IN_PROGRESS,
-                message="job has launched successfully",
-            )
+        admin_api.update_progress(
+            status=Status.IN_PROGRESS,
+            message="job has launched successfully",
+        )
 
         os.makedirs(args.outdir, exist_ok=True)
 
@@ -138,12 +143,10 @@ def handle(
 
         print(f"Progress: {existing}/{args.max_images} already exist; work on {total}.")
 
-        if args.status_update_url is not None:
-            update_progress(
-                url=args.status_update_url,
-                status=Status.IN_PROGRESS,
-                message=f"working on {total}/{args.max_images} images",
-            )
+        admin_api.update_progress(
+            status=Status.IN_PROGRESS,
+            message=f"working on {total}/{args.max_images} images",
+        )
 
         pipe = load_pipeline(args.model_id)
 
@@ -178,43 +181,35 @@ def handle(
             if (idx + 1) % 50 == 0 or (idx + 1) == total:
                 message = f"Progress: [{idx + 1}/{total}] generated and queued."
                 print(message)
-                if args.status_update_url is not None:
-                    update_progress(
-                        url=args.status_update_url,
-                        status=Status.IN_PROGRESS,
-                        message=message,
-                    )
+                admin_api.update_progress(
+                    status=Status.IN_PROGRESS,
+                    message=message,
+                )
 
         pool.shutdown(wait=True)
 
         if _failures:
             message = f"FAILED: {len(_failures)} uploads did not complete"
             print(message)
-            if args.status_update_url is not None:
-                update_progress(
-                    url=args.status_update_url,
-                    status=Status.FAILED,
-                    message=message,
-                )
+            admin_api.update_progress(
+                status=Status.FAILED,
+                message=message,
+            )
             return 1
         
         print("All tasks finished and synced to S3.")
         if not args.embed:
-            if args.status_update_url is not None:
-                update_progress(
-                    url=args.status_update_url,
-                    status=Status.COMPLETED,
-                    message="work completed successfully",
-                )
+            admin_api.update_progress(
+                status=Status.COMPLETED,
+                message="work completed successfully",
+            )
             
             return 0
 
-        if args.status_update_url is not None:
-            update_progress(
-                url=args.status_update_url,
-                status=Status.IN_PROGRESS,
-                message="image generation and s3 upload completed",
-            )
+        admin_api.update_progress(
+            status=Status.IN_PROGRESS,
+            message="image generation and s3 upload completed",
+        )
         
         print("Starting embedding on local images.")
         del pipe
@@ -229,29 +224,25 @@ def handle(
         embed(embed_args, s3)
         print("Finished embedding and synced to S3.")
 
-        if args.status_update_url is not None:
-            update_progress(
-                url=args.status_update_url,
-                status=Status.COMPLETED,
-                message="image generation, s3 upload, and embeddings completed",
-            )
+        admin_api.update_progress(
+            status=Status.COMPLETED,
+            message="image generation, s3 upload, and embeddings completed",
+        )
 
     except Exception as e:  # noqa: BLE001
         frame = inspect.currentframe()
         fname = frame.f_code.co_name if frame is not None else "<unknown>"
         print(f"An error occurred in {fname}: {e.__class__.__name__} {e}")
-        if args.status_update_url is not None:
-            update_progress(
-                url=args.status_update_url,
-                status=Status.FAILED,
-                message="An uncaught error occurred during processing",
-                details={
-                    "function_name": fname,
-                    "error": str(e),
-                    "error_class": e.__class__.__name__,
-                    "args": {k: v for k, v in vars(args).items()}
-                }
-            )
+        admin_api.update_progress(
+            status=Status.FAILED,
+            message="An uncaught error occurred during processing",
+            details={
+                "function_name": fname,
+                "error": str(e),
+                "error_class": e.__class__.__name__,
+                "args": {k: v for k, v in vars(args).items()}
+            }
+        )
 
         return 1
 
@@ -270,7 +261,30 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--outdir", type=str, default="images")
     parser.add_argument("--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B")
     parser.add_argument("--embed", action="store_true", default=False)
-    parser.add_argument("--status-update-url", type=str, default=None)
+    parser.add_argument(
+        "--status-update-url",
+        type=str,
+        default=None,
+        help="An explicit URL to issue PUT calls for status updates; ignored if empty",
+    )
+    parser.add_argument(
+        "--status-update-auth-secret-name",
+        type=str,
+        default=None,
+        help="Status update auth secret name; ignored if empty",
+    )
+    parser.add_argument(
+        "--status-update-auth-secret-type",
+        type=str,
+        default=None,
+        help="Status update auth secret type (Bearer, Basic); ignored if empty",
+    )
+    parser.add_argument(
+        "--status-update-admin-run-id",
+        type=str,
+        default=None,
+        help="An explicit 'run_id' for correlation to admin systems; ignored if empty",
+    )
     parser.set_defaults(func=handle)
     return parser
 

@@ -1,3 +1,5 @@
+import base64
+import os
 from collections.abc import Collection
 from enum import StrEnum
 from typing import Any
@@ -23,9 +25,6 @@ BACKOFF_MULTIPLIER = 1
 BACKOFF_MINIMUM = 1
 BACKOFF_MAXIMUM = 10
 DEFAULT_MAX_ATTEMPTS = 3
-
-
-_http = httpx.Client()
 
 
 class Status(StrEnum):
@@ -87,7 +86,8 @@ def _request_with_retry(
     return response
 
 
-def update_progress(
+def _update_progress(
+    client: httpx.Client,
     url: str,
     status: Status,
     message: str,
@@ -96,10 +96,69 @@ def update_progress(
     _ = _request_with_retry(
         method="PUT", 
         url=url, 
-        client=_http,
+        client=client,
         json={
             "status": status,
             "message": message,
             "details": details,
         }
     )
+
+
+def _create_basic_auth_header(credentials: str) -> str:
+    return base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+
+
+class AdminAPI:
+
+    def __init__(
+        self,
+        url: str | None,
+        auth_secret_name: str | None,
+        auth_secret_type: str | None,
+        admin_run_id: str | None,
+    ) -> None:
+        self._url = url
+        if url is None:
+            return
+
+        headers = {
+            "content-type": "application/json",
+            "accept": "application/json",
+        }
+        if auth_secret_type is None:
+            auth_secret_type = "Bearer"
+        if auth_secret_name is not None:
+            auth_secret = os.environ[auth_secret_name]
+            if auth_secret_type == "Bearer":
+                headers["authorization"] = f"{auth_secret_type} {auth_secret}"
+            elif auth_secret_type == "Basic":
+                auth_secret = _create_basic_auth_header(auth_secret)
+                headers["authorization"] = f"{auth_secret_type} {auth_secret}"
+            else:
+                raise ValueError(f"Unsupported auth_secret_type '{auth_secret_type}'")
+
+        if admin_run_id is not None:
+            headers["x-admin-run-id"] = admin_run_id
+    
+        self._http = httpx.Client(headers=headers)
+
+    def update_progress(
+        self,
+        status: Status,
+        message: str,
+        details: dict | None = None,
+    ) -> None:
+        if self._url is None:
+            print(
+                f"No url set for status updates, no call will be made ({status}, {message}, {details})"
+            )
+            return
+        
+        return _update_progress(
+            client=self._http,
+            url=self._url,
+            status=status,
+            message=message,
+            details=details,
+        )
