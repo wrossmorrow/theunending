@@ -170,6 +170,7 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--steps", type=int, default=4)
     parser.add_argument("--s3-bucket", type=str, default=os.environ.get("AWS_S3_BUCKET_NAME"))
     parser.add_argument("--s3-prefix", type=str, default="drafts")
+    parser.add_argument("--status-update-url", type=str, default=None)
     parser.set_defaults(func=handle)
     return parser
 
