@@ -1,5 +1,7 @@
 """Unending Admin API."""
 
+from uuid import UUID
+
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -27,43 +29,43 @@ def create_set(body: models.SetCreate) -> models.Set:
 
 
 @api.get("/api/v0/sets/{set_id}", response_model=models.Set, status_code=status.HTTP_200_OK)
-def get_set(set_id: str) -> models.Set:
+def get_set(set_id: UUID) -> models.Set:
     """Get one set (or 404)."""
     ...
 
 
 @api.patch("/api/v0/sets/{set_id}", response_model=models.Set, status_code=status.HTTP_200_OK)
-def patch_set(set_id: str, update: models.Set) -> models.Set:
+def patch_set(set_id: UUID, update: models.Set) -> models.Set:
     """Update set fields (only slug/name; DRAFT only)."""
     ...
 
 
 @api.delete("/api/v0/sets/{set_id}", response_model=models.Set, status_code=status.HTTP_200_OK)
-def delete_set(set_id: str) -> models.Set:
+def delete_set(set_id: UUID) -> models.Set:
     """Mark set ABANDONED (soft; DRAFT only)."""
     ...
 
 
 @api.post("/api/v0/sets/{set_id}/drafts", response_model=models.Draft, status_code=status.HTTP_201_CREATED)
-def create_draft(set_id: str, body: models.DraftCreate) -> models.Draft:
+def create_draft(set_id: UUID, body: models.DraftCreate) -> models.Draft:
     """Create a set draft; set must exist and be DRAFT; prompt required."""
     ...
 
 
 @api.get("/api/v0/sets/{set_id}/drafts", response_model=models.DraftsResponse, status_code=status.HTTP_200_OK)
-def list_drafts(set_id: str) -> models.DraftsResponse:
+def list_drafts(set_id: UUID) -> models.DraftsResponse:
     """List set drafts (created_at desc)."""
     ...
 
 
 @api.get("/api/v0/sets/{set_id}/drafts/{draft_id}", response_model=models.Draft, status_code=status.HTTP_200_OK)
-def get_draft(set_id: str, draft_id: str) -> models.Draft:
+def get_draft(set_id: UUID, draft_id: UUID) -> models.Draft:
     """Get a specific set draft (or 404)."""
     ...
 
 
 @api.post("/api/v0/sets/{set_id}/drafts/{draft_id}/commit", response_model=models.Set, status_code=status.HTTP_200_OK)
-def commit_draft(set_id: str, draft_id: str) -> models.Set:
+def commit_draft(set_id: UUID, draft_id: UUID) -> models.Set:
     """Commit a draft set."""
     ...
 
@@ -79,19 +81,19 @@ def list_runs(
 
 
 @api.get("/api/v0/runs/{run_id}", response_model=models.Run, status_code=status.HTTP_200_OK)
-def get_run(run_id: str) -> models.Run:
+def get_run(run_id: UUID) -> models.Run:
     """Get a specific run by id alone (or 404)."""
     ...
 
 
 @api.post("/api/v0/runs/{run_id}", response_model=models.Run, status_code=status.HTTP_201_CREATED)
-def redo_run(run_id: str) -> models.Run:
+def redo_run(run_id: UUID) -> models.Run:
     """Redo a run (requires FAILED status; creates a distinct run)."""
     ...
 
 
 @api.put("/api/v0/runs/{run_id}/status", response_model=models.Run, status_code=status.HTTP_200_OK)
-def update_run_status(run_id: str, update: models.RunStatusUpdate) -> models.Run:
+def update_run_status(run_id: UUID, update: models.RunStatusUpdate) -> models.Run:
     """Update a run status (system call)."""
     ...
 
