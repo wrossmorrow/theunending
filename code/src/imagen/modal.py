@@ -1,0 +1,203 @@
+import argparse
+import os
+from collections.abc import Iterable
+
+import boto3
+
+import modal
+
+from .batch import command as batch_command
+from .evaluate import command as eval_command
+from .similarity.embed import command as embed_command
+
+DEFAULT_IGNORE_ARGS = {"func", "command"}
+
+EVAL_GPU = "A100"
+BATCH_GPU = "A100"
+EMBED_GPU = "A100"  # overkill for PE, if not also flux
+
+EVAL_TIMEOUT_SEC = 600  # 10 minutes
+BATCH_TIMEOUT_SEC = 3600  # 1 hour
+EMBED_TIMEOUT_SEC = 600  # 10 minutes
+
+AWS_OIDC_ROLE_ARN = "arn:aws:iam::396610714890:role/modal-oidc-access"
+AWS_OIDC_SESSION_DURATION_SECONDS = 7200  # 2 hours; check IAM limits
+
+
+def _aws_creds(role_arn: str = AWS_OIDC_ROLE_ARN):
+    sts_client = boto3.client("sts")
+    response = sts_client.assume_role_with_web_identity(
+        RoleArn=role_arn,
+        RoleSessionName="ModalOIDCSession",
+        WebIdentityToken=os.environ["MODAL_IDENTITY_TOKEN"],
+        DurationSeconds=AWS_OIDC_SESSION_DURATION_SECONDS,
+    )
+    return response["Credentials"]
+
+
+def _s3_client(role_arn: str = AWS_OIDC_ROLE_ARN):
+    credentials = _aws_creds(role_arn=role_arn)
+    return boto3.client(
+        "s3",
+        aws_access_key_id=credentials["AccessKeyId"],
+        aws_secret_access_key=credentials["SecretAccessKey"],
+        aws_session_token=credentials["SessionToken"],
+    )
+
+
+def _sanitize_args(
+    args: argparse.Namespace, 
+    ignore: set[str] = DEFAULT_IGNORE_ARGS,
+) -> argparse.Namespace:
+    return argparse.Namespace(**{k: v for k, v in vars(args).items() if k not in ignore})
+
+
+img = modal.Image.from_name(name="theunending").env({
+    "HF_HUB_OFFLINE": "1",
+    "HF_HOME": "/cache",
+})
+app = modal.App("theunending", image=img)
+vol = modal.Volume.from_name("hf-hub-cache")
+
+
+@app.function()
+def square(args: argparse.Namespace) -> int:
+    print("This code is running on a remote worker!")
+    return args.value ** 2
+
+
+def handle_test(args: argparse.Namespace) -> None:
+    with app.run():
+        result = square.remote(_sanitize_args(args))
+        print("the square is", result)
+
+
+def _parse_args(
+    parser: argparse.ArgumentParser, 
+    flags: Iterable[str] = (),
+    **kwargs,
+) -> argparse.Namespace:
+    argv: list[str] = [f"--{f.replace('_', '-')}" for f in flags]
+    for k, v in kwargs.items():
+        argv += [f"--{k.replace('_', '-')}", str(v)]
+    return parser.parse_args(argv)
+
+
+@app.function(
+    gpu=EVAL_GPU,
+    volumes={
+        "/cache": vol,
+    },
+    timeout=EVAL_TIMEOUT_SEC,
+    secrets=[modal.Secret.from_name("admin-api-token")],
+)
+def evaluate(args: dict | argparse.Namespace) -> None:
+    from .evaluate import handle as _handle_eval
+
+    if isinstance(args, dict):
+        parser = eval_command(argparse.ArgumentParser())
+        args = _parse_args(
+            parser, 
+            flags=args.get("flags", ()),
+            **args.get("kwargs", {}),
+        )
+
+    # NOTE!: get client on remote for OIDC
+    _handle_eval(_sanitize_args(args), s3=_s3_client())
+
+
+def handle_eval(args: argparse.Namespace) -> None:
+    with app.run():
+        evaluate.remote(args)
+
+
+@app.function(
+    gpu=BATCH_GPU,
+    volumes={
+        "/cache": vol,
+    },
+    timeout=BATCH_TIMEOUT_SEC,
+    secrets=[modal.Secret.from_name("admin-api-token")],
+)
+def batch(args: dict | argparse.Namespace) -> None:
+    from .batch import handle as _handle_batch
+
+    if isinstance(args, dict):
+        parser = batch_command(argparse.ArgumentParser())
+        args = _parse_args(
+            parser, 
+            flags=args.get("flags", ()),
+            **args.get("kwargs", {}),
+        )
+
+    # NOTE!: get client on remote for OIDC
+    _handle_batch(_sanitize_args(args), s3=_s3_client())
+
+
+def handle_batch(args: argparse.Namespace) -> None:
+    with app.run():
+        batch.remote(args)
+
+
+@app.function(
+    gpu=EMBED_GPU,
+    volumes={
+        "/cache": vol,
+    },
+    timeout=EMBED_TIMEOUT_SEC,
+    secrets=[modal.Secret.from_name("admin-api-token")],
+)
+def embed(args: dict | argparse.Namespace) -> None:
+    from .similarity.embed import handle as _handle_embed
+
+    if isinstance(args, dict):
+        parser = embed_command(argparse.ArgumentParser())
+        args = _parse_args(
+            parser, 
+            flags=args.get("flags", ()),
+            **args.get("kwargs", {}),
+        )
+
+    # NOTE!: get client on remote for OIDC
+    _handle_embed(_sanitize_args(args), s3=_s3_client())
+
+
+def handle_embed(args: argparse.Namespace) -> None:
+    with app.run():
+        embed.remote(args)
+
+
+def commands(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+
+    subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
+
+    parser = subparsers.add_parser("test", help="Test modal")
+    parser.add_argument("--value", type=int, required=True)
+    parser.set_defaults(func=handle_test)
+
+    parser = subparsers.add_parser("eval", help="Evaluate on modal")
+    parser = eval_command(parser)
+    parser.set_defaults(func=handle_eval)
+
+    parser = subparsers.add_parser("batch", help="Batch on modal")
+    parser = batch_command(parser)
+    parser.set_defaults(func=handle_batch)
+
+    parser = subparsers.add_parser("embed", help="Embed on modal")
+    parser = embed_command(parser)
+    parser.set_defaults(func=handle_embed)
+
+    return parser
+
+
+def cli() -> argparse.Namespace:
+    return commands(argparse.ArgumentParser()).parse_args()
+
+
+def main():
+    args = cli()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
