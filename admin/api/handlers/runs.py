@@ -9,7 +9,7 @@ from sqlmodel import Session
 from api import models
 
 
-def list_runs(
+async def list_runs(
     db: Session,
     status: models.RunStatus | None = None,
     set_id: str | None = None,
@@ -22,7 +22,7 @@ def list_runs(
     )
 
 
-def get_run(run_id: UUID, db: Session) -> models.Run:
+async def get_run(run_id: UUID, db: Session) -> models.Run:
     """Get a specific run by id alone (or 404)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -30,7 +30,7 @@ def get_run(run_id: UUID, db: Session) -> models.Run:
     )
 
 
-def redo_run(run_id: UUID, db: Session) -> models.Run:
+async def redo_run(run_id: UUID, db: Session) -> models.Run:
     """Redo a run (requires FAILED status; creates a distinct run)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -38,7 +38,7 @@ def redo_run(run_id: UUID, db: Session) -> models.Run:
     )
 
 
-def update_run_status(
+async def update_run_status(
     run_id: UUID, update: models.RunStatusUpdate, db: Session
 ) -> models.Run:
     """Update a run status (system call)."""

@@ -9,7 +9,9 @@ from sqlmodel import Session
 from api import models
 
 
-def create_draft(set_id: UUID, body: models.DraftCreate, db: Session) -> models.Draft:
+async def create_draft(
+    set_id: UUID, body: models.DraftCreate, db: Session
+) -> models.Draft:
     """Create a set draft; set must exist and be DRAFT; prompt required."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -17,7 +19,7 @@ def create_draft(set_id: UUID, body: models.DraftCreate, db: Session) -> models.
     )
 
 
-def list_drafts(set_id: UUID, db: Session) -> models.DraftsResponse:
+async def list_drafts(set_id: UUID, db: Session) -> models.DraftsResponse:
     """List set drafts (created_at desc)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -25,7 +27,7 @@ def list_drafts(set_id: UUID, db: Session) -> models.DraftsResponse:
     )
 
 
-def get_draft(set_id: UUID, draft_id: UUID, db: Session) -> models.Draft:
+async def get_draft(set_id: UUID, draft_id: UUID, db: Session) -> models.Draft:
     """Get a specific set draft (or 404)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -33,7 +35,7 @@ def get_draft(set_id: UUID, draft_id: UUID, db: Session) -> models.Draft:
     )
 
 
-def commit_draft(set_id: UUID, draft_id: UUID, db: Session) -> models.Set:
+async def commit_draft(set_id: UUID, draft_id: UUID, db: Session) -> models.Set:
     """Commit a draft set."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,

@@ -9,7 +9,7 @@ from sqlmodel import Session
 from api import models
 
 
-def list_sets(
+async def list_sets(
     db: Session,
     status: models.SetStatus | None = None,
     post_date: str | None = None,
@@ -23,7 +23,7 @@ def list_sets(
     )
 
 
-def create_set(db: Session, body: models.SetCreate) -> models.Set:
+async def create_set(db: Session, body: models.SetCreate) -> models.Set:
     """Create a set (DRAFT status); requires model, optional slug/name."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -31,7 +31,7 @@ def create_set(db: Session, body: models.SetCreate) -> models.Set:
     )
 
 
-def get_set(set_id: UUID, db: Session) -> models.Set:
+async def get_set(set_id: UUID, db: Session) -> models.Set:
     """Get one set (or 404)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -39,7 +39,7 @@ def get_set(set_id: UUID, db: Session) -> models.Set:
     )
 
 
-def patch_set(set_id: UUID, update: models.Set, db: Session) -> models.Set:
+async def patch_set(set_id: UUID, update: models.Set, db: Session) -> models.Set:
     """Update set fields (only slug/name; DRAFT only)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
@@ -47,7 +47,7 @@ def patch_set(set_id: UUID, update: models.Set, db: Session) -> models.Set:
     )
 
 
-def delete_set(set_id: UUID, db: Session) -> models.Set:
+async def delete_set(set_id: UUID, db: Session) -> models.Set:
     """Mark set ABANDONED (soft; DRAFT only)."""
     raise HTTPException(
         status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
