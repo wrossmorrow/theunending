@@ -10,6 +10,7 @@ dependencies = [
     "httpx",
     "sqlmodel",
     "psycopg[binary]",
+    "uvicorn>=0.54.0",
 ]
 
 [project.optional-dependencies]
