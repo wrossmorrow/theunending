@@ -87,7 +87,7 @@ We're going to use :
     * created_at (generated on creation, UTC timestamp)
 * "runs"
     * run_id (PK, uuidv7)
-    * external_run_id (required, string/text)
+    * external_run_id (required, string/text, from job system response)
     * set_id (FK, uuidv7)
     * draft_id (FK, uuidv7)
     * type (EVALUATION, BATCH)
@@ -175,9 +175,12 @@ We're going to use :
     * implement any X -> X state transition (same state as current) as a no-op success
 * There is no "direct" way to update a draft status, the system will do this as described elsewhere
 * when we create a draft _and_ successfully trigger the external job
-    * we create a run for this set/draft storing the set_id/draft_id FK's and the external_run_id
+    * we create a run for this set/draft storing:
+        * the set_id/draft_id FK's
+        * and the external_run_id returned from the job creation
     * run created of type: EVALUATION
     * run created in status: PENDING
+    * on failure to create a job in the external system, the draft creation should fail with no database changes
 * when a draft's status is moved from IN_PROGRESS -> COMPLETED
     * we will need to copy S3 assets from one bucket to another (owned by the same account)
     * "job" bucket /job prefix -> "site" bucket / site prefix
@@ -195,9 +198,12 @@ We're going to use :
         * set[set_id].committed_at <- current UTC timestamp
         * set[set_id].status <- COMMITTED
         * runs an external job
-            * we create a run for this set/draft storing the set_id/draft_id FK's and the external_run_id
+            * we create a run for this set/draft storing:
+                * the set_id/draft_id FK's
+                * and the external_run_id returned from the job system
             * run created of type: BATCH
             * run created in status: PENDING
+            * on failure to create the job, reject all changes and return with error details
 
 ## runs
 
@@ -214,7 +220,8 @@ We're going to use :
 
 ### Details
 
-* external_run_id should be server-generated (uuid) and unique per external job, used to correlate the external job with its run.
+* run_id should be server-generated (uuidv7) and unique per external job
+* external_run_id is returned from the job system and used to correlate the external job with its run.
 * run objects should only be created by the code, from draft creation, set committing, and internally for "redos"
 * runs are immutable except timestamps and status
 * run statuses are linear: PENDING -> IN_PROGRESS -> COMPLETED | FAILED are the only valid changes
