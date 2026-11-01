@@ -1,5 +1,12 @@
 # Admin API just recipes
 
+image_name := "ghcr.io/wrossmorrow/theunending"
+image_tag := `git rev-parse --short HEAD`
+
+# List targets and exit
+default:
+    just --list
+
 # Install dependencies
 install:
     uv sync
@@ -18,8 +25,20 @@ typecheck:
 
 # Run the local server
 run host="0.0.0.0" port="8000":
-    uv run uvicorn api.main:api --host {{host}} --port {{port}}
+    uv run uvicorn api.main:api --host {{ host }} --port {{ port }}
 
 # Run unit tests
 test *flags="":
-    uv run pytest {{flags}}
+    uv run pytest {{ flags }}
+
+# Containerize the application
+containerize:
+    docker build . -t {{ image_name }}:{{ image_tag }}
+
+# Bring up compose setup
+up *flags="":
+    docker compose up --build {{ flags }}
+
+# Bring down compose setup
+down *flags="":
+    docker compose down {{ flags }}
