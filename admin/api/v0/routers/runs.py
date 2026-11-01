@@ -9,6 +9,7 @@ from sqlmodel import Session
 
 from api.database import models as database
 from api.database.db import get_session_factory
+from api.utils.jobs import ExternalJobClient, get_job_client
 from api.v0.handlers import runs as runs_handlers
 from api.v0.schema import models
 
@@ -49,9 +50,10 @@ async def get_run(
 async def redo_run(
     run_id: UUID,
     session_factory: Annotated[sessionmaker[Session], Depends(get_session_factory)],
+    job_client: Annotated[ExternalJobClient, Depends(get_job_client)],
 ) -> database.Run:
     """Redo a run (requires FAILED status; creates a distinct run)."""
-    return await runs_handlers.redo_run(run_id, session_factory)
+    return await runs_handlers.redo_run(run_id, session_factory, job_client)
 
 
 @runs_router.put(

@@ -3,12 +3,14 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
+import httpx
 from fastapi import HTTPException
 from fastapi import status as http_status
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session
 
 from api.database import models as database
+from api.utils.jobs import ExternalJobClient
 from api.v0.schema import models
 
 
@@ -34,13 +36,56 @@ async def get_run(run_id: UUID, session_factory: sessionmaker[Session]) -> datab
 
 
 async def redo_run(
-    run_id: UUID, session_factory: sessionmaker[Session]
+    run_id: UUID,
+    session_factory: sessionmaker[Session],
+    job_client: ExternalJobClient,
 ) -> database.Run:
     """Redo a run (requires FAILED status; creates a distinct run)."""
-    raise HTTPException(
-        status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Run redo is not implemented yet.",
-    )
+    with session_factory() as session:
+        run = session.get(database.Run, run_id)
+        if run is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Run {run_id} not found.",
+            )
+        if run.status != database.RunStatus.FAILED:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=f"Run {run_id} is not in FAILED status.",
+            )
+        draft = session.get(database.Draft, run.draft_id)
+        if draft is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Draft {run.draft_id} not found.",
+            )
+
+        try:
+            external_run_id = job_client.create_job(
+                {
+                    "set_id": str(run.set_id),
+                    "draft_id": str(run.draft_id),
+                    "model_prompt_hash": draft.model_prompt_hash,
+                }
+            )
+        except httpx.HTTPError, KeyError:
+            raise HTTPException(
+                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create external job.",
+            )
+
+        new_run = database.Run(
+            external_run_id=external_run_id,
+            set_id=run.set_id,
+            draft_id=run.draft_id,
+            type=run.type,
+            status=database.RunStatus.PENDING,
+        )
+        session.add(new_run)
+        session.commit()
+        session.refresh(new_run)
+
+    return new_run
 
 
 def _run_transition_valid(
