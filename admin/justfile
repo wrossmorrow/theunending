@@ -1,0 +1,25 @@
+# Admin API just recipes
+
+# Install dependencies
+install:
+    uv sync
+
+# Format code
+format:
+    uv run ruff format .
+
+# Lint code
+lint:
+    uv run ruff check .
+
+# Run type checks
+typecheck:
+    uv run mypy .
+
+# Run the local server
+run:
+    uv run uvicorn admin.api.main:api --host 0.0.0.0 --port 8000
+
+# Run unit tests
+test:
+    uv run pytest
