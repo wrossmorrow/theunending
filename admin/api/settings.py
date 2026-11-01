@@ -12,3 +12,4 @@ class Settings(BaseSettings):
     draft_status: models.DraftStatus = models.DraftStatus.PENDING
     run_type: models.RunType = models.RunType.EVALUATION
     run_status: models.RunStatus = models.RunStatus.PENDING
+    database_url: str = "sqlite:///./theunending_admin.db"

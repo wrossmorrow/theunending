@@ -1,14 +1,32 @@
 """Unending Admin API."""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlmodel import SQLModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api import models
+from api.settings import Settings
 
-api = FastAPI(title="Unending Admin API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    settings = Settings()
+    engine = create_engine(settings.database_url)
+    SQLModel.metadata.create_all(engine)
+    app.state.engine = engine
+    app.state.session_factory = sessionmaker(engine, class_=SQLModel)
+    yield
+    engine.dispose()
+
+
+api = FastAPI(title="Unending Admin API", lifespan=lifespan)
 
 
 @api.get(
