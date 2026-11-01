@@ -65,8 +65,56 @@ We're going to use :
     * `post_date` is an exception, it's a literal string used for other purposes
 * When write HTTP endpoint specs like `METHOD /path/{param:type}` we mean we validate the type
     * specifically, `METHOD /path/{param:uuidv7}` means the implementation validates the UUID
+* the API must expose top-level `GET /health/alive` and `GET /health/ready` endpoints
+* every other functional API endpoint should be prefixed `/api/v0` (or other vX number later)
+* Do not pass a database _session_ to an API route handler
+    * pass a _session factory_ not a session
+    * the route handler will have to decide on session management
+* When writing tests avoid mocks at all costs.
+    * Mocking makes tests complex, brittle and it is easy to test trivialities
+    * One exception here may be a mock response from an external job system with an external_job_id
 
-# Resources
+# File layout
+
+This is the preferred file layout:
+```
+admin/
+    .gitignore
+    justfile
+    pyproject.toml
+    uv.lock
+    README.md
+    Dockerfile (install non-dev uv dependencies, copy source code, set entrypoint)
+    compose.yaml (for running locally with dependencies; sqlite or postgres, a mock for external job system)
+    api/
+        main.py (primary entrypoint with app definition, import and "add" routers)
+        settings.py (configuration, define and instantiate a single settings object)
+        health.py (definition of health endpoints, and a router to attach for them)
+        utils/
+            ... shared functions, standalone, don't use any other local imports
+        v0/
+            schema/
+                ... API request/response schemas as needed
+            handlers/
+                ... request handlers: health, sets, drafts, runs
+            routers/
+                ... use routers, instead of flat route definitions; these go here
+                    organized by prefix (e.g., `/sets*` in `sets.py`)
+            router.py (aggregated `/api/v0*` prefixed router)
+        database/
+            .. database utilities, table models
+    mocks/
+        ... any simpler, single-file apps we need to run local E2E tests; e.g. maybe jobs/ test server
+    tests/
+        conftest.py (pytest sertup and fixtures)
+        ...
+```
+
+# API
+
+## sets 
+
+### Resource
 
 * "sets":
     * set_id (PK, uuidv7)
@@ -81,28 +129,6 @@ We're going to use :
     * updated_at (set to the latest update, UTC timestamp)
     * committed_at (UTC timestamp)
     * abandoned_at (UTC timestamp)
-* "drafts":
-    * draft_id (PK, uuidv7)
-    * set_id (FK, uuidv7)
-    * prompt (required, string/text)
-    * model_prompt_hash (generated on creation, defined as sha256(sets[set_id].model::prompt))
-    * status (PENDING, IN_PROGRESS, FAILED, COMPLETED)
-    * created_at (generated on creation, UTC timestamp)
-* "runs"
-    * run_id (PK, uuidv7)
-    * external_run_id (required, string/text, from job system response)
-    * set_id (FK, uuidv7)
-    * draft_id (FK, uuidv7)
-    * type (EVALUATION, BATCH)
-    * status (PENDING, IN_PROGRESS, FAILED, COMPLETED)
-    * details (optional, not sure, maybe string/text, maybe JSON)
-    * created_at (generated on creation, UTC timestamp)
-    * updated_at (set to the latest update, UTC timestamp)
-    * finished_at (set when finished, UTC timestamp)
-
-# API
-
-## sets 
 
 ### HTTP calls
 
@@ -134,6 +160,7 @@ We're going to use :
     * have no more than 3 words (space-separated)
     * have no more than 64 total characters
     * does not have to be chosen at create time, but have to be set before commit
+* prompts must be checked to be strings less than 1024 characters in length
 * Every created set starts in status: DRAFT, and creation returns a uuidv7 set_id
 * Creation requires a model in the payload, and _can_ have slug and name but does not have to
 * Only sets in DRAFT state can be updated with PATCH; others return a 400 BadRequest
@@ -153,6 +180,16 @@ We're going to use :
 
 ## drafts
 
+### Resource
+
+* "drafts":
+    * draft_id (PK, uuidv7)
+    * set_id (FK, uuidv7)
+    * prompt (required, string/text)
+    * model_prompt_hash (generated on creation, defined as sha256(sets[set_id].model::prompt))
+    * status (PENDING, IN_PROGRESS, FAILED, COMPLETED)
+    * created_at (generated on creation, UTC timestamp)
+
 ### HTTP calls
 
 * POST /api/v0/sets/{set_id:uuidv7}/drafts
@@ -168,6 +205,7 @@ We're going to use :
 
 * To create a draft the set_id referenced in the path must exist, and be in status: DRAFT
 * To create a draft we have to submit a prompt and get back a uuidv7 draft_id
+* prompts must be checked to be strings less than 1024 characters in length
 * drafts are otherwise immutable except for system-updatable status field
 * The system creates the model_prompt_hash from the prompt in the create request
 * model_prompt_hashes must be globally unique over all drafts
@@ -212,6 +250,20 @@ We're going to use :
             * on failure to create the job, reject all changes and return with error details
 
 ## runs
+
+### Resource
+
+* "runs"
+    * run_id (PK, uuidv7)
+    * external_run_id (required, string/text, from job system response)
+    * set_id (FK, uuidv7)
+    * draft_id (FK, uuidv7)
+    * type (EVALUATION, BATCH)
+    * status (PENDING, IN_PROGRESS, FAILED, COMPLETED)
+    * details (optional, not sure, maybe string/text, maybe JSON)
+    * created_at (generated on creation, UTC timestamp)
+    * updated_at (set to the latest update, UTC timestamp)
+    * finished_at (set when finished, UTC timestamp)
 
 ### HTTP calls
 
