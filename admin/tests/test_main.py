@@ -4,6 +4,7 @@ import hashlib
 from uuid import uuid4
 
 import httpx
+import pytest
 from fastapi.testclient import TestClient
 
 from api.database.models import RunType
@@ -236,6 +237,63 @@ def test_get_draft_returns_created_draft() -> None:
         assert response.json()["draft_id"] == draft_id
         response = client.get(f"/api/v0/sets/{set_id}/drafts/{uuid4()}")
         assert response.status_code == 404
+
+
+def test_get_draft_preview_for_missing_draft_returns_404() -> None:
+    with TestClient(api) as client:
+        response = client.get(f"/api/v0/sets/{uuid4()}/drafts/{uuid4()}/preview")
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"]
+
+
+def test_get_draft_preview_requires_completed_draft_returns_400() -> None:
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        api.dependency_overrides[get_job_client] = lambda: MockExternalJobClient(
+            base_url="http://localhost:8080"
+        )
+        try:
+            response = client.post(
+                f"/api/v0/sets/{set_id}/drafts",
+                json={"prompt": f"a cat {uuid4().hex}"},
+            )
+        finally:
+            api.dependency_overrides.pop(get_job_client, None)
+        assert response.status_code == 201
+        draft_id = response.json()["draft_id"]
+        response = client.get(f"/api/v0/sets/{set_id}/drafts/{draft_id}/preview")
+        assert response.status_code == 400
+        assert "COMPLETED" in response.json()["detail"]
+
+
+def test_get_draft_preview_returns_presigned_url_when_completed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with TestClient(api) as client:
+        set_id, draft_id, run_id = _create_set_with_draft(client)
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+        )
+        assert response.status_code == 200
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "COMPLETED"}
+        )
+        assert response.status_code == 200
+        monkeypatch.setattr(
+            "api.v0.handlers.drafts.find_object_key",
+            lambda bucket, prefix, suffix=".png": f"{prefix}/preview.png",
+        )
+        monkeypatch.setattr(
+            "api.v0.handlers.drafts.create_presigned_url",
+            lambda bucket, key, expires_in=3600: f"https://s3.example/{bucket}/{key}",
+        )
+        response = client.get(f"/api/v0/sets/{set_id}/drafts/{draft_id}/preview")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["preview_url"].startswith("https://s3.example/")
 
 
 def test_list_runs_returns_created_run() -> None:

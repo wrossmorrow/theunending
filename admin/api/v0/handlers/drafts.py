@@ -15,6 +15,7 @@ from api.database import models as database
 from api.settings import settings
 from api.utils.jobs import ExternalJobClient, JobParameters
 from api.utils.prompt import compute_model_prompt_hash
+from api.utils.s3 import create_presigned_url, find_object_key
 from api.v0.schema import models
 
 
@@ -92,6 +93,43 @@ async def create_draft(
         await session.commit()
 
     return draft
+
+
+async def get_draft_preview(
+    set_id: UUID,
+    draft_id: UUID,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> models.DraftPreviewResponse:
+    """Get a presigned S3 preview URL for a completed draft."""
+    async with session_factory() as session:
+        table = database.Draft.metadata.tables[database.Draft.__tablename__]
+        stmt = select(database.Draft).where(
+            table.c.set_id == set_id,
+            table.c.draft_id == draft_id,
+        )
+        draft = (await session.execute(stmt)).scalars().first()
+        if draft is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Draft {draft_id} not found.",
+            )
+        if draft.status != database.DraftStatus.COMPLETED:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=f"Draft {draft_id} must be in COMPLETED status for a preview.",
+            )
+
+        run_prefix = f"{settings.s3_evaluate_prefix}/{draft.model_prompt_hash}"
+        image_key = find_object_key(settings.s3_bucket_name, run_prefix)
+        if image_key is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_502_BAD_GATEWAY,
+                detail=f"No preview image found for draft {draft_id}.",
+            )
+        preview_url = create_presigned_url(
+            bucket=settings.s3_bucket_name, key=image_key
+        )
+        return models.DraftPreviewResponse(preview_url=preview_url)
 
 
 async def list_drafts(
