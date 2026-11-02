@@ -54,7 +54,7 @@ class Set(SQLModel, table=True):
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
-            DateTime(),
+            DateTime(timezone=True),
             default=lambda: datetime.now(UTC),
             onupdate=lambda: datetime.now(UTC),
         ),
@@ -71,13 +71,13 @@ class Draft(SQLModel, table=True):
     draft_id: UUID = Field(default_factory=uuid7, primary_key=True)
     set_id: UUID = Field(index=True, foreign_key="sets.set_id")
     prompt: str = Field(min_length=1, max_length=1023)
-    model_prompt_hash: str = Field(index=True)
+    model_prompt_hash: str = Field(index=True, unique=True)
     status: DraftStatus = Field(default=DraftStatus.PENDING)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
-            DateTime(),
+            DateTime(timezone=True),
             default=lambda: datetime.now(UTC),
             onupdate=lambda: datetime.now(UTC),
         ),
@@ -100,7 +100,7 @@ class Run(SQLModel, table=True):
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
-            DateTime(),
+            DateTime(timezone=True),
             default=lambda: datetime.now(UTC),
             onupdate=lambda: datetime.now(UTC),
         ),

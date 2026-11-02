@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 import httpx
 from fastapi import HTTPException
 from fastapi import status as http_status
+from sqlalchemy import exc as sqlalchemy_exc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlmodel import select
 
@@ -47,8 +48,14 @@ async def create_draft(
         draft_id = draft.draft_id
         draft_model_prompt_hash = draft.model_prompt_hash
         session.add(draft)
-        await session.commit()
-        await session.refresh(draft)
+        try:
+            await session.commit()
+            await session.refresh(draft)
+        except sqlalchemy_exc.IntegrityError:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Draft prompt already exists.",
+            )
 
     try:
         external_run_id = await job_client.create_job(
