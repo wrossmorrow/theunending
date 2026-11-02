@@ -28,8 +28,12 @@ run host="0.0.0.0" port="8000":
     uv run uvicorn api.main:api --host {{ host }} --port {{ port }}
 
 # Run unit tests
-test *flags="":
+test *flags="tests/test_main.py":
     uv run pytest {{ flags }}
+
+# Run integration tests
+test-integration:
+    uv run pytest tests/integration
 
 # Containerize the application
 containerize:
