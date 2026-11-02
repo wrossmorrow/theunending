@@ -185,4 +185,5 @@ async def update_run_status(
                 await session.commit()
                 await session.refresh(committed_set)
 
-    return run
+        await session.refresh(run)
+        return run
