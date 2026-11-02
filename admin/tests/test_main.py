@@ -303,6 +303,113 @@ def test_get_run_with_invalid_uuid_returns_422() -> None:
         assert response.json()["detail"][0]["type"] == "uuid_parsing"
 
 
+def test_update_run_status_pending_to_in_progress_returns_200() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(client)
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+        )
+        assert response.status_code == 200
+        status_response = client.get(f"/api/v0/runs/{run_id}")
+        assert status_response.status_code == 200
+        assert status_response.json()["status"] == "IN_PROGRESS"
+
+
+def test_update_run_status_in_progress_to_completed_returns_200() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(client)
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+        )
+        assert response.status_code == 200
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "COMPLETED"}
+        )
+        assert response.status_code == 200
+        status_response = client.get(f"/api/v0/runs/{run_id}")
+        assert status_response.status_code == 200
+        assert status_response.json()["status"] == "COMPLETED"
+
+
+def test_update_run_status_same_state_returns_200_noop() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(client)
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+        )
+        assert response.status_code == 200
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+        )
+        assert response.status_code == 200
+        status_response = client.get(f"/api/v0/runs/{run_id}")
+        assert status_response.status_code == 200
+        assert status_response.json()["status"] == "IN_PROGRESS"
+
+
+def test_update_run_status_failed_propagates_to_draft_returns_200() -> None:
+    with TestClient(api) as client:
+        set_id, draft_id, run_id = _create_set_with_draft(client)
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "FAILED"}
+        )
+        assert response.status_code == 200
+        draft_response = client.get(f"/api/v0/sets/{set_id}/drafts/{draft_id}")
+        assert draft_response.status_code == 200
+        assert draft_response.json()["status"] == "FAILED"
+
+
+def test_redo_run_returns_new_run_returns_201() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(client)
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "FAILED"}
+        )
+        assert response.status_code == 200
+        api.dependency_overrides[get_job_client] = lambda: MockExternalJobClient(
+            base_url="http://localhost:8080"
+        )
+        try:
+            response = client.post(f"/api/v0/runs/{run_id}")
+        finally:
+            api.dependency_overrides.pop(get_job_client, None)
+        assert response.status_code == 201
+        new_run_id = response.json()["run_id"]
+        new_run_response = client.get(f"/api/v0/runs/{new_run_id}")
+        assert new_run_response.status_code == 200
+        assert new_run_response.json()["status"] == "PENDING"
+
+
+def test_commit_draft_returns_200_and_commits_set() -> None:
+    with TestClient(api) as client:
+        set_id, draft_id, run_id = _create_set_with_draft(client)
+        client.patch(
+            f"/api/v0/sets/{set_id}",
+            json={"slug": "commit-set-abc", "name": "Commit Set"},
+        )
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+        )
+        assert response.status_code == 200
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "COMPLETED"}
+        )
+        assert response.status_code == 200
+        api.dependency_overrides[get_job_client] = lambda: MockExternalJobClient(
+            base_url="http://localhost:8080"
+        )
+        try:
+            response = client.post(f"/api/v0/sets/{set_id}/drafts/{draft_id}/commit")
+        finally:
+            api.dependency_overrides.pop(get_job_client, None)
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "COMMITTED"
+        set_response = client.get(f"/api/v0/sets/{set_id}")
+        assert set_response.status_code == 200
+        assert set_response.json()["status"] == "COMMITTED"
+
+
 def test_update_run_status_invalid_transition_returns_400() -> None:
     with TestClient(api) as client:
         _set_id, _draft_id, run_id = _create_set_with_draft(client)
