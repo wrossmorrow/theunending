@@ -15,6 +15,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY api api
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl=7.88.1-10+deb12u15 \
+    && rm -rf /var/lib/apt/lists/*
+
 EXPOSE 8000
 
 CMD ["uvicorn", "api.main:api", "--host", "0.0.0.0", "--port", "8000"]
