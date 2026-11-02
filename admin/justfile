@@ -35,6 +35,10 @@ test *flags="":
 containerize:
     docker build . -t {{ image_name }}:{{ image_tag }}
 
+# Generate SQL DDL for database tables to a file
+db-create output="sql/create_tables.sql":
+    uv run python scripts/generate_db_sql.py {{ output }}
+
 # Bring up compose setup
 up *flags="":
     docker compose up --build {{ flags }}
