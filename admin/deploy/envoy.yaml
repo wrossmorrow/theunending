@@ -24,9 +24,15 @@ static_resources:
                       domains: ["*"]
                       routes:
                         - match:
-                            prefix: "/"
+                            prefix: "/api"
                           route:
                             cluster: api
+                        - match:
+                            prefix: "/"
+                          direct_response:
+                            status: 404
+                            body:
+                              inline_string: "{\"error\": \"NotFound\"}"
                 http_filters:
                   - name: envoy.filters.http.ext_proc
                     typed_config:
