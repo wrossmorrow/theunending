@@ -73,10 +73,19 @@ async def redo_run(
                 status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Draft {run.draft_id} not found.",
             )
+        set_ = await session.get(database.Set, run.set_id)
+        if set_ is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Set {run.set_id} not found.",
+            )
+
+        model = set_.model
 
         new_run_id = uuid7()
         try:
             job_request = JobParameters(
+                model_id=model,
                 s3_bucket=settings.s3_bucket,
                 s3_prefix=(
                     f"{settings.s3_evaluate_prefix if run.type == database.RunType.EVALUATION else settings.s3_batch_prefix}"

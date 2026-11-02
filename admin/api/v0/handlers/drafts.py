@@ -40,10 +40,11 @@ async def create_draft(
                 detail=f"Set {set_id} is not in DRAFT status.",
             )
 
+        model = set_.model
         draft = database.Draft(
             set_id=set_.set_id,
             prompt=body.prompt,
-            model_prompt_hash=compute_model_prompt_hash(set_.model, body.prompt),
+            model_prompt_hash=compute_model_prompt_hash(model, body.prompt),
             status=database.DraftStatus.PENDING,
         )
         draft_id = draft.draft_id
@@ -61,6 +62,7 @@ async def create_draft(
     run_id = uuid7()
     try:
         job_request = JobParameters(
+            model_id=model,
             s3_bucket=settings.s3_bucket,
             s3_prefix=f"{settings.s3_evaluate_prefix}/{draft_model_prompt_hash}",
             prompt=draft.prompt,
@@ -70,7 +72,7 @@ async def create_draft(
         external_run_id = await job_client.create_job(
             database.RunType.EVALUATION, job_request
         )
-    except (httpx.HTTPError, KeyError):
+    except httpx.HTTPError, KeyError:
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create external job.",
@@ -164,6 +166,8 @@ async def commit_draft(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Set {set_id} must have a slug and name before commit.",
             )
+
+        model = set_.model
         draft = await session.get(database.Draft, draft_id)
         if draft is None:
             raise HTTPException(
@@ -178,6 +182,7 @@ async def commit_draft(
 
     try:
         job_request = JobParameters(
+            model_id=model,
             s3_bucket=settings.s3_bucket,
             s3_prefix=f"{settings.s3_batch_prefix}/{draft.model_prompt_hash}",
             prompt=draft.prompt,

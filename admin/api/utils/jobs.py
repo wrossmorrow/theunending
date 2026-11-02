@@ -11,6 +11,7 @@ from api.settings import settings
 class JobParameters(BaseModel):
     """Parameters for an external job creation request."""
 
+    model_id: str
     s3_bucket: str
     s3_prefix: str
     prompt: str
