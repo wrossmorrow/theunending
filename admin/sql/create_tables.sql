@@ -9,7 +9,7 @@ CREATE TABLE sets (
 	post_date VARCHAR, 
 	status setstatus NOT NULL, 
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
-	updated_at TIMESTAMP WITHOUT TIME ZONE, 
+	updated_at TIMESTAMP WITH TIME ZONE, 
 	committed_at TIMESTAMP WITH TIME ZONE, 
 	abandoned_at TIMESTAMP WITH TIME ZONE, 
 	PRIMARY KEY (set_id)
@@ -25,7 +25,7 @@ CREATE TABLE drafts (
 	model_prompt_hash VARCHAR NOT NULL, 
 	status draftstatus NOT NULL, 
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
-	updated_at TIMESTAMP WITHOUT TIME ZONE, 
+	updated_at TIMESTAMP WITH TIME ZONE, 
 	PRIMARY KEY (draft_id), 
 	FOREIGN KEY(set_id) REFERENCES sets (set_id)
 )
@@ -42,7 +42,7 @@ CREATE TABLE runs (
 	status runstatus NOT NULL, 
 	details VARCHAR, 
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
-	updated_at TIMESTAMP WITHOUT TIME ZONE, 
+	updated_at TIMESTAMP WITH TIME ZONE, 
 	finished_at TIMESTAMP WITH TIME ZONE, 
 	PRIMARY KEY (run_id), 
 	FOREIGN KEY(set_id) REFERENCES sets (set_id), 

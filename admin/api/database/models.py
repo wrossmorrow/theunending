@@ -54,7 +54,7 @@ class Set(SQLModel, table=True):
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
-            DateTime(),
+            DateTime(timezone=True),
             default=lambda: datetime.now(UTC),
             onupdate=lambda: datetime.now(UTC),
         ),
@@ -77,7 +77,7 @@ class Draft(SQLModel, table=True):
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
-            DateTime(),
+            DateTime(timezone=True),
             default=lambda: datetime.now(UTC),
             onupdate=lambda: datetime.now(UTC),
         ),
@@ -100,7 +100,7 @@ class Run(SQLModel, table=True):
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
-            DateTime(),
+            DateTime(timezone=True),
             default=lambda: datetime.now(UTC),
             onupdate=lambda: datetime.now(UTC),
         ),
