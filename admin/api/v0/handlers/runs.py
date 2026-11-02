@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlmodel import select
 
 from api.database import models as database
+from api.settings import settings
 from api.utils.jobs import ExternalJobClient
 from api.v0.schema import models
 
@@ -77,9 +78,14 @@ async def redo_run(
             external_run_id = await job_client.create_job(
                 run.type,
                 {
-                    "set_id": str(run.set_id),
-                    "draft_id": str(run.draft_id),
-                    "model_prompt_hash": draft.model_prompt_hash,
+                    "s3_bucket": settings.s3_bucket,
+                    "s3_prefix": (
+                        f"{settings.s3_evaluate_prefix if run.type == database.RunType.EVALUATION else settings.s3_batch_prefix}"
+                        f"/{draft.model_prompt_hash}"
+                    ),
+                    "prompt": draft.prompt,
+                    "status_update_url": f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
+                    "status_update_admin_run_id": run_id,
                 },
             )
         except httpx.HTTPError, KeyError:

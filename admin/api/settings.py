@@ -13,7 +13,12 @@ class Settings(BaseSettings):
     run_type: RunType = RunType.EVALUATION
     run_status: RunStatus = RunStatus.PENDING
     database_url: str = "sqlite+aiosqlite:///./theunending_admin.db"
+    admin_base_url: str = "http://localhost:8000"
     job_base_url: str = "http://localhost:8080"
+    job_bearer_token: str = "dev-token"
+    s3_bucket: str = "unending-local"
+    s3_evaluate_prefix: str = "drafts"
+    s3_batch_prefix: str = "runs"
 
 
 settings = Settings()

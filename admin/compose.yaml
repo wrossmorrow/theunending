@@ -2,9 +2,11 @@ services:
 
   # mock external job system for local runs and integration tests
   mock-jobs:
-    image: ghcr.io/wrossmorrow/theunending/admin-api
-    build: .
-    command: ["uvicorn", "api.mocks.jobs:api", "--host", "0.0.0.0", "--port", "8080"]
+    image: ghcr.io/wrossmorrow/theunending/admin-mock-jobs
+    build:
+      context: .
+      dockerfile: mocks/Dockerfile
+    command: ["uvicorn", "mocks.jobs:api", "--host", "0.0.0.0", "--port", "8080"]
     ports:
       - "8080:8080"
     restart: unless-stopped
@@ -23,7 +25,12 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      ADMIN_BASE_URL: http://api:8000
       JOB_BASE_URL: http://mock-jobs:8080
+      JOB_BEARER_TOKEN: ${JOB_BEARER_TOKEN:-dev-token}
+      S3_BUCKET: ${S3_BUCKET:-unending-local}
+      S3_EVALUATE_PREFIX: ${S3_EVALUATE_PREFIX:-drafts}
+      S3_BATCH_PREFIX: ${S3_BATCH_PREFIX:-runs}
     volumes:
       - ${HOME}/data:/data
     restart: unless-stopped
