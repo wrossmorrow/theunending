@@ -265,7 +265,8 @@ input.bad { border-color: var(--accent-color); }
 }
 .run-type { text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-color); }
 .run-message { color: var(--text-color); font-weight: 600; }
-.run-details { color: var(--text-color); }
+.run-details { color: var(--meta-color); cursor: help; }
+.run-details:empty { display: none; }
 .run-id { font-size: 0.95em; background: none; padding: 0; color: var(--meta-color); }
 
 .batch .run { font-size: 0.8rem; }
