@@ -38,6 +38,10 @@ services:
     image: "${API_IMAGE_REGISTRY}/${API_IMAGE_NAME}:${API_IMAGE_TAG:-latest}"
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      ADMIN_BASE_URL: ${ADMIN_BASE_URL}
+      JOB_BASE_URL: ${JOB_BASE_URL}
+      JOB_BEARER_TOKEN: ${JOB_BEARER_TOKEN}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
     ports:
       - "127.0.0.1:8000:8000"
     restart: unless-stopped
