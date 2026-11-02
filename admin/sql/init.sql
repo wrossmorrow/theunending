@@ -52,7 +52,7 @@ CREATE TABLE runs (
 	type runtype NOT NULL, 
 	status runstatus NOT NULL, 
 	message VARCHAR(1024), 
-	details JSON, 
+	details JSONB, 
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	updated_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	finished_at TIMESTAMP WITH TIME ZONE

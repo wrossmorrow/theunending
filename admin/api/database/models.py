@@ -5,7 +5,8 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid7
 
-from sqlalchemy import JSON, DateTime
+from sqlalchemy import DateTime
+from sqlalchemy.dialects import postgresql
 from sqlmodel import Column, Field, SQLModel
 
 
@@ -97,7 +98,7 @@ class Run(SQLModel, table=True):
     type: RunType = Field()
     status: RunStatus = Field(default=RunStatus.PENDING)
     message: str | None = Field(default=None, max_length=1024)
-    details: dict[str, Any] | None = Field(default=None, sa_type=JSON)
+    details: dict[str, Any] | None = Field(default=None, sa_type=postgresql.JSONB)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
