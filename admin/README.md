@@ -30,11 +30,15 @@ built.
 
 ## External job system
 
-- The API calls the external job system via `POST {job_base_url}/jobs` and stores the
-  returned `external_run_id` on the run.
+- The API calls the external job system via `POST {job_base_url}/evaluate` or
+  `POST {job_base_url}/batch` (based on the run type) and stores the returned
+  `external_run_id` on the run. Job creation calls carry a bearer token
+  (`JOB_BEARER_TOKEN`) and a payload with `s3_bucket`, `s3_prefix`, `prompt`,
+  `status_update_url`, and `status_update_admin_run_id`.
 - Locally, `just up` (docker compose) brings up the mock external job system
   (`mock-jobs`, base URL `http://mock-jobs:8080`) alongside the api and database; the
-  api is configured with `JOB_BASE_URL=http://mock-jobs:8080`.
+  api is configured with `JOB_BASE_URL=http://mock-jobs:8080`,
+  `ADMIN_BASE_URL=http://api:8000`, and `JOB_BEARER_TOKEN`.
 - For running the server without docker, use `just mock-jobs` and point the api at it via
   the `JOB_BASE_URL` env var (default `http://localhost:8080`).
 

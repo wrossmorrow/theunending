@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlmodel import select
 
 from api.database import models as database
+from api.settings import settings
 from api.utils.jobs import ExternalJobClient
 from api.utils.prompt import compute_model_prompt_hash
 from api.v0.schema import models
@@ -61,9 +62,11 @@ async def create_draft(
         external_run_id = await job_client.create_job(
             database.RunType.EVALUATION,
             {
-                "set_id": str(set_id),
-                "draft_id": str(draft_id),
-                "model_prompt_hash": draft_model_prompt_hash,
+                "s3_bucket": settings.s3_bucket,
+                "s3_prefix": f"{settings.s3_evaluate_prefix}/{draft_model_prompt_hash}",
+                "prompt": draft.prompt,
+                "status_update_url": f"{settings.admin_base_url}/api/v0/runs/{draft.draft_id}/status",
+                "status_update_admin_run_id": str(draft.draft_id),
             },
         )
     except httpx.HTTPError, KeyError:
@@ -175,9 +178,11 @@ async def commit_draft(
         external_run_id = await job_client.create_job(
             database.RunType.BATCH,
             {
-                "set_id": str(set_id),
-                "draft_id": str(draft_id),
-                "model_prompt_hash": draft.model_prompt_hash,
+                "s3_bucket": settings.s3_bucket,
+                "s3_prefix": f"{settings.s3_batch_prefix}/{draft.model_prompt_hash}",
+                "prompt": draft.prompt,
+                "status_update_url": f"{settings.admin_base_url}/api/v0/runs/{draft.draft_id}/status",
+                "status_update_admin_run_id": str(draft.draft_id),
             },
         )
     except httpx.HTTPError, KeyError:
