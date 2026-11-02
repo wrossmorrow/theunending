@@ -1,6 +1,7 @@
 services:
 
   api:
+    image: ghcr.io/wrossmorrow/theunending
     build: .
     ports:
       - "8000:8000"

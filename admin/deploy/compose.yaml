@@ -1,0 +1,55 @@
+services:
+
+  # envoy, configured as with envoy.yaml to use extprocs
+  envoy:
+    image: "envoyproxy/envoy:${ENVOY_VERSION:-v1.35-latest}"
+    command: envoy -c /etc/envoy/envoy.yaml --log-level ${ENVOY_LOG_LEVEL:-info}
+    ports:
+      # listener
+      - "8080:8080"
+      # admin port
+      - "9901:9901"
+    volumes:
+      - ${HOME}/deploy/envoy.yaml:/etc/envoy/envoy.yaml
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9901/ready"]
+      interval: 15s
+      timeout: 2s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      auth:
+        condition: service_healthy
+
+  # extproc for auth, checks against static tokens
+  auth:
+    image: "${EXTPROC_IMAGE_REGISTRY}/${EXTPROC_IMAGE_NAME}:${EXTPROC_IMAGE_TAG:-latest}"
+    command: ["--update-duration-header"]
+    ports:
+      # metrics (gRPC kept internal)
+      - '9090:9090'
+    volumes:
+      - /opt/theunending/authorization:/opt/theunending/authorization
+    restart: always
+    healthcheck:
+      test: ["CMD", "/grpc-health-probe", "-addr=localhost:50051"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 3s
+
+  # api to run; NOTE: listener not exposed on host, foces through envoy
+  api:
+    image: "${API_IMAGE_REGISTRY}/${API_IMAGE_NAME}:${API_IMAGE_TAG:-latest}"
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////data/theunending_admin.db
+    volumes:
+      - ${HOME}/data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health/alive"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
