@@ -79,9 +79,9 @@ def stitch_grid(output, images, grid_cols=None, padding=8, bg_color=(255, 255, 2
 def _copy_to_s3(
     args: argparse.Namespace,
     s3: S3Client,
-) -> None:
+) -> tuple[str | None, list[str]]:
     if args.s3_bucket is None:
-        return
+        return None, []
     
     s3.put_object(
         Bucket=args.s3_bucket,
@@ -97,13 +97,18 @@ def _copy_to_s3(
             Key=f"{args.s3_prefix}/{fn}",
         )
 
+    keys = []
     for tile in glob.glob(f"{args.tiles}/*.png"):
         fn = Path(tile).name
+        key = f"{args.s3_prefix}/tiles/{fn}"
+        keys.append(key)
         s3.upload_file(
             Filename=tile,
             Bucket=args.s3_bucket,
-            Key=f"{args.s3_prefix}/tiles/{fn}",
+            Key=key,
         )
+
+    return args.s3_bucket, keys
 
 
 def handle(args: argparse.Namespace, s3: S3Client | None) -> int:
@@ -146,11 +151,15 @@ def handle(args: argparse.Namespace, s3: S3Client | None) -> int:
                 message=f"sample {r+1}/{args.repetitions} completed",
             )
 
-        _copy_to_s3(args, s3)
+        bucket, keys = _copy_to_s3(args, s3)
 
         admin_api.update_progress(
             status=Status.COMPLETED,
             message="image generation and s3 upload completed",
+            details={
+                "bucket": bucket,
+                "keys": keys,
+            }
         )
 
     except Exception as e:  # noqa: BLE001
