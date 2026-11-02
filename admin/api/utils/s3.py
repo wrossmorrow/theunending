@@ -2,7 +2,7 @@
 
 import boto3  # type: ignore[import-untyped]
 
-DEFAULT_EXPIRES_SECONDS = 3600
+DEFAULT_EXPIRES_SECONDS = 300
 
 
 def create_presigned_url(
@@ -15,15 +15,3 @@ def create_presigned_url(
         Params={"Bucket": bucket, "Key": key},
         ExpiresIn=expires_in,
     )
-
-
-def find_object_key(bucket: str, prefix: str, suffix: str = ".png") -> str | None:
-    """Find the first object key under a prefix ending with a suffix."""
-    client = boto3.client("s3")
-    paginator = client.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
-        for obj in page.get("Contents") or []:
-            key = obj["Key"]
-            if key.startswith(prefix) and key[len(prefix) :].lower().endswith(suffix):
-                return key
-    return None

@@ -279,16 +279,19 @@ def test_get_draft_preview_returns_presigned_url_when_completed(
         )
         assert response.status_code == 200
         response = client.put(
-            f"/api/v0/runs/{run_id}/status", json={"status": "COMPLETED"}
+            f"/api/v0/runs/{run_id}/status",
+            json={
+                "status": "COMPLETED",
+                "details": {
+                    "keys": [f"drafts/{draft_id}/thematic-grid-0.png"],
+                    "bucket": "wrossmorrow-genai-repetitions-use1",
+                },
+            },
         )
         assert response.status_code == 200
         monkeypatch.setattr(
-            "api.v0.handlers.drafts.find_object_key",
-            lambda bucket, prefix, suffix=".png": f"{prefix}/preview.png",
-        )
-        monkeypatch.setattr(
             "api.v0.handlers.drafts.create_presigned_url",
-            lambda bucket, key, expires_in=3600: f"https://s3.example/{bucket}/{key}",
+            lambda bucket, key, expires_in=300: f"https://s3.example/{bucket}/{key}",
         )
         response = client.get(f"/api/v0/sets/{set_id}/drafts/{draft_id}/preview")
         assert response.status_code == 200
