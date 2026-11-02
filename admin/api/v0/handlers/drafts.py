@@ -67,7 +67,7 @@ async def create_draft(
             s3_prefix=f"{settings.s3_evaluate_prefix}/{draft_model_prompt_hash}",
             prompt=draft.prompt,
             status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
-            status_update_admin_run_id=str(run_id),
+            status_update_admin_run_id=run_id,
         )
         external_run_id = await job_client.create_job(
             database.RunType.EVALUATION, job_request
@@ -180,14 +180,15 @@ async def commit_draft(
                 detail=f"Draft {draft_id} is not in COMPLETED status.",
             )
 
+    run_id = uuid7()
     try:
         job_request = JobParameters(
             model_id=model,
             s3_bucket=settings.s3_bucket_name,
             s3_prefix=f"{settings.s3_batch_prefix}/{draft.model_prompt_hash}",
             prompt=draft.prompt,
-            status_update_url=f"{settings.admin_base_url}/api/v0/runs/{draft.draft_id}/status",
-            status_update_admin_run_id=str(draft.draft_id),
+            status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
+            status_update_admin_run_id=draft.draft_id,
         )
         external_run_id = await job_client.create_job(
             database.RunType.BATCH, job_request
@@ -223,6 +224,7 @@ async def commit_draft(
         set_.committed_at = datetime.now(UTC)
         set_.status = database.SetStatus.COMMITTED
         run = database.Run(
+            run_id=run_id,
             external_run_id=external_run_id,
             set_id=set_id,
             draft_id=draft_id,

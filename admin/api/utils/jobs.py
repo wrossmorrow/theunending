@@ -1,5 +1,7 @@
 """External job system client for the Unending Admin API."""
 
+from uuid import UUID
+
 import httpx
 from fastapi import Request
 from pydantic import BaseModel, ValidationError
@@ -16,7 +18,7 @@ class JobParameters(BaseModel):
     s3_prefix: str
     prompt: str
     status_update_url: str
-    status_update_admin_run_id: str
+    status_update_admin_run_id: UUID
 
 
 class JobAPIResponse(BaseModel):
