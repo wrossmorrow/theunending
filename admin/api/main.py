@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from api.database.db import create_session_factory, selectone
 from api.health import health_router
 from api.settings import settings
+from api.utils.jobs import ExternalJobClient
 from api.v0.router import api_v0_router
 
 
@@ -20,9 +21,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     engine = create_async_engine(settings.database_url)
     app.state.engine = engine
     app.state.session_factory = create_session_factory(engine)
+    app.state.job_client = ExternalJobClient(base_url=settings.job_base_url)
     await selectone(app.state.session_factory)
     yield
     await engine.dispose()
+    await app.state.job_client.aclose()
 
 
 api = FastAPI(title="Unending Admin API", lifespan=lifespan)
@@ -30,6 +33,7 @@ api.include_router(health_router)
 api.include_router(api_v0_router)
 
 api.mount("/admin", StaticFiles(directory="web", html=True), name="admin")
+
 
 @api.exception_handler(Exception)
 async def _exception_handler(request: Request, exc: Exception) -> JSONResponse:

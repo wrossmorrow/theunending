@@ -8,14 +8,14 @@ from fastapi.testclient import TestClient
 
 from api.database.models import RunType
 from api.main import api
-from api.utils.jobs import ExternalJobClient, get_job_client
+from api.utils.jobs import ExternalJobClient, JobParameters, get_job_client
 from api.utils.prompt import compute_model_prompt_hash
 
 
 class MockExternalJobClient(ExternalJobClient):
     """Mock external job client returning a fixed external run id."""
 
-    async def create_job(self, job_type: RunType, payload: dict) -> str:
+    async def create_job(self, job_type: RunType, job_request: JobParameters) -> str:
         """Return a fixed external run id without calling the job system."""
         return "mock-external-run-id"
 
@@ -23,7 +23,7 @@ class MockExternalJobClient(ExternalJobClient):
 class FailingExternalJobClient(ExternalJobClient):
     """Mock external job client that always fails."""
 
-    async def create_job(self, job_type: RunType, payload: dict) -> str:
+    async def create_job(self, job_type: RunType, job_request: JobParameters) -> str:
         """Raise an httpx error to simulate an external job system failure."""
         raise httpx.ConnectError("mock external job system failure")
 
