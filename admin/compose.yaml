@@ -28,7 +28,7 @@ services:
       ADMIN_BASE_URL: http://api:8000
       JOB_BASE_URL: http://mock-jobs:8080
       JOB_BEARER_TOKEN: ${JOB_BEARER_TOKEN:-dev-token}
-      S3_BUCKET: ${S3_BUCKET:-unending-local}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-unending-local}
       S3_EVALUATE_PREFIX: ${S3_EVALUATE_PREFIX:-drafts}
       S3_BATCH_PREFIX: ${S3_BATCH_PREFIX:-runs}
     volumes:

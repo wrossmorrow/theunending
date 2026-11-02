@@ -1,7 +1,7 @@
 """Draft route handlers."""
 
 from datetime import UTC, datetime
-from uuid import UUID
+from uuid import UUID, uuid7
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -40,10 +40,11 @@ async def create_draft(
                 detail=f"Set {set_id} is not in DRAFT status.",
             )
 
+        model = set_.model
         draft = database.Draft(
             set_id=set_.set_id,
             prompt=body.prompt,
-            model_prompt_hash=compute_model_prompt_hash(set_.model, body.prompt),
+            model_prompt_hash=compute_model_prompt_hash(model, body.prompt),
             status=database.DraftStatus.PENDING,
         )
         draft_id = draft.draft_id
@@ -58,18 +59,21 @@ async def create_draft(
                 detail="Draft prompt already exists.",
             )
 
+    run_id = uuid7()
     try:
         job_request = JobParameters(
-            s3_bucket=settings.s3_bucket,
+            model_id=model,
+            s3_bucket=settings.s3_bucket_name,
             s3_prefix=f"{settings.s3_evaluate_prefix}/{draft_model_prompt_hash}",
             prompt=draft.prompt,
-            status_update_url=f"{settings.admin_base_url}/api/v0/runs/{draft.draft_id}/status",
-            status_update_admin_run_id=str(draft.draft_id),
+            status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
+            status_update_admin_run_id=run_id,
         )
         external_run_id = await job_client.create_job(
             database.RunType.EVALUATION, job_request
         )
-    except httpx.HTTPError, KeyError:
+    except (httpx.HTTPError, KeyError) as e:
+        print(f"Failed to trigger external job: {e.__class__.__name__} {e}")
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create external job.",
@@ -77,6 +81,7 @@ async def create_draft(
 
     async with session_factory() as session:
         run = database.Run(
+            run_id=run_id,
             external_run_id=external_run_id,
             set_id=set_id,
             draft_id=draft_id,
@@ -162,6 +167,8 @@ async def commit_draft(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Set {set_id} must have a slug and name before commit.",
             )
+
+        model = set_.model
         draft = await session.get(database.Draft, draft_id)
         if draft is None:
             raise HTTPException(
@@ -174,18 +181,21 @@ async def commit_draft(
                 detail=f"Draft {draft_id} is not in COMPLETED status.",
             )
 
+    run_id = uuid7()
     try:
         job_request = JobParameters(
-            s3_bucket=settings.s3_bucket,
+            model_id=model,
+            s3_bucket=settings.s3_bucket_name,
             s3_prefix=f"{settings.s3_batch_prefix}/{draft.model_prompt_hash}",
             prompt=draft.prompt,
-            status_update_url=f"{settings.admin_base_url}/api/v0/runs/{draft.draft_id}/status",
-            status_update_admin_run_id=str(draft.draft_id),
+            status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
+            status_update_admin_run_id=run_id,
         )
         external_run_id = await job_client.create_job(
             database.RunType.BATCH, job_request
         )
-    except httpx.HTTPError, KeyError:
+    except (httpx.HTTPError, KeyError) as e:
+        print(f"Failed to trigger external job: {e.__class__.__name__} {e}")
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create external job.",
@@ -215,6 +225,7 @@ async def commit_draft(
         set_.committed_at = datetime.now(UTC)
         set_.status = database.SetStatus.COMMITTED
         run = database.Run(
+            run_id=run_id,
             external_run_id=external_run_id,
             set_id=set_id,
             draft_id=draft_id,

@@ -1,8 +1,10 @@
 """External job system client for the Unending Admin API."""
 
+from uuid import UUID
+
 import httpx
 from fastapi import Request
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from api.database.models import RunType
 from api.settings import settings
@@ -11,11 +13,16 @@ from api.settings import settings
 class JobParameters(BaseModel):
     """Parameters for an external job creation request."""
 
+    model_id: str
     s3_bucket: str
     s3_prefix: str
     prompt: str
     status_update_url: str
-    status_update_admin_run_id: str
+    status_update_admin_run_id: UUID
+
+
+class JobAPIResponse(BaseModel):
+    external_run_id: str
 
 
 class ExternalJobClient:
@@ -39,11 +46,19 @@ class ExternalJobClient:
     async def create_job(self, job_type: RunType, job_request: JobParameters) -> str:
         """Create an external job of the given type and return the external run id."""
         path = "/evaluate" if job_type == RunType.EVALUATION else "/batch"
-        response = await self._client.post(
-            path, json=job_request.model_dump(mode="json")
-        )
-        response.raise_for_status()
-        return str(response.json()["external_run_id"])
+        try:
+            response = await self._client.post(
+                path, json=job_request.model_dump(mode="json")
+            )
+            response.raise_for_status()
+            data = JobAPIResponse.model_validate(response.json())
+            return data.external_run_id
+        except httpx.HTTPStatusError as e:
+            print(f"Failed job call: {e.response.status_code} {e.response.text}")
+            raise
+        except ValidationError as e:
+            print(f"Job response validation failed: {e}")
+            raise
 
 
 def get_job_client(request: Request) -> ExternalJobClient:

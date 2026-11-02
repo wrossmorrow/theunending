@@ -1,7 +1,7 @@
 """Run route handlers."""
 
 from datetime import UTC, datetime
-from uuid import UUID
+from uuid import UUID, uuid7
 
 import httpx
 from fastapi import HTTPException
@@ -73,26 +73,38 @@ async def redo_run(
                 status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Draft {run.draft_id} not found.",
             )
+        set_ = await session.get(database.Set, run.set_id)
+        if set_ is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Set {run.set_id} not found.",
+            )
 
+        model = set_.model
+
+        new_run_id = uuid7()
         try:
             job_request = JobParameters(
-                s3_bucket=settings.s3_bucket,
+                model_id=model,
+                s3_bucket=settings.s3_bucket_name,
                 s3_prefix=(
                     f"{settings.s3_evaluate_prefix if run.type == database.RunType.EVALUATION else settings.s3_batch_prefix}"
                     f"/{draft.model_prompt_hash}"
                 ),
                 prompt=draft.prompt,
-                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
-                status_update_admin_run_id=str(run_id),
+                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{new_run_id}/status",
+                status_update_admin_run_id=new_run_id,
             )
             external_run_id = await job_client.create_job(run.type, job_request)
-        except httpx.HTTPError, KeyError:
+        except (httpx.HTTPError, KeyError) as e:
+            print(f"Failed to trigger external job: {e.__class__.__name__} {e}")
             raise HTTPException(
                 status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create external job.",
             )
 
         new_run = database.Run(
+            run_id=new_run_id,
             external_run_id=external_run_id,
             set_id=run.set_id,
             draft_id=run.draft_id,

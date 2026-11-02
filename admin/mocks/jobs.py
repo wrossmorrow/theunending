@@ -16,7 +16,7 @@ class JobCreate(BaseModel):
     s3_prefix: str
     prompt: str
     status_update_url: str
-    status_update_admin_run_id: str
+    status_update_admin_run_id: uuid.UUID
 
 
 class JobCreated(BaseModel):
@@ -42,7 +42,9 @@ async def _send_status_update(
         response.raise_for_status()
 
 
-async def _run_job(status_update_url: str, status_update_admin_run_id: str) -> None:
+async def _run_job(
+    status_update_url: str, status_update_admin_run_id: uuid.UUID
+) -> None:
     """Simulate a job: IN_PROGRESS then COMPLETED via status updates."""
     await asyncio.sleep(STATUS_UPDATE_DELAY_SECONDS)
     await _send_status_update(
