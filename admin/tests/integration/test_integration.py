@@ -36,6 +36,11 @@ def _unique_slug() -> str:
     return f"it-{uuid4().hex[:8]}a"
 
 
+def _unique_prompt() -> str:
+    """Generate a unique draft prompt that satisfies the API prompt constraints."""
+    return f"a cat {uuid4().hex}"
+
+
 def _create_set(
     client: httpx.Client,
     slug: str | None = None,
@@ -170,7 +175,7 @@ def test_create_draft_returns_201_with_pending_run(http_client: httpx.Client) ->
     """Creating a draft returns 201 with a PENDING draft and an EVALUATION run."""
     set_body = _create_set(http_client)
     set_id = set_body["set_id"]
-    draft = _create_draft(http_client, set_id)
+    draft = _create_draft(http_client, set_id, prompt=_unique_prompt())
     draft_id = draft["draft_id"]
     run = _get_run_by_draft(http_client, draft_id)
     assert run["status"] == "PENDING"
@@ -223,7 +228,8 @@ def test_full_flow_draft_to_committed_batch_to_completed(
     """Full flow: create set, draft, drive evaluation run, commit, drive batch run."""
     set_body = _create_set(http_client, slug=_unique_slug(), name="It Flow Set")
     set_id = set_body["set_id"]
-    draft = _create_draft(http_client, set_id, prompt="a cat")
+    prompt = _unique_prompt()
+    draft = _create_draft(http_client, set_id, prompt=prompt)
     draft_id = draft["draft_id"]
     run = _get_run_by_draft(http_client, draft_id)
     run_id = run["run_id"]
@@ -240,7 +246,7 @@ def test_full_flow_draft_to_committed_batch_to_completed(
     assert committed["status"] == "COMMITTED"
     committed_set = http_client.get(f"/api/v0/sets/{set_id}").json()
     assert committed_set["status"] == "COMMITTED"
-    assert committed_set["prompt"] == "a cat"
+    assert committed_set["prompt"] == prompt
     assert committed_set["post_date"]
     assert committed_set["committed_at"]
 
@@ -268,7 +274,7 @@ def test_commit_draft_with_draft_not_completed_returns_400(
     set_body = _create_set(
         http_client, slug=_unique_slug(), name="It Commit Pending Set"
     )
-    draft = _create_draft(http_client, set_body["set_id"])
+    draft = _create_draft(http_client, set_body["set_id"], prompt=_unique_prompt())
     response = http_client.post(
         f"/api/v0/sets/{set_body['set_id']}/drafts/{draft['draft_id']}/commit"
     )
@@ -281,7 +287,7 @@ def test_commit_draft_with_missing_slug_and_name_returns_400(
 ) -> None:
     """Committing a draft without a set slug and name returns 400."""
     set_body = _create_set(http_client)
-    draft = _create_draft(http_client, set_body["set_id"])
+    draft = _create_draft(http_client, set_body["set_id"], prompt=_unique_prompt())
     response = http_client.post(
         f"/api/v0/sets/{set_body['set_id']}/drafts/{draft['draft_id']}/commit"
     )
@@ -294,7 +300,7 @@ def test_update_run_status_invalid_transition_returns_400(
 ) -> None:
     """Updating a run status without a valid transition returns 400."""
     set_body = _create_set(http_client)
-    draft = _create_draft(http_client, set_body["set_id"])
+    draft = _create_draft(http_client, set_body["set_id"], prompt=_unique_prompt())
     run = _get_run_by_draft(http_client, draft["draft_id"])
     response = http_client.put(
         f"/api/v0/runs/{run['run_id']}/status", json={"status": "COMPLETED"}
@@ -314,7 +320,7 @@ def test_update_run_status_not_found_returns_404(http_client: httpx.Client) -> N
 def test_redo_run_returns_new_run_returns_201(http_client: httpx.Client) -> None:
     """Redoing a failed run creates a new run in PENDING status."""
     set_body = _create_set(http_client)
-    draft = _create_draft(http_client, set_body["set_id"])
+    draft = _create_draft(http_client, set_body["set_id"], prompt=_unique_prompt())
     run = _get_run_by_draft(http_client, draft["draft_id"])
     assert (
         _update_run_status(http_client, run["run_id"], "FAILED")["status"] == "FAILED"
