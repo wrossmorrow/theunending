@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin · The Unending</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <h1>The Unending</h1>
+    <div class="kicker">Admin &middot; sets, drafts &amp; runs</div>
+  </header>
+
+  <div class="site-bar">
+    <nav>
+      <a href="#/" data-nav="sets">Sets</a>
+      <a href="#/new" data-nav="new">New set</a>
+      <span class="bar-spacer"></span>
+      <span id="conn-status" class="conn" title="API connection">&middot;</span>
+      <button type="button" id="token-button" class="link-button">Token</button>
+    </nav>
+    <hr>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <main class="layout">
+    <!-- Left: set list -->
+    <aside class="sets-pane" aria-label="Sets">
+      <div class="pane-head">
+        <label class="kicker" for="status-filter">Show</label>
+        <select id="status-filter">
+          <option value="active" selected>Active</option>
+          <option value="all">All</option>
+          <option value="DRAFT">Draft</option>
+          <option value="COMMITTED">Committed</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="FAILED">Failed</option>
+          <option value="ABANDONED">Abandoned</option>
+        </select>
+        <button type="button" id="refresh-sets" class="link-button" title="Refresh">&#8635;</button>
+      </div>
+      <ul id="set-list" class="set-list"></ul>
+      <p id="set-list-empty" class="empty" hidden>No sets.</p>
+    </aside>
+
+    <!-- Right: detail / create -->
+    <section id="detail" class="detail-pane" aria-live="polite">
+      <p class="empty">Pick a set, or <a href="#/new">make a new one</a>.</p>
+    </section>
+  </main>
+
+  <!-- Templates -->
+  <template id="tpl-new-set">
+    <h2>New set</h2>
+    <form id="new-set-form" class="stack" novalidate>
+      <label>
+        <span class="kicker">Model</span>
+        <select name="model" required></select>
+      </label>
+      <label>
+        <span class="kicker">Slug <em>optional</em></span>
+        <input name="slug" autocomplete="off" spellcheck="false" placeholder="dry-lake-towers">
+        <small class="hint" data-hint="slug">lowercase letters, digits, hyphens; starts and ends with a letter; 3–128 chars</small>
+      </label>
+      <label>
+        <span class="kicker">Name <em>optional</em></span>
+        <input name="name" autocomplete="off" placeholder="Dry Lake Towers">
+        <small class="hint" data-hint="name">Title Case, up to 3 words, 64 chars</small>
+      </label>
+      <div class="actions">
+        <button type="submit" class="primary">Create set</button>
+      </div>
+    </form>
+  </template>
+
+  <template id="tpl-set-detail">
+    <div class="set-head">
+      <div>
+        <div class="kicker" data-field="model"></div>
+        <h2 data-field="title"></h2>
+      </div>
+      <span class="badge" data-field="status"></span>
+    </div>
+
+    <dl class="meta-grid">
+      <dt>Set</dt><dd><code data-field="set_id"></code></dd>
+      <dt>Created</dt><dd data-field="created_at"></dd>
+      <dt>Updated</dt><dd data-field="updated_at"></dd>
+      <dt data-show="committed">Committed</dt><dd data-show="committed" data-field="committed_at"></dd>
+      <dt data-show="committed">Post date</dt><dd data-show="committed" data-field="post_date"></dd>
+      <dt data-show="abandoned">Abandoned</dt><dd data-show="abandoned" data-field="abandoned_at"></dd>
+      <dt data-show="committed">Prompt</dt><dd data-show="committed" class="prompt" data-field="prompt"></dd>
+    </dl>
+
+    <form id="edit-set-form" class="stack inline-form" novalidate>
+      <div class="row">
+        <label>
+          <span class="kicker">Slug</span>
+          <input name="slug" autocomplete="off" spellcheck="false">
+          <small class="hint" data-hint="slug"></small>
+        </label>
+        <label>
+          <span class="kicker">Name</span>
+          <input name="name" autocomplete="off">
+          <small class="hint" data-hint="name"></small>
+        </label>
+      </div>
+      <div class="actions">
+        <button type="submit" class="primary" data-action="save">Save</button>
+        <button type="button" class="danger" data-action="abandon">Abandon set</button>
+      </div>
+    </form>
+
+    <section class="batch" data-section="batch" hidden>
+      <h3>Batch</h3>
+      <div data-field="batch-runs"></div>
+    </section>
+
+    <section class="drafts">
+      <h3>Drafts</h3>
+      <form id="new-draft-form" class="stack" novalidate>
+        <label>
+          <span class="kicker">Prompt <span class="counter" data-field="prompt-count"></span></span>
+          <textarea name="prompt" rows="3" maxlength="1023" placeholder="a dry lake surrounded by watertowers"></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit" class="primary">Draft it</button>
+          <small class="hint">Starts an evaluation run on the GPU.</small>
+        </div>
+      </form>
+      <ol class="draft-list" data-field="drafts"></ol>
+      <p class="empty" data-field="drafts-empty" hidden>No drafts yet.</p>
+    </section>
+  </template>
+
+  <template id="tpl-draft">
+    <li class="draft">
+      <div class="draft-head">
+        <span class="badge" data-field="status"></span>
+        <span class="kicker" data-field="created_at"></span>
+        <span class="tag" data-field="committed-tag" hidden>committed</span>
+        <span class="spacer"></span>
+        <button type="button" class="primary small" data-action="commit">Commit</button>
+      </div>
+      <p class="prompt" data-field="prompt"></p>
+      <figure class="preview" data-field="preview" hidden>
+        <a target="_blank" rel="noopener"><img alt="Draft preview grid" loading="lazy"></a>
+      </figure>
+      <div class="kicker hash">hash <code data-field="hash"></code></div>
+      <div class="runs" data-field="runs"></div>
+    </li>
+  </template>
+
+  <template id="tpl-run">
+    <div class="run">
+      <span class="badge small" data-field="status"></span>
+      <span class="run-type" data-field="type"></span>
+      <span class="run-time" data-field="time"></span>
+      <span class="run-details" data-field="details"></span>
+      <span class="spacer"></span>
+      <code class="run-id" data-field="run_id"></code>
+      <button type="button" class="small" data-action="redo" hidden>Retry</button>
+    </div>
+  </template>
+
+  <!-- Dialogs -->
+  <dialog id="token-dialog">
+    <form method="dialog" id="token-form" class="stack">
+      <h3>API token</h3>
+      <p class="hint">Sent as <code>Authorization: Bearer …</code> on every API call. Kept in this browser tab only, unless you tick remember.</p>
+      <input name="token" type="password" autocomplete="off" spellcheck="false" placeholder="token">
+      <label class="check"><input type="checkbox" name="remember"> Remember on this device</label>
+      <div class="actions">
+        <button value="save" class="primary">Save</button>
+        <button value="clear" type="submit">Clear</button>
+        <button value="cancel" formnovalidate>Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog">
+    <form method="dialog" class="stack">
+      <h3 data-field="title"></h3>
+      <p data-field="body"></p>
+      <div class="actions">
+        <button value="ok" class="primary" data-field="ok"></button>
+        <button value="cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

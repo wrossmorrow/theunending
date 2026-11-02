@@ -18,6 +18,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
 COPY api api
+COPY web web
 
 EXPOSE 8000
 
