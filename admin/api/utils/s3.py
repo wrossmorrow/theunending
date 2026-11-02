@@ -2,12 +2,8 @@
 
 import boto3  # type: ignore[import-untyped]
 
-DEFAULT_EXPIRES_SECONDS = 300
 
-
-def create_presigned_url(
-    bucket: str, key: str, expires_in: int = DEFAULT_EXPIRES_SECONDS
-) -> str:
+def create_presigned_url(bucket: str, key: str, expires_in: int) -> str:
     """Create a presigned S3 GET URL for the given object key."""
     client = boto3.client("s3")
     return client.generate_presigned_url(

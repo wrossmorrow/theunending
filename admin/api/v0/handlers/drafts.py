@@ -137,7 +137,9 @@ async def get_draft_preview(
                 detail=f"No preview image found for draft {draft_id}.",
             )
         preview_url = create_presigned_url(
-            bucket=run.details["bucket"], key=run.details["keys"][0]
+            bucket=run.details["bucket"],
+            key=run.details["keys"][0],
+            expires_in=settings.s3_presign_expires_seconds,
         )
         return models.DraftPreviewResponse(preview_url=preview_url)
 
