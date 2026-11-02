@@ -86,7 +86,7 @@ async def redo_run(
         try:
             job_request = JobParameters(
                 model_id=model,
-                s3_bucket=settings.s3_bucket,
+                s3_bucket=settings.s3_bucket_name,
                 s3_prefix=(
                     f"{settings.s3_evaluate_prefix if run.type == database.RunType.EVALUATION else settings.s3_batch_prefix}"
                     f"/{draft.model_prompt_hash}"

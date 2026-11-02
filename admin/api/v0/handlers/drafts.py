@@ -63,7 +63,7 @@ async def create_draft(
     try:
         job_request = JobParameters(
             model_id=model,
-            s3_bucket=settings.s3_bucket,
+            s3_bucket=settings.s3_bucket_name,
             s3_prefix=f"{settings.s3_evaluate_prefix}/{draft_model_prompt_hash}",
             prompt=draft.prompt,
             status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
@@ -183,7 +183,7 @@ async def commit_draft(
     try:
         job_request = JobParameters(
             model_id=model,
-            s3_bucket=settings.s3_bucket,
+            s3_bucket=settings.s3_bucket_name,
             s3_prefix=f"{settings.s3_batch_prefix}/{draft.model_prompt_hash}",
             prompt=draft.prompt,
             status_update_url=f"{settings.admin_base_url}/api/v0/runs/{draft.draft_id}/status",
