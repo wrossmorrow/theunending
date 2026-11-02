@@ -15,6 +15,7 @@ from api.database import models as database
 from api.settings import settings
 from api.utils.jobs import ExternalJobClient, JobParameters
 from api.utils.prompt import compute_model_prompt_hash
+from api.utils.s3 import create_presigned_url
 from api.v0.schema import models
 
 
@@ -92,6 +93,55 @@ async def create_draft(
         await session.commit()
 
     return draft
+
+
+async def get_draft_preview(
+    set_id: UUID,
+    draft_id: UUID,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> models.DraftPreviewResponse:
+    """Get a presigned S3 preview URL for a completed draft."""
+    async with session_factory() as session:
+        table = database.Draft.metadata.tables[database.Draft.__tablename__]
+        stmt = select(database.Draft).where(
+            table.c.set_id == set_id,
+            table.c.draft_id == draft_id,
+        )
+        draft = (await session.execute(stmt)).scalars().first()
+        if draft is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Draft {draft_id} not found.",
+            )
+        if draft.status != database.DraftStatus.COMPLETED:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=f"Draft {draft_id} must be in COMPLETED status for a preview.",
+            )
+
+        runs_table = database.Run.metadata.tables[database.Run.__tablename__]
+        runs_stmt = (
+            select(database.Run)
+            .where(
+                database.Run.draft_id == draft_id,
+                database.Run.status == database.RunStatus.COMPLETED,
+            )
+            .order_by(runs_table.c.created_at.desc())
+            .limit(1)
+        )
+        runs = (await session.execute(runs_stmt)).scalars().all()
+        run = runs[0] if runs else None
+        if run is None or not run.details or not run.details.get("keys"):
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"No preview image found for draft {draft_id}.",
+            )
+        preview_url = create_presigned_url(
+            bucket=run.details["bucket"],
+            key=run.details["keys"][0],
+            expires_in=settings.s3_presign_expires_seconds,
+        )
+        return models.DraftPreviewResponse(preview_url=preview_url)
 
 
 async def list_drafts(

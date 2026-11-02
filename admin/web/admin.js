@@ -18,11 +18,10 @@ const CONFIG = {
   // How often to refresh while a draft or run is PENDING / IN_PROGRESS.
   pollMs: 4000,
 
-  // URL of a draft's preview grid, or null to hide previews. Drafts are keyed by
-  // model_prompt_hash, so if completed drafts get copied somewhere this page can
-  // read (same-site or CloudFront), point this at it. For example:
-  //   draftPreviewUrl: (draft) => `/draft-assets/${draft.model_prompt_hash}/thematic-grid-0.png`,
-  draftPreviewUrl: (draft) => null,
+  // Completed drafts get a preview from GET .../drafts/{id}/preview, which returns a
+  // short-lived presigned URL. Reuse a fetched URL for this long before asking again;
+  // keep it well under the presign expiry.
+  previewReuseMs: 5 * 60 * 1000,
 };
 
 /* ------------------------------------------------------------------ *
@@ -154,6 +153,7 @@ const API = {
   commitDraft: (setId, draftId) => api("POST", `/sets/${setId}/drafts/${draftId}/commit`),
   listRuns: (params) => api("GET", `/runs${query(params)}`),
   redoRun: (runId) => api("POST", `/runs/${runId}`),
+  draftPreview: (setId, draftId) => api("GET", `/sets/${setId}/drafts/${draftId}/preview`),
 };
 
 function query(params) {
@@ -589,6 +589,29 @@ function runsFor(draftId, type) {
     .sort((a, b) => (parseUtc(b.created_at) ?? 0) - (parseUtc(a.created_at) ?? 0));
 }
 
+// details is free-form JSON from the job. Known shapes get a readable summary;
+// anything else falls back to compact key: value pairs. Full JSON is on hover.
+function renderDetails(el, details) {
+  el.replaceChildren();
+  if (!details || typeof details !== "object" || !Object.keys(details).length) return;
+  el.title = JSON.stringify(details, null, 2);
+
+  const { keys, bucket, ...rest } = details;
+  const parts = [];
+  if (Array.isArray(keys)) {
+    const n = keys.length;
+    const files = `${n} file${n === 1 ? "" : "s"}`;
+    parts.push(bucket ? `${files} in ${bucket}` : files);
+  } else if (bucket) {
+    parts.push(`bucket ${bucket}`);
+  }
+  for (const [k, v] of Object.entries(rest)) {
+    if (v === null || v === undefined || v === "") continue;
+    parts.push(`${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`);
+  }
+  el.textContent = parts.join(" · ");
+}
+
 function renderRun(run, { latest }) {
   const node = fromTemplate("tpl-run");
   setBadge(field(node, "status"), run.status);
@@ -602,7 +625,7 @@ function renderRun(run, { latest }) {
   field(node, "time").textContent = time;
 
   field(node, "message").textContent = run.message ?? "";
-  field(node, "details").textContent = run.details ? JSON.stringify(run.details) : "";
+  renderDetails(field(node, "details"), run.details);
   const idEl = field(node, "run_id");
   idEl.textContent = run.run_id.slice(-8);
   idEl.title = `run ${run.run_id}\nexternal ${run.external_run_id}`;
@@ -637,6 +660,50 @@ function renderBatch() {
     return;
   }
   batchRuns.forEach((run, i) => box.append(renderRun(run, { latest: i === 0 })));
+}
+
+/* Preview images: the API hands out short-lived presigned S3 URLs. <img> can't send
+ * the Bearer token, so fetch the URL via the API, then point the <img> at S3.
+ * URLs are cached per draft so the 4 s polling doesn't re-sign on every refresh. */
+const previewCache = new Map(); // draft_id -> { url, at } | { failed: true, at }
+
+async function previewUrl(setId, draftId, { fresh = false } = {}) {
+  const hit = previewCache.get(draftId);
+  if (!fresh && hit && Date.now() - hit.at < CONFIG.previewReuseMs) {
+    if (hit.failed) return null;
+    return hit.url;
+  }
+  try {
+    const { preview_url: url } = await API.draftPreview(setId, draftId);
+    previewCache.set(draftId, url ? { url, at: Date.now() } : { failed: true, at: Date.now() });
+    return url || null;
+  } catch (err) {
+    console.warn("preview unavailable", draftId, err);
+    previewCache.set(draftId, { failed: true, at: Date.now() });
+    return null;
+  }
+}
+
+async function showPreview(setId, draftId, fig) {
+  const img = fig.querySelector("img");
+  const link = fig.querySelector("a");
+  let retried = false;
+
+  const apply = (url) => {
+    if (!url || !fig.isConnected) { fig.hidden = true; return; }
+    link.href = url;
+    img.src = url;
+    fig.hidden = false;
+  };
+
+  // An expired or bad URL: re-sign once, then give up quietly.
+  img.addEventListener("error", async () => {
+    if (retried) { fig.hidden = true; return; }
+    retried = true;
+    apply(await previewUrl(setId, draftId, { fresh: true }));
+  });
+
+  apply(await previewUrl(setId, draftId));
 }
 
 function renderDrafts() {
@@ -677,16 +744,8 @@ function renderDrafts() {
       commit.title = reasons.length ? `Can't commit yet: ${reasons.join(", ")}` : "Commit the set with this prompt and run the batch";
     }
 
-    // Preview grid, if configured
-    const url = draft.status === "COMPLETED" ? CONFIG.draftPreviewUrl(draft) : null;
-    if (url) {
-      const fig = field(node, "preview");
-      const img = fig.querySelector("img");
-      fig.querySelector("a").href = url;
-      img.src = url;
-      img.addEventListener("error", () => { fig.hidden = true; }, { once: true });
-      fig.hidden = false;
-    }
+    // Preview grid for completed drafts (presigned URL fetched from the API)
+    if (draft.status === "COMPLETED") showPreview(set.set_id, draft.draft_id, field(node, "preview"));
 
     // Evaluation runs for this draft
     const runsBox = field(node, "runs");

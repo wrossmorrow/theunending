@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     s3_bucket_name: str = "unending-local"
     s3_evaluate_prefix: str = "drafts"
     s3_batch_prefix: str = "runs"
+    s3_presign_expires_seconds: int = 300
+    aws_region_name: str = "us-east-1"
 
 
 settings = Settings()

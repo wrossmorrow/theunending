@@ -48,6 +48,22 @@ async def list_drafts(
 
 
 @drafts_router.get(
+    "/sets/{set_id}/drafts/{draft_id}/preview",
+    response_model=models.DraftPreviewResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_draft_preview(
+    set_id: UUID,
+    draft_id: UUID,
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
+) -> models.DraftPreviewResponse:
+    """Get a presigned S3 preview URL for a completed draft."""
+    return await drafts_handlers.get_draft_preview(set_id, draft_id, session_factory)
+
+
+@drafts_router.get(
     "/sets/{set_id}/drafts/{draft_id}",
     response_model=database.Draft,
     status_code=status.HTTP_200_OK,

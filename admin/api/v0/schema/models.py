@@ -64,3 +64,9 @@ class RunStatusUpdate(BaseModel):
     status: RunStatus = Field()
     message: str | None = Field(default=None, max_length=1024)
     details: dict[str, Any] | None = Field(default=None)
+
+
+class DraftPreviewResponse(BaseModel):
+    """Preview response: presigned S3 URL for a completed draft's image."""
+
+    preview_url: str
