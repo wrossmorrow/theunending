@@ -188,7 +188,7 @@ async def commit_draft(
             s3_prefix=f"{settings.s3_batch_prefix}/{draft.model_prompt_hash}",
             prompt=draft.prompt,
             status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
-            status_update_admin_run_id=draft.draft_id,
+            status_update_admin_run_id=run_id,
         )
         external_run_id = await job_client.create_job(
             database.RunType.BATCH, job_request
