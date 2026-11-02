@@ -122,8 +122,6 @@ class AdminAPI:
         if url is None:
             return
 
-        print(f"status updates configured, to return to {self._url}")
-
         headers = {
             "content-type": "application/json",
             "accept": "application/json",
