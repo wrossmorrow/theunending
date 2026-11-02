@@ -24,7 +24,7 @@ ecr-login:
         | docker login --username AWS --password-stdin {{registry}}
 
 scp ip ssh_key=ssh_key user=ssh_user *flags="":
-    scp -i ~/.ssh/{{ ssh_key }} {{ flags }} .env compose.yaml envoy.yaml {{ user }}@{{ ip }}:~/deploy
+    scp -i ~/.ssh/{{ ssh_key }} {{ flags }} .env compose.yaml envoy.yaml ../sql/init.sql {{ user }}@{{ ip }}:~/deploy
 
 ssh ip ssh_key=ssh_key user=ssh_user *flags="":
     ssh -i ~/.ssh/{{ ssh_key }} {{ flags }} {{ user }}@{{ ip }}
