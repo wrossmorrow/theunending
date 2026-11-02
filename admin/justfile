@@ -46,3 +46,7 @@ up *flags="":
 # Bring down compose setup
 down *flags="":
     docker compose down {{ flags }}
+
+psql:
+    set -a && source .env && set +a \
+        && PGPASSWORD="${POSTGRES_PASSWORD}" psql -h localhost -p 5432 -U ${POSTGRES_USER}
