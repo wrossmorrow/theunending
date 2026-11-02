@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import create_async_engine
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -28,6 +29,7 @@ api = FastAPI(title="Unending Admin API", lifespan=lifespan)
 api.include_router(health_router)
 api.include_router(api_v0_router)
 
+api.mount("/admin", StaticFiles(directory="web", html=True), name="admin")
 
 @api.exception_handler(Exception)
 async def _exception_handler(request: Request, exc: Exception) -> JSONResponse:
