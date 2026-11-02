@@ -85,7 +85,7 @@ async def redo_run(
                     ),
                     "prompt": draft.prompt,
                     "status_update_url": f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
-                    "status_update_admin_run_id": run_id,
+                    "status_update_admin_run_id": str(run_id),
                 },
             )
         except httpx.HTTPError, KeyError:
