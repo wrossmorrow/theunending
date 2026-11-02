@@ -99,6 +99,7 @@ def _evaluate(payload: dict, authed: bool = Depends(_check_auth)):
     fcall = target.spawn({"kwargs": kwargs})
     
     return {
+        "external_run_id": fcall.object_id,
         "message": "Successfully launched target app function!",
         "details": {
             "prompt": prompt,
@@ -144,6 +145,7 @@ def _batch(payload: dict, authed: bool = Depends(_check_auth)):
     })
     
     return {
+        "external_run_id": fcall.object_id,
         "message": "Successfully launched target app function!",
         "details": {
             "prompt": prompt,
