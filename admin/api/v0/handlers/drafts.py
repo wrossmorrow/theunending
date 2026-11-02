@@ -1,7 +1,7 @@
 """Draft route handlers."""
 
 from datetime import UTC, datetime
-from uuid import UUID
+from uuid import UUID, uuid7
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -58,21 +58,19 @@ async def create_draft(
                 detail="Draft prompt already exists.",
             )
 
+    run_id = uuid7()
     try:
         job_request = JobParameters(
             s3_bucket=settings.s3_bucket,
             s3_prefix=f"{settings.s3_evaluate_prefix}/{draft_model_prompt_hash}",
             prompt=draft.prompt,
-            status_update_url=f"{settings.admin_base_url}/api/v0/runs/{draft.draft_id}/status",
-            status_update_admin_run_id=str(draft.draft_id),
+            status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
+            status_update_admin_run_id=str(run_id),
         )
         external_run_id = await job_client.create_job(
             database.RunType.EVALUATION, job_request
         )
-    except (httpx.HTTPError, KeyError) as e:
-        print(
-            f"Failed to create external job for draft: {e.__class__.__name__} {e}"
-        )
+    except (httpx.HTTPError, KeyError):
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create external job.",
@@ -80,6 +78,7 @@ async def create_draft(
 
     async with session_factory() as session:
         run = database.Run(
+            run_id=run_id,
             external_run_id=external_run_id,
             set_id=set_id,
             draft_id=draft_id,
@@ -188,7 +187,8 @@ async def commit_draft(
         external_run_id = await job_client.create_job(
             database.RunType.BATCH, job_request
         )
-    except httpx.HTTPError, KeyError:
+    except (httpx.HTTPError, KeyError) as e:
+        print(f"Failed to trigger external job: {e.__class__.__name__} {e}")
         raise HTTPException(
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create external job.",

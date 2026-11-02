@@ -1,7 +1,7 @@
 """Run route handlers."""
 
 from datetime import UTC, datetime
-from uuid import UUID
+from uuid import UUID, uuid7
 
 import httpx
 from fastapi import HTTPException
@@ -74,6 +74,7 @@ async def redo_run(
                 detail=f"Draft {run.draft_id} not found.",
             )
 
+        new_run_id = uuid7()
         try:
             job_request = JobParameters(
                 s3_bucket=settings.s3_bucket,
@@ -82,17 +83,19 @@ async def redo_run(
                     f"/{draft.model_prompt_hash}"
                 ),
                 prompt=draft.prompt,
-                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
+                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{new_run_id}/status",
                 status_update_admin_run_id=str(run_id),
             )
             external_run_id = await job_client.create_job(run.type, job_request)
-        except httpx.HTTPError, KeyError:
+        except (httpx.HTTPError, KeyError) as e:
+            print(f"Failed to trigger external job: {e.__class__.__name__} {e}")
             raise HTTPException(
                 status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create external job.",
             )
 
         new_run = database.Run(
+            run_id=new_run_id,
             external_run_id=external_run_id,
             set_id=run.set_id,
             draft_id=run.draft_id,

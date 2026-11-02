@@ -54,7 +54,7 @@ class ExternalJobClient:
             print(f"Failed job call: {e.response.status_code} {e.response.text}")
             raise
         except ValidationError as e:
-            print("Job response validation failed: {e}")
+            print(f"Job response validation failed: {e}")
             raise
 
 
