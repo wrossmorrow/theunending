@@ -24,6 +24,14 @@ static_resources:
                       domains: ["*"]
                       routes:
                         - match:
+                            prefix: "/admin"
+                          route:
+                            cluster: api
+                          typed_per_filter_config:
+                            envoy.filters.http.ext_proc:
+                              '@type': type.googleapis.com/envoy.extensions.filters.http.ext_proc.v3.ExtProcPerRoute
+                              disabled: true
+                        - match:
                             prefix: "/api"
                           route:
                             cluster: api
