@@ -89,24 +89,25 @@ def _copy_to_s3(
         Body=args.prompt.encode(),
     )
 
-    for r in range(args.repetitions):
-        fn = f"thematic-grid-{r}.png"
-        s3.upload_file(
-            Filename=f"{args.outdir}/{fn}",
-            Bucket=args.s3_bucket,
-            Key=f"{args.s3_prefix}/{fn}",
-        )
-
-    keys = []
     for tile in glob.glob(f"{args.tiles}/*.png"):
         fn = Path(tile).name
         key = f"{args.s3_prefix}/tiles/{fn}"
-        keys.append(key)
         s3.upload_file(
             Filename=tile,
             Bucket=args.s3_bucket,
             Key=key,
         )
+
+    keys = []
+    for r in range(args.repetitions):
+        fn = f"thematic-grid-{r}.png"
+        key = f"{args.s3_prefix}/{fn}"
+        s3.upload_file(
+            Filename=f"{args.outdir}/{fn}",
+            Bucket=args.s3_bucket,
+            Key=key,
+        )
+        keys.append(key)
 
     return args.s3_bucket, keys
 
