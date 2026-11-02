@@ -25,6 +25,18 @@ built.
 - `just typecheck` — type check (mypy)
 - `just test` — run unit tests
 - `just run` — run the local server (uvicorn; override host/port as needed)
+- `just mock-jobs` — run the mock external job system server (uvicorn; default port 8080)
+- `just test-integration` — run integration tests against a live server
+
+## External job system
+
+- The API calls the external job system via `POST {job_base_url}/jobs` and stores the
+  returned `external_run_id` on the run.
+- Locally, `just up` (docker compose) brings up the mock external job system
+  (`mock-jobs`, base URL `http://mock-jobs:8080`) alongside the api and database; the
+  api is configured with `JOB_BASE_URL=http://mock-jobs:8080`.
+- For running the server without docker, use `just mock-jobs` and point the api at it via
+  the `JOB_BASE_URL` env var (default `http://localhost:8080`).
 
 ## API
 

@@ -27,6 +27,10 @@ typecheck:
 run host="0.0.0.0" port="8000":
     uv run uvicorn api.main:api --host {{ host }} --port {{ port }}
 
+# Run the mock external job system server
+mock-jobs:
+    uv run uvicorn api.mocks.jobs:api --host 0.0.0.0 --port 8080
+
 # Run unit tests
 test *flags="tests/test_main.py":
     uv run pytest {{ flags }}
