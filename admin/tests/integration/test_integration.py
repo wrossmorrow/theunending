@@ -222,6 +222,21 @@ def test_create_draft_with_long_prompt_returns_422(http_client: httpx.Client) ->
     assert response.status_code == 422
 
 
+def test_create_draft_with_duplicate_prompt_returns_400(
+    http_client: httpx.Client,
+) -> None:
+    """Creating a draft with a prompt that was already used returns 400."""
+    set_body = _create_set(http_client)
+    first_draft = _create_draft(
+        http_client, set_body["set_id"], prompt=_unique_prompt()
+    )
+    response = http_client.post(
+        f"/api/v0/sets/{set_body['set_id']}/drafts",
+        json={"prompt": first_draft["prompt"]},
+    )
+    assert response.status_code == 400
+
+
 def test_full_flow_draft_to_committed_batch_to_completed(
     http_client: httpx.Client,
 ) -> None:
