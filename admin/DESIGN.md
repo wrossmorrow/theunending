@@ -265,7 +265,8 @@ admin/
     * draft_id (FK, uuidv7)
     * type (EVALUATION, BATCH)
     * status (PENDING, IN_PROGRESS, FAILED, COMPLETED)
-    * details (optional, not sure, maybe string/text, maybe JSON)
+    * message (optional, string/text, human-readable status message from the external job)
+    * details (optional, JSON, structured details from the external job)
     * created_at (generated on creation, UTC timestamp)
     * updated_at (set to the latest update, UTC timestamp)
     * finished_at (set when finished, UTC timestamp)
@@ -279,14 +280,14 @@ admin/
 * POST /api/v0/runs/{run_id:uuidv7}
     - create a new run by "redoing" an existing run (for it's set and draft)
 * PUT /api/v0/runs/{run_id:uuidv7}/status
-    - update a run status (system call)
+    - update a run status (system call); may carry optional `message` and JSON `details`
 
 ### Details
 
 * run_id should be server-generated (uuidv7) and unique per external job
 * external_run_id is returned from the job system and used to correlate the external job with its run.
 * run objects should only be created by the code, from draft creation, set committing, and internally for "redos"
-* runs are immutable except timestamps and status
+* runs are immutable except timestamps and status; status updates may also carry optional `message` and JSON `details`
 * run statuses are linear: PENDING -> IN_PROGRESS -> COMPLETED | FAILED are the only valid changes
     * PENDING -> IN_PROGRESS (we are signalled an external job we created has started)
     * IN_PROGRESS -> COMPLETED | FAILED (we are signalled an external job we created has finished)

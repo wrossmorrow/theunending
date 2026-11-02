@@ -2,9 +2,10 @@
 
 from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
 from uuid import UUID, uuid7
 
-from sqlalchemy import DateTime
+from sqlalchemy import JSON, DateTime
 from sqlmodel import Column, Field, SQLModel
 
 
@@ -95,7 +96,8 @@ class Run(SQLModel, table=True):
     draft_id: UUID = Field(index=True, foreign_key="drafts.draft_id")
     type: RunType = Field()
     status: RunStatus = Field(default=RunStatus.PENDING)
-    details: str | None = Field(default=None)
+    message: str | None = Field(default=None, max_length=1024)
+    details: dict[str, Any] | None = Field(default=None, sa_type=JSON)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),

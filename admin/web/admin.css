@@ -252,6 +252,7 @@ input.bad { border-color: var(--accent-color); }
   padding-top: 0.3em;
 }
 .run-type { text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-color); }
+.run-message { color: var(--text-color); font-weight: 600; }
 .run-details { color: var(--text-color); }
 .run-id { font-size: 0.95em; background: none; padding: 0; color: var(--meta-color); }
 

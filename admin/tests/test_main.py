@@ -359,6 +359,71 @@ def test_update_run_status_failed_propagates_to_draft_returns_200() -> None:
         assert draft_response.json()["status"] == "FAILED"
 
 
+def test_update_run_status_with_message_and_details_returns_200() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(
+            client, prompt=f"a cat {uuid4().hex}"
+        )
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status",
+            json={
+                "status": "FAILED",
+                "message": "mock external job failed",
+                "details": {"error": "job crashed"},
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "FAILED"
+        assert body["message"] == "mock external job failed"
+        assert body["details"] == {"error": "job crashed"}
+        status_response = client.get(f"/api/v0/runs/{run_id}")
+        assert status_response.status_code == 200
+        status_body = status_response.json()
+        assert status_body["status"] == "FAILED"
+        assert status_body["message"] == "mock external job failed"
+        assert status_body["details"] == {"error": "job crashed"}
+
+
+def test_update_run_status_without_message_and_details_returns_200() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(
+            client, prompt=f"a cat {uuid4().hex}"
+        )
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "FAILED"}
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "FAILED"
+        assert body["message"] is None
+        assert body["details"] is None
+
+
+def test_update_run_status_with_non_string_message_returns_422() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(
+            client, prompt=f"a cat {uuid4().hex}"
+        )
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status",
+            json={"status": "IN_PROGRESS", "message": 123},
+        )
+        assert response.status_code == 422
+
+
+def test_update_run_status_with_non_json_details_returns_422() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(
+            client, prompt=f"a cat {uuid4().hex}"
+        )
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status",
+            json={"status": "IN_PROGRESS", "details": "not-an-object"},
+        )
+        assert response.status_code == 422
+
+
 def test_redo_run_returns_new_run_returns_201() -> None:
     with TestClient(api) as client:
         _set_id, _draft_id, run_id = _create_set_with_draft(client)
