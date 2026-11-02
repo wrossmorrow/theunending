@@ -1,6 +1,7 @@
 """External job system client for the Unending Admin API."""
 
 import httpx
+from fastapi import Request
 from pydantic import BaseModel
 
 from api.database.models import RunType
@@ -31,6 +32,10 @@ class ExternalJobClient:
             base_url=base_url, timeout=timeout, headers=headers
         )
 
+    async def aclose(self) -> None:
+        """Close the underlying HTTP client."""
+        await self._client.aclose()
+
     async def create_job(self, job_type: RunType, job_request: JobParameters) -> str:
         """Create an external job of the given type and return the external run id."""
         path = "/evaluate" if job_type == RunType.EVALUATION else "/batch"
@@ -41,6 +46,6 @@ class ExternalJobClient:
         return str(response.json()["external_run_id"])
 
 
-def get_job_client() -> ExternalJobClient:
-    """Return the external job system client."""
-    return ExternalJobClient(base_url=settings.job_base_url)
+def get_job_client(request: Request) -> ExternalJobClient:
+    """Return the shared external job system client from app state."""
+    return request.app.state.job_client
