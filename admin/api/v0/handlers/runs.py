@@ -11,7 +11,7 @@ from sqlmodel import select
 
 from api.database import models as database
 from api.settings import settings
-from api.utils.jobs import ExternalJobClient
+from api.utils.jobs import ExternalJobClient, JobParameters
 from api.v0.schema import models
 
 
@@ -75,19 +75,17 @@ async def redo_run(
             )
 
         try:
-            external_run_id = await job_client.create_job(
-                run.type,
-                {
-                    "s3_bucket": settings.s3_bucket,
-                    "s3_prefix": (
-                        f"{settings.s3_evaluate_prefix if run.type == database.RunType.EVALUATION else settings.s3_batch_prefix}"
-                        f"/{draft.model_prompt_hash}"
-                    ),
-                    "prompt": draft.prompt,
-                    "status_update_url": f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
-                    "status_update_admin_run_id": str(run_id),
-                },
+            job_request = JobParameters(
+                s3_bucket=settings.s3_bucket,
+                s3_prefix=(
+                    f"{settings.s3_evaluate_prefix if run.type == database.RunType.EVALUATION else settings.s3_batch_prefix}"
+                    f"/{draft.model_prompt_hash}"
+                ),
+                prompt=draft.prompt,
+                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
+                status_update_admin_run_id=str(run_id),
             )
+            external_run_id = await job_client.create_job(run.type, job_request)
         except httpx.HTTPError, KeyError:
             raise HTTPException(
                 status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,

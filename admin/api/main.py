@@ -31,6 +31,7 @@ api.include_router(api_v0_router)
 
 api.mount("/admin", StaticFiles(directory="web", html=True), name="admin")
 
+
 @api.exception_handler(Exception)
 async def _exception_handler(request: Request, exc: Exception) -> JSONResponse:
     if isinstance(exc, (HTTPException, StarletteHTTPException)):
