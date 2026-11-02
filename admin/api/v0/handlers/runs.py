@@ -156,6 +156,8 @@ async def update_run_status(
         await session.commit()
         await session.refresh(run)
 
+        run_type = run.type
+        run_set_id = run.set_id
         draft = await session.get(database.Draft, run.draft_id)
         if draft is None:
             raise HTTPException(
@@ -168,11 +170,11 @@ async def update_run_status(
         await session.commit()
         await session.refresh(draft)
 
-        if run.type == database.RunType.BATCH and update.status in (
+        if run_type == database.RunType.BATCH and update.status in (
             database.RunStatus.COMPLETED,
             database.RunStatus.FAILED,
         ):
-            committed_set = await session.get(database.Set, run.set_id)
+            committed_set = await session.get(database.Set, run_set_id)
             if committed_set is not None:
                 committed_set.status = (
                     database.SetStatus.COMPLETED
