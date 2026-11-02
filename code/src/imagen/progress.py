@@ -122,6 +122,8 @@ class AdminAPI:
         if url is None:
             return
 
+        print(f"status updates configured, to return to {self._url}")
+
         headers = {
             "content-type": "application/json",
             "accept": "application/json",
@@ -140,6 +142,8 @@ class AdminAPI:
 
         if admin_run_id is not None:
             headers["x-admin-run-id"] = admin_run_id
+
+        print(headers)
     
         self._http = httpx.Client(headers=headers)
 

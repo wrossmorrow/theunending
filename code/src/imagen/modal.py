@@ -79,7 +79,7 @@ def _parse_args(
 ) -> argparse.Namespace:
     argv: list[str] = [f"--{f.replace('_', '-')}" for f in flags]
     for k, v in kwargs.items():
-        argv += [f"--{k.replace('_', '-')}", str(v)]
+        argv += [f"--{k.replace('_', '-')}", str(v) if v is not None else None]
     return parser.parse_args(argv)
 
 
