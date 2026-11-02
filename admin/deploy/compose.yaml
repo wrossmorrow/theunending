@@ -8,10 +8,10 @@ services:
       # listener
       - "8080:8080"
       # admin port
-      - "9901:9901"
+      - "127.0.0.1:9901:9901"
     volumes:
       - ${HOME}/deploy/envoy.yaml:/etc/envoy/envoy.yaml
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:9901/ready"]
       interval: 15s
@@ -28,10 +28,10 @@ services:
     command: ["--update-duration-header"]
     ports:
       # metrics (gRPC kept internal)
-      - '9090:9090'
+      - '127.0.0.1:9090:9090'
     volumes:
       - /opt/theunending/authorization:/opt/theunending/authorization
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "/grpc-health-probe", "-addr=localhost:50051"]
       interval: 2s
@@ -43,13 +43,43 @@ services:
   api:
     image: "${API_IMAGE_REGISTRY}/${API_IMAGE_NAME}:${API_IMAGE_TAG:-latest}"
     environment:
-      DATABASE_URL: sqlite+aiosqlite:////data/theunending_admin.db
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     volumes:
       - ${HOME}/data:/data
-    restart: always
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/health/alive"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 30s
+
+  # database, not exposed even with SG's
+  postgres:
+    image: postgres:18-alpine
+    container_name: theunending-postgres
+    restart: unless-stopped
+    shm_size: 256mb
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  pgdata:
