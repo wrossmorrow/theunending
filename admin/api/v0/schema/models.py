@@ -1,6 +1,6 @@
 """API request/response schemas for the Unending Admin API."""
 
-from typing import Self
+from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -62,3 +62,5 @@ class RunStatusUpdate(BaseModel):
     """Update a run status."""
 
     status: RunStatus = Field()
+    message: str | None = Field(default=None, max_length=1024)
+    details: dict[str, Any] | None = Field(default=None)

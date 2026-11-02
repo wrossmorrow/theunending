@@ -1,0 +1,7 @@
+
+ALTER TABLE runs
+ADD COLUMN IF NOT EXISTS message VARCHAR(1024);
+
+ALTER TABLE runs 
+ALTER COLUMN details TYPE JSONB
+USING details::jsonb;

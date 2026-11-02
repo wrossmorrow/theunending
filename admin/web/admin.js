@@ -601,7 +601,8 @@ function renderRun(run, { latest }) {
   else if (ACTIVE.has(run.status) && start) time += ` · ${fmtDuration(Date.now() - start)} so far`;
   field(node, "time").textContent = time;
 
-  field(node, "details").textContent = run.details ?? "";
+  field(node, "message").textContent = run.message ?? "";
+  field(node, "details").textContent = run.details ? JSON.stringify(run.details) : "";
   const idEl = field(node, "run_id");
   idEl.textContent = run.run_id.slice(-8);
   idEl.title = `run ${run.run_id}\nexternal ${run.external_run_id}`;

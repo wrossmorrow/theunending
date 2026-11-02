@@ -29,7 +29,7 @@ class FailingExternalJobClient(ExternalJobClient):
 
 
 def _create_set_with_draft(
-    client: TestClient, prompt: str = "a cat"
+    client: TestClient, prompt: str | None = None
 ) -> tuple[str, str, str]:
     """Create a draft set and return (set_id, draft_id, run_id)."""
     created = client.post(
@@ -40,7 +40,10 @@ def _create_set_with_draft(
         base_url="http://localhost:8080"
     )
     try:
-        response = client.post(f"/api/v0/sets/{set_id}/drafts", json={"prompt": prompt})
+        response = client.post(
+            f"/api/v0/sets/{set_id}/drafts",
+            json={"prompt": prompt or f"a cat {uuid4().hex}"},
+        )
     finally:
         api.dependency_overrides.pop(get_job_client, None)
     assert response.status_code == 201
@@ -117,7 +120,8 @@ def test_create_draft_returns_201_with_pending_run() -> None:
         )
         try:
             response = client.post(
-                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+                f"/api/v0/sets/{set_id}/drafts",
+                json={"prompt": f"a cat {uuid4().hex}"},
             )
         finally:
             api.dependency_overrides.pop(get_job_client, None)
@@ -196,7 +200,8 @@ def test_list_drafts_returns_created_draft() -> None:
         )
         try:
             response = client.post(
-                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+                f"/api/v0/sets/{set_id}/drafts",
+                json={"prompt": f"a cat {uuid4().hex}"},
             )
         finally:
             api.dependency_overrides.pop(get_job_client, None)
@@ -219,7 +224,8 @@ def test_get_draft_returns_created_draft() -> None:
         )
         try:
             response = client.post(
-                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+                f"/api/v0/sets/{set_id}/drafts",
+                json={"prompt": f"a cat {uuid4().hex}"},
             )
         finally:
             api.dependency_overrides.pop(get_job_client, None)
@@ -243,7 +249,8 @@ def test_list_runs_returns_created_run() -> None:
         )
         try:
             response = client.post(
-                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+                f"/api/v0/sets/{set_id}/drafts",
+                json={"prompt": f"a cat {uuid4().hex}"},
             )
         finally:
             api.dependency_overrides.pop(get_job_client, None)
@@ -266,7 +273,8 @@ def test_get_run_returns_created_run() -> None:
         )
         try:
             response = client.post(
-                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+                f"/api/v0/sets/{set_id}/drafts",
+                json={"prompt": f"a cat {uuid4().hex}"},
             )
         finally:
             api.dependency_overrides.pop(get_job_client, None)
@@ -357,6 +365,71 @@ def test_update_run_status_failed_propagates_to_draft_returns_200() -> None:
         draft_response = client.get(f"/api/v0/sets/{set_id}/drafts/{draft_id}")
         assert draft_response.status_code == 200
         assert draft_response.json()["status"] == "FAILED"
+
+
+def test_update_run_status_with_message_and_details_returns_200() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(
+            client, prompt=f"a cat {uuid4().hex}"
+        )
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status",
+            json={
+                "status": "FAILED",
+                "message": "mock external job failed",
+                "details": {"error": "job crashed"},
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "FAILED"
+        assert body["message"] == "mock external job failed"
+        assert body["details"] == {"error": "job crashed"}
+        status_response = client.get(f"/api/v0/runs/{run_id}")
+        assert status_response.status_code == 200
+        status_body = status_response.json()
+        assert status_body["status"] == "FAILED"
+        assert status_body["message"] == "mock external job failed"
+        assert status_body["details"] == {"error": "job crashed"}
+
+
+def test_update_run_status_without_message_and_details_returns_200() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(
+            client, prompt=f"a cat {uuid4().hex}"
+        )
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "FAILED"}
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "FAILED"
+        assert body["message"] is None
+        assert body["details"] is None
+
+
+def test_update_run_status_with_non_string_message_returns_422() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(
+            client, prompt=f"a cat {uuid4().hex}"
+        )
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status",
+            json={"status": "IN_PROGRESS", "message": 123},
+        )
+        assert response.status_code == 422
+
+
+def test_update_run_status_with_non_json_details_returns_422() -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(
+            client, prompt=f"a cat {uuid4().hex}"
+        )
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status",
+            json={"status": "IN_PROGRESS", "details": "not-an-object"},
+        )
+        assert response.status_code == 422
 
 
 def test_redo_run_returns_new_run_returns_201() -> None:
@@ -459,7 +532,8 @@ def test_commit_draft_with_missing_slug_and_name_returns_400() -> None:
         )
         try:
             response = client.post(
-                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+                f"/api/v0/sets/{set_id}/drafts",
+                json={"prompt": f"a cat {uuid4().hex}"},
             )
         finally:
             api.dependency_overrides.pop(get_job_client, None)
@@ -589,7 +663,8 @@ def test_create_draft_with_failing_job_returns_500() -> None:
         )
         try:
             response = client.post(
-                f"/api/v0/sets/{set_id}/drafts", json={"prompt": "a cat"}
+                f"/api/v0/sets/{set_id}/drafts",
+                json={"prompt": f"a cat {uuid4().hex}"},
             )
         finally:
             api.dependency_overrides.pop(get_job_client, None)

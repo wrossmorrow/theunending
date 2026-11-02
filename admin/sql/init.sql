@@ -51,7 +51,8 @@ CREATE TABLE runs (
 	draft_id UUID NOT NULL REFERENCES drafts (draft_id), 
 	type runtype NOT NULL, 
 	status runstatus NOT NULL, 
-	details VARCHAR, 
+	message VARCHAR(1024), 
+	details JSONB, 
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	updated_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	finished_at TIMESTAMP WITH TIME ZONE

@@ -93,10 +93,19 @@ def _get_run_by_draft(client: httpx.Client, draft_id: str) -> dict[str, Any]:
 
 
 def _update_run_status(
-    client: httpx.Client, run_id: str, status: str
+    client: httpx.Client,
+    run_id: str,
+    status: str,
+    message: str | None = None,
+    details: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Update a run status and return the updated run body."""
-    response = client.put(f"/api/v0/runs/{run_id}/status", json={"status": status})
+    body: dict[str, Any] = {"status": status}
+    if message is not None:
+        body["message"] = message
+    if details is not None:
+        body["details"] = details
+    response = client.put(f"/api/v0/runs/{run_id}/status", json=body)
     assert response.status_code == 200, response.text
     return response.json()
 
@@ -308,6 +317,26 @@ def test_commit_draft_with_missing_slug_and_name_returns_400(
     )
     assert response.status_code == 400
     assert "slug and name" in response.json()["detail"]
+
+
+def test_update_run_status_with_message_and_details_returns_200(
+    http_client: httpx.Client,
+) -> None:
+    """Updating a run status with a message and JSON details returns the run."""
+    set_body = _create_set(http_client)
+    draft = _create_draft(http_client, set_body["set_id"], prompt=_unique_prompt())
+    run = _get_run_by_draft(http_client, draft["draft_id"])
+
+    updated = _update_run_status(
+        http_client,
+        run["run_id"],
+        "FAILED",
+        message="mock external job failed",
+        details={"error": "job crashed"},
+    )
+    assert updated["status"] == "FAILED"
+    assert updated["message"] == "mock external job failed"
+    assert updated["details"] == {"error": "job crashed"}
 
 
 def test_update_run_status_invalid_transition_returns_400(

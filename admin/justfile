@@ -55,6 +55,13 @@ up *flags="":
 down *flags="":
     docker compose down {{ flags }}
 
+# exec psql against compose setup
 psql:
     set -a && source .env && set +a \
         && PGPASSWORD="${POSTGRES_PASSWORD}" psql -h localhost -p 5432 -U ${POSTGRES_USER}
+
+# exec psql -f against compose setup, for a listed file
+psql-f file:
+    [ -f {{file}} ] \
+        && set -a && source .env && set +a \
+        && PGPASSWORD="${POSTGRES_PASSWORD}" psql -h localhost -p 5432 -U ${POSTGRES_USER} -f {{file}}

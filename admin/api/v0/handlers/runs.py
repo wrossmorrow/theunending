@@ -152,6 +152,10 @@ async def update_run_status(
             database.RunStatus.FAILED,
         ):
             run.finished_at = datetime.now(UTC)
+        if update.message is not None:
+            run.message = update.message
+        if update.details is not None:
+            run.details = update.details
         session.add(run)
         await session.commit()
         await session.refresh(run)
