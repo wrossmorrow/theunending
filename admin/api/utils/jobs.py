@@ -15,9 +15,13 @@ class ExternalJobClient:
 
     async def create_job(self, job_type: RunType, payload: dict) -> str:
         """Create an external job of the given type and return the external run id."""
-        response = await self._client.post(
-            "/jobs", json={"job_type": job_type, **payload}
+        path = "/evaluate" if job_type == RunType.EVALUATION else "/batch"
+        headers = (
+            {"Authorization": f"Bearer {settings.job_bearer_token}"}
+            if (settings.job_bearer_token)
+            else None
         )
+        response = await self._client.post(path, json=payload, headers=headers)
         response.raise_for_status()
         return str(response.json()["external_run_id"])
 
