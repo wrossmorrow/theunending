@@ -38,8 +38,6 @@ services:
     image: "${API_IMAGE_REGISTRY}/${API_IMAGE_NAME}:${API_IMAGE_TAG:-latest}"
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-    volumes:
-      - ${HOME}/data:/data
     ports:
       - "127.0.0.1:8000:8000"
     restart: unless-stopped
@@ -66,6 +64,7 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ${HOME}/deploy/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:
