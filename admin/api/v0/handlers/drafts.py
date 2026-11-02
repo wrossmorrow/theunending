@@ -69,7 +69,7 @@ async def create_draft(
         external_run_id = await job_client.create_job(
             database.RunType.EVALUATION, job_request
         )
-    except httpx.HTTPError, KeyError as e:
+    except (httpx.HTTPError, KeyError) as e:
         print(
             f"Failed to create external job for draft: {e.__class__.__name__} {e}"
         )
