@@ -24,7 +24,6 @@ services:
   # database, not exposed even with SG's
   postgres:
     image: postgres:18-alpine
-    container_name: theunending-postgres
     restart: unless-stopped
     shm_size: 256mb
     environment:
@@ -34,6 +33,7 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     ports:
       - "5432:5432"
     healthcheck:
