@@ -1,0 +1,30 @@
+
+aws_region := "us-east-1"
+registry := "396610714890.dkr.ecr.us-east-1.amazonaws.com"
+namespace := "theunending"
+ssh_key := "theunending.pem"
+ssh_user := "ubuntu"
+
+# List targets and exit
+default:
+    just --list
+
+# containerize
+containerize tag=`git rev-parse --short HEAD`:
+    docker build extproc -t {{registry}}/{{namespace}}/admin-auth:{{tag}} --platform linux/amd64,linux/arm64
+    docker build ../ -t {{registry}}/{{namespace}}/admin-api:{{tag}} --platform linux/amd64,linux/arm64
+
+# publish
+publish tag=`git rev-parse --short HEAD`: (containerize tag)
+    docker push {{registry}}/{{namespace}}/admin-auth:{{tag}}
+    docker push {{registry}}/{{namespace}}/admin-api:{{tag}}
+
+ecr-login:
+    aws ecr get-login-password --region {{aws_region}} \
+        | docker login --username AWS --password-stdin {{registry}}
+
+scp ip ssh_key=ssh_key user=ssh_user *flags="":
+    scp -i ~/.ssh/{{ ssh_key }} {{ flags }} .env compose.yaml envoy.yaml {{ user }}@{{ ip }}:~/deploy
+
+ssh ip ssh_key=ssh_key user=ssh_user *flags="":
+    ssh -i ~/.ssh/{{ ssh_key }} {{ flags }} {{ user }}@{{ ip }}
