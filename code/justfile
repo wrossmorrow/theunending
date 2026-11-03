@@ -57,6 +57,11 @@ regen prompt regen loc width="512" height="512":
         s3://dac2ef3da2-exercises-or-excuses-site-content-use1/assets/img/{{ loc }}/ \
         --exclude "*" --include "*.png" --recursive
 
+deploy-modal:
+    uv run python modal/image.py
+    uv run modal deploy -m src.imagen.modal
+    uv run modal deploy modal/api.py
+
 ssh ip ssh_key=ssh_key user="ubuntu" *flags="":
     ssh -i ~/.ssh/{{ ssh_key }} {{ user }}@{{ ip }} {{ flags }}
 

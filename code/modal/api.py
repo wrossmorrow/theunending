@@ -10,7 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 import modal
 
 DEFAULT_MODEL = "black-forest-labs/FLUX.2-klein-4B"
-DEFAULT_S3_BUCKET_NAME = "wrossmorrow-genai-repetitions-use1"
+DEFAULT_S3_BUCKET_NAME = "theunending-ai-raw-content-use1"
 AUTH_TOKEN_HEADER_NAME = "MODAL_ENDPOINT_AUTH_TOKEN"
 MODAL_APP_NAME = "theunending"
 
@@ -49,33 +49,11 @@ def _check_auth(request: Request, token: HTTPAuthorizationCredentials = Depends(
     return True
 
 
-def _parse_prompt(payload: dict) -> str:
-
-    if "prompt" not in payload:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="payload sent must have 'prompt'",
-        )
-
-    prompt = payload["prompt"]
-
-    if len(prompt) < 3:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="prompt too short",
-        )
-    
-    if len(prompt) > 1024:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="prompt too long",
-        )
-
-    return prompt
-
-
 @api.exception_handler(Exception)
-async def _exception_handler(request: Request, exc: Exception):
+async def _exception_handler(request: Request, exc: Exception) -> JSONResponse:
+
+    print(f"Caught unhandled exception for {request.method} {request._url}: {exc.__class__.__name__} {exc}")
+
     if isinstance(exc, (HTTPException, StarletteHTTPException)):
         raise exc
     
@@ -89,7 +67,10 @@ async def _exception_handler(request: Request, exc: Exception):
 
 
 @api.post("/evaluate")
-def _evaluate(payload: JobParameters, authed: bool = Depends(_check_auth)):
+def _evaluate(payload: JobParameters, request: Request, authed: bool = Depends(_check_auth)):
+
+    print(f"Received {request.method} {request._url} with params: {payload.model_dump_json()}")
+
     target = modal.Function.from_name(MODAL_APP_NAME, "evaluate")
     kwargs = payload.model_dump(mode="json")
     fcall = target.spawn({"kwargs": kwargs})
@@ -106,7 +87,10 @@ def _evaluate(payload: JobParameters, authed: bool = Depends(_check_auth)):
 
 
 @api.post("/batch")
-def _batch(payload: JobParameters, authed: bool = Depends(_check_auth)):
+def _batch(payload: JobParameters, request: Request, authed: bool = Depends(_check_auth)):
+
+    print(f"Received {request.method} {request._url} with params: {payload.model_dump_json()}")
+
     target = modal.Function.from_name(MODAL_APP_NAME, "batch")
     kwargs = payload.model_dump(mode="json")
     fcall = target.spawn({"flags": ("embed",), "kwargs": kwargs})
