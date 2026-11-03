@@ -39,11 +39,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	tokens := map[string][]string{
+		token: {"*"},
+	}
+
 	proc := &authRequestProcessor{
-		opts: popts,
-		tokens: map[string][]string{
-			token: {"*"},
-		},
+		opts:   popts,
+		tokens: tokens,
 	}
 
 	logger := slog.New(

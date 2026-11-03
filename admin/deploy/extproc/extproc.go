@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"strings"
 
 	ep "github.com/wrossmorrow/envoy-extproc-sdk-go"
@@ -12,6 +13,7 @@ const unauthzResponse = "{\"error\": \"Forbidden\"}"
 
 type authRequestProcessor struct {
 	opts   *ep.ProcessingOptions
+	logger *slog.Logger
 	tokens map[string][]string
 }
 
@@ -38,12 +40,12 @@ func (s *authRequestProcessor) ProcessRequestHeaders(ctx *ep.RequestContext, hea
 	token := strings.TrimPrefix(auth, "Bearer ")
 	paths, ok := s.tokens[token]
 	if !ok {
+		s.logger.Info("token not allowed", slog.Any("token", token), slog.Any("tokens", s.tokens))
 		return ctx.CancelRequest(403, nil, unauthzResponse)
 	}
 
 	path := ctx.Path
-	log.Printf("Path/Paths allowed: %s, %v\n", path, paths)
-	// TODO: look into paths against _this_ path
+	s.logger.Info("Path/Paths allowed", slog.Any("path", path), slog.Any("allowed", paths))
 
 	return ctx.ContinueRequest()
 }
