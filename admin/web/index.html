@@ -68,12 +68,12 @@
       </label>
       <label>
         <span class="kicker">Slug <em>optional</em></span>
-        <input name="slug" autocomplete="off" spellcheck="false" placeholder="dry-lake-towers">
+        <input name="slug" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="dry-lake-towers">
         <small class="hint" data-hint="slug">lowercase letters, digits, hyphens; starts and ends with a letter; 3–128 chars</small>
       </label>
       <label>
         <span class="kicker">Name <em>optional</em></span>
-        <input name="name" autocomplete="off" placeholder="Dry Lake Towers">
+        <input name="name" autocomplete="off" autocapitalize="words" autocorrect="off" placeholder="Dry Lake Towers">
         <small class="hint" data-hint="name">Title Case, up to 3 words, 64 chars</small>
       </label>
       <div class="actions">
@@ -105,12 +105,12 @@
       <div class="row">
         <label>
           <span class="kicker">Slug</span>
-          <input name="slug" autocomplete="off" spellcheck="false">
+          <input name="slug" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
           <small class="hint" data-hint="slug"></small>
         </label>
         <label>
           <span class="kicker">Name</span>
-          <input name="name" autocomplete="off">
+          <input name="name" autocomplete="off" autocapitalize="words" autocorrect="off">
           <small class="hint" data-hint="name"></small>
         </label>
       </div>
@@ -130,7 +130,7 @@
       <form id="new-draft-form" class="stack" novalidate>
         <label>
           <span class="kicker">Prompt <span class="counter" data-field="prompt-count"></span></span>
-          <textarea name="prompt" rows="3" maxlength="1023" placeholder="a dry lake surrounded by watertowers"></textarea>
+          <textarea name="prompt" rows="3" maxlength="1023" autocapitalize="none" autocorrect="on" placeholder="a dry lake surrounded by watertowers"></textarea>
         </label>
         <div class="actions">
           <button type="submit" class="primary">Draft it</button>
@@ -178,7 +178,7 @@
     <form method="dialog" id="token-form" class="stack">
       <h3>API token</h3>
       <p class="hint">Sent as <code>Authorization: Bearer …</code> on every API call. Kept in this browser tab only, unless you tick remember.</p>
-      <input name="token" type="password" autocomplete="off" spellcheck="false" placeholder="token">
+      <input name="token" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="token">
       <label class="check"><input type="checkbox" name="remember"> Remember on this device</label>
       <div class="actions">
         <button value="save" class="primary">Save</button>
