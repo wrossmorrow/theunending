@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -32,16 +33,25 @@ func parseArgs(args []string) (sopts *ep.ServerOptions, popts *ep.ProcessingOpti
 func main() {
 	sopts, popts := parseArgs(os.Args[1:])
 
-	proc := &authRequestProcessor{
-		opts: popts,
-		tokens: map[string][]string{
-			"0": {"*"},
-		},
+	logger := slog.New(
+		slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}),
+	)
+
+	token, exists := os.LookupEnv("ADMIN_AUTH_TOKEN")
+	if !exists {
+		fmt.Println("ADMIN_AUTH_TOKEN is not set but is required")
+		os.Exit(1)
 	}
 
-	logger := slog.New(
-		slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}),
-	)
+	tokens := map[string][]string{
+		token: {"*"},
+	}
+
+	proc := &authRequestProcessor{
+		opts:   popts,
+		tokens: tokens,
+		logger: logger,
+	}
 
 	ep.MustServe(sopts, proc, logger)
 }
