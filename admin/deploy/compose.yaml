@@ -21,7 +21,7 @@ services:
     image: "${EXTPROC_IMAGE_REGISTRY}/${EXTPROC_IMAGE_NAME}:${EXTPROC_IMAGE_TAG:-latest}"
     command: ["--update-duration-header"]
     environment:
-      ADMIN_AUTH_TOKEN: ADMIN_AUTH_TOKEN
+      ADMIN_AUTH_TOKEN: ${ADMIN_AUTH_TOKEN}
     ports:
       # metrics (gRPC kept internal)
       - '127.0.0.1:9090:9090'
