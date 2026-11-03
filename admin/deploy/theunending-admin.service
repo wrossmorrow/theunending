@@ -1,0 +1,34 @@
+# /etc/systemd/system/theunending-admin.service
+
+[Unit]
+Description=The Unending Admin Docker Compose Stack
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=ubuntu
+Group=docker
+WorkingDirectory=/home/ubuntu/deploy
+Environment="HOME=/home/ubuntu"
+
+# Pull latest images from ECR on start/restart (optional; remove if you prefer pinned local images)
+ExecStartPre=-/usr/bin/docker compose pull --quiet
+
+# Start the stack in detached mode and remove old orphan containers
+ExecStart=/usr/bin/docker compose up -d --remove-orphans
+
+# Cleanly stop containers on service stop or EC2 shutdown
+ExecStop=/usr/bin/docker compose down
+
+# Reload/update containers without full downtime via: sudo systemctl reload theunending-admin
+ExecReload=/usr/bin/docker compose pull --quiet
+ExecReload=/usr/bin/docker compose up -d --remove-orphans
+
+TimeoutStartSec=300
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target
