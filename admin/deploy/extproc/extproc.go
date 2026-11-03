@@ -40,7 +40,6 @@ func (s *authRequestProcessor) ProcessRequestHeaders(ctx *ep.RequestContext, hea
 	token := strings.TrimPrefix(auth, "Bearer ")
 	paths, ok := s.tokens[token]
 	if !ok {
-		s.logger.Info("token not allowed", slog.Any("token", token), slog.Any("tokens", s.tokens))
 		return ctx.CancelRequest(403, nil, unauthzResponse)
 	}
 
