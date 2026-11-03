@@ -33,6 +33,10 @@ func parseArgs(args []string) (sopts *ep.ServerOptions, popts *ep.ProcessingOpti
 func main() {
 	sopts, popts := parseArgs(os.Args[1:])
 
+	logger := slog.New(
+		slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}),
+	)
+
 	token, exists := os.LookupEnv("ADMIN_AUTH_TOKEN")
 	if !exists {
 		fmt.Println("ADMIN_AUTH_TOKEN is not set but is required")
@@ -46,11 +50,8 @@ func main() {
 	proc := &authRequestProcessor{
 		opts:   popts,
 		tokens: tokens,
+		logger: logger,
 	}
-
-	logger := slog.New(
-		slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}),
-	)
 
 	ep.MustServe(sopts, proc, logger)
 }
