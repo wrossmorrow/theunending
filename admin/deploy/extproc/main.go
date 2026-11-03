@@ -47,7 +47,7 @@ func main() {
 	}
 
 	logger := slog.New(
-		slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}),
+		slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}),
 	)
 
 	ep.MustServe(sopts, proc, logger)
