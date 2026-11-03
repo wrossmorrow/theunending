@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -32,10 +33,16 @@ func parseArgs(args []string) (sopts *ep.ServerOptions, popts *ep.ProcessingOpti
 func main() {
 	sopts, popts := parseArgs(os.Args[1:])
 
+	token, exists := os.LookupEnv("ADMIN_AUTH_TOKEN")
+	if !exists {
+		fmt.Println("ADMIN_AUTH_TOKEN is not set but is required")
+		os.Exit(1)
+	}
+
 	proc := &authRequestProcessor{
 		opts: popts,
 		tokens: map[string][]string{
-			"0": {"*"},
+			token: {"*"},
 		},
 	}
 
