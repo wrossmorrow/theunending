@@ -1,4 +1,8 @@
 
+registry := "396610714890.dkr.ecr.us-east-1.amazonaws.com"
+namespace := "theunending"
+image_name := "theunending"
+
 raw_S3_bucket := "wrossmorrow-genai-repetitions-use1"
 site_s3_bucket := "theunending-ai-site-content-use1"
 ssh_key := "imagen-lambda.pem"
@@ -23,6 +27,14 @@ fix:
 # Lint code
 lint:
     uv run ruff check src/imagen
+
+# Containerize the application
+containerize tag=`git rev-parse --short HEAD`:
+    docker build . -t {{registry}}/{{namespace}}/{{image_name}}:{{tag}}
+
+# publish container
+publish tag=`git rev-parse --short HEAD`: (containerize tag)
+    docker push {{registry}}/{{namespace}}/{{image_name}}:{{tag}}
 
 run prompt rows cols width="512" height="512" model_id=flux2:
     PROMPT="{{ prompt }}" \
