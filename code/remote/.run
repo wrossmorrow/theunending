@@ -1,5 +1,5 @@
 # define these
-POST_TITLE="Poltergeist"
-SET_NAME="poltergeist"
-PROMPT="photograph in a foggy rainforest in the pacific northwest, like the ho river trail, dense with tall trees. deep undergrowth of ferns, with rotting fallen tree carcases with almost maroon bark overgrown with moss and yound ferns. numerous sneakers hang by their tied-together shoelaces over tree branches overhead."
+POST_TITLE="Intérieure Air"
+SET_NAME="inside-air"
+PROMPT="an “en plein air” painting in a crowded commuter train. a small easel is set up in the aisle, with a shelf for supplies. on the easel is a canvas with a sketchy, rough painting in muted colors of the scene behind it: a crowded commuter train car with any people sitting and standing on their way to work. behind the painting setup there are many people, sitting and standing, packed closely together behind the easel and canvas. the back of the train seats we can see are a light gray. iPhone photograph for a social media post."
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
