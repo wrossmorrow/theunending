@@ -109,10 +109,10 @@ class ExternalJobClient:
             submission_error: Exception | None = None
             try:
                 response = await self.submit_job(request)
-                self._queue.task_done()
             except Exception as e:  # noqa: BLE001
-                self._queue.task_done()
                 submission_error = e
+            finally:
+                self._queue.task_done()
 
             if submission_error is not None:
                 request.attempts += 1
