@@ -156,11 +156,22 @@ class AdminAPI:
                 f"No url set for status updates, no call will be made ({status}, {message}, {details})"
             )
             return
-        
-        return _update_progress(
-            client=self._http,
-            url=self._url,
-            status=status,
-            message=message,
-            details=details,
-        )
+
+        try:
+            return _update_progress(
+                client=self._http,
+                url=self._url,
+                status=status,
+                message=message,
+                details=details,
+            )
+        except httpx.HTTPStatusError as e:
+            print(
+                f"Update progress failed for ({status}, {message}, {details}): "
+                f"({e.response.status_code}) {e.response.text}"
+            )
+        except Exception as e:
+            print(
+                f"Update progress failed for ({status}, {message}, {details}): "
+                f"{e.__class__.__name__} {e}"
+            )
