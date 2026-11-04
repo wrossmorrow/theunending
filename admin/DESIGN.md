@@ -222,13 +222,9 @@ admin/
     * implement any X -> X state transition (same state as current) as a no-op success
 * drafts are the way to evaluate options before committing a set; drafts associated with a set are the "drafting" phase. Holding "commit" at the draft level lets the user pick the draft that works best, and "commit" the set with that draft's prompt, model_prompt_hash, and the commit "post_date".
 * There is no "direct" way to update a draft status, the system will do this as described elsewhere
-* when we create a draft _and_ successfully trigger the external job
-    * we create a run for this set/draft storing:
-        * the set_id/draft_id FK's
-        * and the external_run_id returned from the job creation
-    * run created of type: EVALUATION
-    * run created in status: PENDING
-    * on failure to create a job in the external system, the draft creation should fail with no database changes
+* when we create a draft we create and commit a run for this set/draft (type: EVALUATION, status: PENDING, external_run_id: NULL), then enqueue an external job submission for that run
+* the enqueue is picked up by a local async worker which submits the job to the external system and records the returned external_run_id on the run (run status: SUBMITTED, submitted_at: timestamp)
+* if the worker exhausts its submission attempts the run is marked FAILED and the draft status follows the FAILED flow
 * when a draft's status is moved from IN_PROGRESS -> COMPLETED
     * we will need to copy S3 assets from one bucket to another (owned by the same account)
     * "job" bucket /job prefix -> "site" bucket / site prefix
@@ -240,7 +236,7 @@ admin/
     * the draft referenced must be in status: COMPLETED
     * the commit must be implemented as a single transaction covering the set update and the run creation.
     * the commit must be idempotent; re-issuing must not create a second BATCH run or overwrite committed state.
-    * the single transaction covers the set update and the run creation, but the outbound HTTP call to create the external job must not run inside the database transaction; it is issued outside/after the transaction.
+    * the single transaction covers the set update and the run creation, but the enqueue of the external job submission is issued outside the database transaction; it is put on a local job queue after the run insert is staged and before the commit, so a failed enqueue rejects all changes and returns with error details.
     * if so, the commit call assigns:
         * set[set_id].prompt <- draft.prompt
         * set[set_id].post_date <- current date in YYYY-MM-DD format for Los Angeles/Pacific TZ
@@ -249,10 +245,10 @@ admin/
         * runs an external job
             * we create a run for this set/draft storing:
                 * the set_id/draft_id FK's
-                * and the external_run_id returned from the job system
+                * and the external_run_id returned from the job system (null until the worker submits the job)
             * run created of type: BATCH
             * run created in status: PENDING
-            * on failure to create the job, reject all changes and return with error details
+            * the worker submits the job and marks the run SUBMITTED on success, or FAILED after exhausting submission attempts
 
 ## runs
 
@@ -260,16 +256,17 @@ admin/
 
 * "runs"
     * run_id (PK, uuidv7)
-    * external_run_id (required, string/text, from job system response)
+    * external_run_id (nullable, string/text, from job system response; set when the worker submits the job)
     * set_id (FK, uuidv7)
     * draft_id (FK, uuidv7)
     * type (EVALUATION, BATCH)
-    * status (PENDING, IN_PROGRESS, FAILED, COMPLETED)
+    * status (PENDING, SUBMITTED, IN_PROGRESS, FAILED, COMPLETED)
     * message (optional, string/text, human-readable status message from the external job)
     * details (optional, JSON, structured details from the external job)
     * created_at (generated on creation, UTC timestamp)
     * updated_at (set to the latest update, UTC timestamp)
     * finished_at (set when finished, UTC timestamp)
+    * submitted_at (set when the worker submitted the job to the external system, UTC timestamp)
 
 ### HTTP calls
 
@@ -288,9 +285,13 @@ admin/
 * external_run_id is returned from the job system and used to correlate the external job with its run.
 * run objects should only be created by the code, from draft creation, set committing, and internally for "redos"
 * runs are immutable except timestamps and status; status updates may also carry optional `message` and JSON `details`
-* run statuses are linear: PENDING -> IN_PROGRESS -> COMPLETED | FAILED are the only valid changes
-    * PENDING -> IN_PROGRESS (we are signalled an external job we created has started)
-    * IN_PROGRESS -> COMPLETED | FAILED (we are signalled an external job we created has finished)
+* run statuses are linear: PENDING -> SUBMITTED -> IN_PROGRESS -> COMPLETED | FAILED are the valid changes
+    * PENDING -> SUBMITTED (the worker submitted the job to the external system and got an external run id)
+    * SUBMITTED -> IN_PROGRESS (we are signalled an external job we submitted has started)
+    * SUBMITTED -> FAILED (we are signalled an external job we submitted failed to start)
+    * IN_PROGRESS -> COMPLETED | FAILED (we are signalled an external job we submitted has finished)
+    * PENDING -> FAILED (submission failed after exhausting worker attempts)
+    * a redo of a FAILED run creates a distinct new run, which starts the flow again at PENDING
     * we will assume we do not "restart" external jobs, we can "resubmit them" under new records if failed
     * if that changes (external jobs restart) we can revisit this status flow
 * "redoing" a run requires the run referenced by id to be in a FAILED status
@@ -309,17 +310,17 @@ user -> create set (POST /api/v0/sets)
     <- 201 if request OK, 400 if invalid model
 
 user -> create draft (POST /api/v0/sets/{set_id}/drafts)
-    -> create/store a type: EVALUATION run object
-    -> kick off external EVALUATION job (HTTP POST request)  creating a run
-    <- 201 if created, 400 if invalid set, 500 if creating job fails, ...
-    ("in the background")
+    -> create/store a type: EVALUATION run object (status: PENDING, external_run_id: NULL)
+    -> enqueue external EVALUATION job submission (queue) for that run
+    <- 201 if created, 400 if invalid set, ...
+    ("in the background"; worker submits the job, marks run SUBMITTED, external job reports IN_PROGRESS/FAILED/COMPLETED)
         <- external job starts, calls PUT /api/v0/runs/{run_id}/status ("IN_PROGRESS")
         <- external job fails, calls PUT /api/v0/runs/{run_id}/status ("FAILED")
         <- external job completes, calls PUT /api/v0/runs/{run_id}/status ("COMPLETED")
         on COMPLETED, set the draft.status to COMPLETED, on FAILED, set the draft.status to FAILED
 
 user -> create draft (POST /api/v0/sets/{set_id}/drafts)
-    -> kick off external EVALUATION job (HTTP POST request) creating a run
+    -> enqueue external EVALUATION job submission (queue) for a new run
     ... same
 
 user -> commit set (POST /api/v0/sets/{set_id}/drafts/{draft_id}/commit)
@@ -331,9 +332,9 @@ user -> update set (PATCH /api/v0/sets/{set_id}) with slug/name
 user -> commit set (POST /api/v0/sets/{set_id}/drafts/{draft_id}/commit)
     -> do checks on draft and set status
         -> "commit" the set, described above
-            -> create/store a new type: BATCH run object
-            -> trigger a BATCH external job (via HTTP call) with a run_id
-            ("in the background", long time)
+            -> create/store a new type: BATCH run object (status: PENDING, external_run_id: NULL)
+            -> enqueue BATCH external job submission (queue) for that run
+            ("in the background", long time; worker submits the job, marks run SUBMITTED, external job reports IN_PROGRESS/FAILED/COMPLETED)
                 <- external job starts, calls PUT /api/v0/runs/{run_id}/status ("IN_PROGRESS")
                 <- external job fails, calls PUT /api/v0/runs/{run_id}/status ("FAILED")
                 <- external job completes, calls PUT /api/v0/runs/{run_id}/status ("COMPLETED")
@@ -364,17 +365,17 @@ Derived from the resolved design decisions in this document.
 
 * SQLModel entities for Set, Draft, Run (async engine; Postgres; SQLite for tests; UUIDs as uuidv7).
 * Sets: create (DRAFT, model required, optional slug/name), list (filters), get, patch (DRAFT only, slug/name), delete (soft → ABANDONED).
-* Commit path: single transaction over set update + run creation; idempotent; external job call outside transaction; failure → reject/no changes.
+* Commit path: single transaction over set update + run creation; idempotent; enqueue of the external job submission outside the transaction; failure → reject/no changes.
 
 ### Phase 2 — Drafts and commit flow
 
-* Draft create (set must exist and be DRAFT; prompt required; hash = sha256(sets[set_id].model::prompt)); trigger EVALUATION job; run created (EVALUATION, PENDING).
+* Draft create (set must exist and be DRAFT; prompt required; hash = sha256(sets[set_id].model::prompt)); create+commit run (EVALUATION, PENDING), enqueue EVALUATION job, worker submits → SUBMITTED.
 * Draft status transitions; on COMPLETED copy S3 assets; on FAILED draft status FAILED.
-* Commit (DRAFT set + COMPLETED draft; slug/name set) → assign set fields; trigger BATCH job; run created (BATCH, PENDING); status updates; set COMPLETED/FAILED.
+* Commit (DRAFT set + COMPLETED draft; slug/name set) → assign set fields; create+commit run (BATCH, PENDING), enqueue BATCH job, worker submits → SUBMITTED; status updates; set COMPLETED/FAILED.
 
 ### Phase 3 — Runs and orchestration
 
-* Runs endpoints; redo (FAILED → new run); status updates (match draft status); `external_run_id` from job system response.
+* Runs endpoints; redo (FAILED → new run); status updates (match draft status); `external_run_id` from job system response, set on worker submission.
 
 ### Phase 4 — Tooling, errors, tests, deploy
 

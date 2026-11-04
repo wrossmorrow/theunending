@@ -1,9 +1,8 @@
 """Run route handlers."""
 
 from datetime import UTC, datetime
-from uuid import UUID, uuid7
+from uuid import UUID
 
-import httpx
 from fastapi import HTTPException
 from fastapi import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -11,7 +10,7 @@ from sqlmodel import select
 
 from api.database import models as database
 from api.settings import settings
-from api.utils.jobs import ExternalJobClient, JobParameters
+from api.utils.jobs import ExternalJobClient, JobParameters, JobRequest
 from api.v0.schema import models
 
 
@@ -82,9 +81,21 @@ async def redo_run(
 
         model = set_.model
 
-        new_run_id = uuid7()
-        try:
-            job_request = JobParameters(
+        new_run = database.Run(
+            external_run_id=None,
+            set_id=run.set_id,
+            draft_id=run.draft_id,
+            type=run.type,
+            status=database.RunStatus.PENDING,
+        )
+        session.add(new_run)
+        await session.flush()
+        await session.refresh(new_run)
+
+        job_request = JobRequest(
+            run_id=new_run.run_id,
+            job_type=run.type,
+            job_params=JobParameters(
                 model_id=model,
                 s3_bucket=settings.s3_bucket_name,
                 s3_prefix=(
@@ -92,26 +103,18 @@ async def redo_run(
                     f"/{draft.model_prompt_hash}"
                 ),
                 prompt=draft.prompt,
-                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{new_run_id}/status",
-                status_update_admin_run_id=new_run_id,
-            )
-            external_run_id = await job_client.create_job(run.type, job_request)
-        except (httpx.HTTPError, KeyError) as e:
-            print(f"Failed to trigger external job: {e.__class__.__name__} {e}")
+                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{new_run.run_id}/status",
+                status_update_admin_run_id=new_run.run_id,
+            ),
+        )
+        try:
+            await job_client.request_job(job_request)
+        except Exception as e:
             raise HTTPException(
                 status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create external job.",
-            )
+                detail="Failed to enqueue external job.",
+            ) from e
 
-        new_run = database.Run(
-            run_id=new_run_id,
-            external_run_id=external_run_id,
-            set_id=run.set_id,
-            draft_id=run.draft_id,
-            type=run.type,
-            status=database.RunStatus.PENDING,
-        )
-        session.add(new_run)
         await session.commit()
         await session.refresh(new_run)
 
@@ -125,19 +128,22 @@ def _run_transition_valid(
     if current == next_status:
         # Same-state transitions are treated as no-op successes.
         return True
-    if current == database.RunStatus.PENDING:
-        # PENDING -> IN_PROGRESS (job started) or PENDING -> FAILED (job failed to start).
-        return next_status in (
+    valid_transitions: dict[database.RunStatus, tuple[database.RunStatus, ...]] = {
+        database.RunStatus.PENDING: (
+            database.RunStatus.SUBMITTED,
             database.RunStatus.IN_PROGRESS,
             database.RunStatus.FAILED,
-        )
-    if current == database.RunStatus.IN_PROGRESS:
-        # IN_PROGRESS -> COMPLETED (job finished ok) or IN_PROGRESS -> FAILED (job failed).
-        return next_status in (
+        ),
+        database.RunStatus.SUBMITTED: (
+            database.RunStatus.IN_PROGRESS,
+            database.RunStatus.FAILED,
+        ),
+        database.RunStatus.IN_PROGRESS: (
             database.RunStatus.COMPLETED,
             database.RunStatus.FAILED,
-        )
-    return False
+        ),
+    }
+    return next_status in valid_transitions.get(current, ())
 
 
 async def update_run_status(
@@ -184,11 +190,15 @@ async def update_run_status(
                 status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Draft {run.draft_id} not found.",
             )
-        draft.status = database.DraftStatus(update.status.value)
-        draft.updated_at = datetime.now(UTC)
-        session.add(draft)
-        await session.commit()
-        await session.refresh(draft)
+        if (
+            run_type == database.RunType.EVALUATION
+            and update.status != database.RunStatus.SUBMITTED
+        ):
+            draft.status = database.DraftStatus(update.status.value)
+            draft.updated_at = datetime.now(UTC)
+            session.add(draft)
+            await session.commit()
+            await session.refresh(draft)
 
         if run_type == database.RunType.BATCH and update.status in (
             database.RunStatus.COMPLETED,
