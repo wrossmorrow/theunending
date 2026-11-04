@@ -106,21 +106,41 @@ class ExternalJobClient:
                 continue
 
             response: JobAPIResponse | None = None
+            submission_error: Exception | None = None
             try:
                 response = await self.submit_job(request)
                 self._queue.task_done()
-                await self.update_job(request, response, RunStatus.SUBMITTED)
             except Exception as e:  # noqa: BLE001
                 self._queue.task_done()
+                submission_error = e
+
+            if submission_error is not None:
                 request.attempts += 1
                 if request.attempts < self._max_attempts:
                     await self._queue.put(request)
                 else:
                     print(
                         "Permanently failed to submit enqueued job run for "
-                        f"{request.run_id} {e.__class__.__name__} {e}"
+                        f"{request.run_id} {submission_error.__class__.__name__} {submission_error}"
                     )
                     await self.update_job(request, None, RunStatus.FAILED)
+                continue
+
+            assert response is not None
+            try:
+                await self.update_job(request, response, RunStatus.SUBMITTED)
+            except Exception as e:  # noqa: BLE001
+                print(
+                    "Failed to mark enqueued job run submitted in the database for "
+                    f"{request.run_id} {e.__class__.__name__} {e}"
+                )
+                try:
+                    await self.update_job(request, None, RunStatus.FAILED)
+                except Exception as update_error:  # noqa: BLE001
+                    print(
+                        "Failed to mark enqueued job run failed in the database for "
+                        f"{request.run_id} {update_error.__class__.__name__} {update_error}"
+                    )
 
     async def join(self) -> None:
         """Process and clear pending queue items (used during shutdown)."""
