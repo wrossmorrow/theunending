@@ -272,6 +272,17 @@ const state = {
   loadSeq: 0,         // guards against out-of-order responses when switching sets
 };
 
+/* One AbortController per rendered view; listeners on long-lived elements use its
+ * signal so they disappear with the view. */
+let viewController = new AbortController();
+function resetView() {
+  viewController.abort();
+  viewController = new AbortController();
+}
+function viewSignal() {
+  return viewController.signal;
+}
+
 /* ------------------------------------------------------------------ *
  * Set list
  * ------------------------------------------------------------------ */
@@ -509,7 +520,9 @@ function wireSetDetail(detail, setId) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) draftForm.requestSubmit();
   });
 
-  // Delegated actions inside draft and batch lists
+  // Delegated actions inside draft and batch lists. #detail outlives views, so the
+  // listener is tied to this view's AbortController and removed when the view changes;
+  // otherwise every visit to a set would add another handler (and another POST).
   detail.addEventListener("click", async (e) => {
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
@@ -517,18 +530,23 @@ function wireSetDetail(detail, setId) {
 
     if (action === "commit") {
       const draft = state.current.drafts.find((d) => d.draft_id === btn.dataset.draftId);
-      if (!draft) return;
-      const ok = await confirmDialog({
-        title: `Commit “${setTitle(state.current.set)}”?`,
-        body: `This locks the set to this prompt and starts the full batch:\n\n“${draft.prompt}”`,
-        ok: "Commit & run batch",
-      });
-      if (!ok) return;
+      if (!draft || state.committing) return;
+      state.committing = true;
       try {
-        await withBusy(btn, () => API.commitDraft(setId, draft.draft_id));
-        toast("Committed. Batch run started.");
-        await Promise.all([refreshCurrent(setId, state.loadSeq, { resetForm: true }), loadSets()]);
-      } catch (err) { reportError(err); }
+        const ok = await confirmDialog({
+          title: `Commit “${setTitle(state.current.set)}”?`,
+          body: `This locks the set to this prompt and starts the full batch:\n\n“${draft.prompt}”`,
+          ok: "Commit & run batch",
+        });
+        if (!ok) return;
+        try {
+          await withBusy(btn, () => API.commitDraft(setId, draft.draft_id));
+          toast("Committed. Batch run started.");
+          await Promise.all([refreshCurrent(setId, state.loadSeq, { resetForm: true }), loadSets()]);
+        } catch (err) { reportError(err); }
+      } finally {
+        state.committing = false;
+      }
     }
 
     if (action === "redo") {
@@ -538,7 +556,7 @@ function wireSetDetail(detail, setId) {
         await refreshCurrent(setId);
       } catch (err) { reportError(err); }
     }
-  });
+  }, { signal: viewSignal() });
 }
 
 function renderSetMeta(resetForm) {
@@ -850,6 +868,7 @@ function parseRoute() {
 }
 
 function route() {
+  resetView();
   state.route = parseRoute();
   stopPolling();
   state.current = null;
