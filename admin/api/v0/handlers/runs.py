@@ -1,9 +1,8 @@
 """Run route handlers."""
 
 from datetime import UTC, datetime
-from uuid import UUID, uuid7
+from uuid import UUID
 
-import httpx
 from fastapi import HTTPException
 from fastapi import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -11,7 +10,7 @@ from sqlmodel import select
 
 from api.database import models as database
 from api.settings import settings
-from api.utils.jobs import ExternalJobClient, JobParameters
+from api.utils.jobs import ExternalJobClient, JobParameters, JobRequest
 from api.v0.schema import models
 
 
@@ -82,9 +81,21 @@ async def redo_run(
 
         model = set_.model
 
-        new_run_id = uuid7()
-        try:
-            job_request = JobParameters(
+        new_run = database.Run(
+            external_run_id=None,
+            set_id=run.set_id,
+            draft_id=run.draft_id,
+            type=run.type,
+            status=database.RunStatus.PENDING,
+        )
+        session.add(new_run)
+        await session.flush()
+        await session.refresh(new_run)
+
+        job_request = JobRequest(
+            run_id=new_run.run_id,
+            job_type=run.type,
+            job_params=JobParameters(
                 model_id=model,
                 s3_bucket=settings.s3_bucket_name,
                 s3_prefix=(
@@ -92,28 +103,13 @@ async def redo_run(
                     f"/{draft.model_prompt_hash}"
                 ),
                 prompt=draft.prompt,
-                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{new_run_id}/status",
-                status_update_admin_run_id=new_run_id,
-            )
-            external_run_id = await job_client.create_job(run.type, job_request)
-        except (httpx.HTTPError, KeyError) as e:
-            print(f"Failed to trigger external job: {e.__class__.__name__} {e}")
-            raise HTTPException(
-                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create external job.",
-            )
-
-        new_run = database.Run(
-            run_id=new_run_id,
-            external_run_id=external_run_id,
-            set_id=run.set_id,
-            draft_id=run.draft_id,
-            type=run.type,
-            status=database.RunStatus.PENDING,
+                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{new_run.run_id}/status",
+                status_update_admin_run_id=new_run.run_id,
+            ),
         )
-        session.add(new_run)
+        await job_client.request_job(job_request)
+
         await session.commit()
-        await session.refresh(new_run)
 
     return new_run
 

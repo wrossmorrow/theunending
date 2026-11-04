@@ -15,6 +15,10 @@ install:
 format:
     uv run ruff format .
 
+# Format-fix code
+fix:
+    uv run ruff check . --fix
+
 # Lint code
 lint:
     uv run ruff check .

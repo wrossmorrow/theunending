@@ -42,11 +42,11 @@ CREATE INDEX ix_drafts_set_id ON drafts (set_id);
 ---
 
 CREATE TYPE runtype AS ENUM ('EVALUATION', 'BATCH');
-CREATE TYPE runstatus AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED');
+CREATE TYPE runstatus AS ENUM ('PENDING', 'SUBMITTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED');
 
 CREATE TABLE runs (
 	run_id UUID NOT NULL PRIMARY KEY, 
-	external_run_id VARCHAR NOT NULL,
+	external_run_id VARCHAR,
 	set_id UUID NOT NULL REFERENCES sets (set_id), 
 	draft_id UUID NOT NULL REFERENCES drafts (draft_id), 
 	type runtype NOT NULL, 

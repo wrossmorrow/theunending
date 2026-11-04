@@ -32,6 +32,7 @@ class RunType(str, Enum):
 
 class RunStatus(str, Enum):
     PENDING = "PENDING"
+    SUBMITTED = "SUBMITTED"
     IN_PROGRESS = "IN_PROGRESS"
     FAILED = "FAILED"
     COMPLETED = "COMPLETED"
@@ -92,7 +93,7 @@ class Run(SQLModel, table=True):
     __tablename__ = "runs"
 
     run_id: UUID = Field(default_factory=uuid7, primary_key=True)
-    external_run_id: str = Field(min_length=1)
+    external_run_id: str | None = Field(min_length=1)
     set_id: UUID = Field(index=True, foreign_key="sets.set_id")
     draft_id: UUID = Field(index=True, foreign_key="drafts.draft_id")
     type: RunType = Field()

@@ -21,7 +21,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     engine = create_async_engine(settings.database_url)
     app.state.engine = engine
     app.state.session_factory = create_session_factory(engine)
-    app.state.job_client = ExternalJobClient(base_url=settings.job_base_url)
+    app.state.job_client = ExternalJobClient(
+        base_url=settings.job_base_url,
+        session_factory=app.state.session_factory,
+        queue_timeout_seconds=settings.queue_timeout_seconds,
+        submit_timeout_seconds=settings.submit_timeout_seconds,
+        max_attempts=settings.max_attempts,
+    )
     await selectone(app.state.session_factory)
     yield
     await engine.dispose()

@@ -22,5 +22,9 @@ class Settings(BaseSettings):
     s3_presign_expires_seconds: int = 300
     aws_region_name: str = "us-east-1"
 
+    queue_timeout_seconds: float = 30
+    submit_timeout_seconds: float = 60
+    max_attempts: int = 3
+
 
 settings = Settings()
