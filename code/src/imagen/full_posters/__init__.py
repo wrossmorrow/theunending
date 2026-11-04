@@ -22,6 +22,7 @@ Lambda: handler = poster.lambda_handler, event = keyword args of build_poster(),
    "orientation": "portrait", "tile": 2, "dpi": 150, "mode": "walk", "title": "Masks"}
 Needs Pillow (layer or container image); boto3 is already in the runtime.
 """
+
 import argparse
 import io
 import json
@@ -61,6 +62,7 @@ class Store:
         self.is_s3 = uri.startswith("s3://")
         if self.is_s3:
             import boto3
+
             self.s3 = boto3.client("s3")
             self.bucket, _, prefix = uri[5:].partition("/")
             self.prefix = prefix if not prefix or prefix.endswith("/") else prefix + "/"
@@ -69,19 +71,25 @@ class Store:
 
     def list_ids(self):
         if not self.is_s3:
-            return sorted(f[:-4] for f in os.listdir(self.root) if f.lower().endswith(".png"))
+            return sorted(
+                f[:-4] for f in os.listdir(self.root) if f.lower().endswith(".png")
+            )
         ids = []
-        pages = self.s3.get_paginator("list_objects_v2").paginate(Bucket=self.bucket, Prefix=self.prefix)
+        pages = self.s3.get_paginator("list_objects_v2").paginate(
+            Bucket=self.bucket, Prefix=self.prefix
+        )
         for page in pages:
             for obj in page.get("Contents", []):
-                rest = obj["Key"][len(self.prefix):]
+                rest = obj["Key"][len(self.prefix) :]
                 if "/" not in rest and rest.lower().endswith(".png"):
                     ids.append(rest[:-4])
         return sorted(ids)
 
     def read(self, name):
         if self.is_s3:
-            return self.s3.get_object(Bucket=self.bucket, Key=self.prefix + name)["Body"].read()
+            return self.s3.get_object(Bucket=self.bucket, Key=self.prefix + name)[
+                "Body"
+            ].read()
         with open(os.path.join(self.root, name), "rb") as f:
             return f.read()
 
@@ -97,6 +105,7 @@ class Store:
 def write_output(uri, data):
     if uri.startswith("s3://"):
         import boto3
+
         bucket, _, key = uri[5:].partition("/")
         boto3.client("s3").put_object(Bucket=bucket, Key=key, Body=data)
     else:
@@ -118,7 +127,9 @@ def draw_caption(canvas, text, right, top, px, font_path=None):
     font, used = load_font(px, font_path)
     draw = ImageDraw.Draw(canvas)
     _, t, _, b = draw.textbbox((right, top), text, font=font, anchor="ra")
-    dy = top - t  # 'ra' anchors at the ascender line; shift so the glyph tops land on `top`
+    dy = (
+        top - t
+    )  # 'ra' anchors at the ascender line; shift so the glyph tops land on `top`
     if b + dy > canvas.height:
         log("warn: caption runs off the bottom of the poster")
     draw.text((right, top + dy), text, fill=CAPTION_FILL, font=font, anchor="ra")
@@ -201,29 +212,54 @@ def load_tile(store, uid, s):
     return im.convert("RGB").resize((s, s), Image.LANCZOS)
 
 
-def build_poster(source, output, poster="24x36", orientation="portrait", tile=2.0,
-                 dpi=150, mode="random", gap=0.125, stretch_gap=True, seed=None, workers=16,
-                 omit_freq=0.0, title=None, caption=True, font=None, font_size=10):
+def build_poster(
+    source,
+    output,
+    poster="24x36",
+    orientation="portrait",
+    tile=2.0,
+    dpi=150,
+    mode="random",
+    gap=0.125,
+    stretch_gap=True,
+    seed=None,
+    workers=16,
+    omit_freq=0.0,
+    title=None,
+    caption=True,
+    font=None,
+    font_size=10,
+):
     pw, ph = (float(x) for x in str(poster).lower().split("x"))
     short, long_ = sorted((pw, ph))
     w_in, h_in = (short, long_) if orientation == "portrait" else (long_, short)
     W, H = round(w_in * dpi), round(h_in * dpi)
-    s, margin, min_gap = round(tile * dpi), round(MARGIN_IN * dpi), max(1, round(gap * dpi))
+    s, margin, min_gap = (
+        round(tile * dpi),
+        round(MARGIN_IN * dpi),
+        max(1, round(gap * dpi)),
+    )
     if s > EXPECTED_PX:
-        log(f"warn: tiles are {s}px, upsampling from {EXPECTED_PX}px "
-            f"(native res at {dpi} dpi is {EXPECTED_PX / dpi:.2f} in)")
+        log(
+            f"warn: tiles are {s}px, upsampling from {EXPECTED_PX}px "
+            f"(native res at {dpi} dpi is {EXPECTED_PX / dpi:.2f} in)"
+        )
 
     cols, rows, g, x0, y0 = layout(W, H, s, min_gap, margin, stretch_gap)
     n = cols * rows
-    log(f"poster {W}x{H}px, grid {cols}x{rows} = {n} tiles of {s}px, gap {g}px "
-        f"({g / dpi:.3f} in), margins L/R {x0 / dpi:.2f} in, T/B {y0 / dpi:.2f} in")
+    log(
+        f"poster {W}x{H}px, grid {cols}x{rows} = {n} tiles of {s}px, gap {g}px "
+        f"({g / dpi:.3f} in), margins L/R {x0 / dpi:.2f} in, T/B {y0 / dpi:.2f} in"
+    )
 
     store = Store(source)
     ids = store.list_ids()
     if not ids:
         raise ValueError(f"no .png files found at {source}")
     rng = random.Random(seed)
-    chosen = pick_walk(store, ids, n, rng) if mode == "walk" else pick_random(ids, n, rng)
+    chosen = (
+        pick_walk(store, ids, n, rng) if mode == "walk" else pick_random(ids, n, rng)
+    )
 
     canvas = Image.new("RGB", (W, H), "white")
     with ThreadPoolExecutor(workers) as ex:
@@ -235,19 +271,36 @@ def build_poster(source, output, poster="24x36", orientation="portrait", tile=2.
 
     created = datetime.now().astimezone().isoformat(timespec="seconds")
     if caption:
-        parts = ([title] if title else []) + [f"{cols} \u00d7 {rows} ({cols * rows} images)", "W. Ross Morrow", created]
-        grid_right = x0 + cols * s + (cols - 1) * g   # exact edges, no centring rounding
+        parts = ([title] if title else []) + [
+            f"{cols} \u00d7 {rows} ({cols * rows} images)",
+            "W. Ross Morrow",
+            created,
+        ]
+        grid_right = x0 + cols * s + (cols - 1) * g  # exact edges, no centring rounding
         grid_bottom = y0 + rows * s + (rows - 1) * g
-        draw_caption(canvas, "   \u00b7   ".join(parts), grid_right, grid_bottom + g,
-                     round(font_size / 72 * dpi), font)
+        draw_caption(
+            canvas,
+            "   \u00b7   ".join(parts),
+            grid_right,
+            grid_bottom + g,
+            round(font_size / 72 * dpi),
+            font,
+        )
 
     fmt = {"jpg": "JPEG", "jpeg": "JPEG", "tif": "TIFF", "tiff": "TIFF"}.get(
-        output.rsplit(".", 1)[-1].lower(), "PNG")
+        output.rsplit(".", 1)[-1].lower(), "PNG"
+    )
     buf = io.BytesIO()
     canvas.save(buf, fmt, dpi=(dpi, dpi), **({"quality": 95} if fmt == "JPEG" else {}))
     write_output(output, buf.getvalue())
     log(f"wrote {output} ({buf.tell() / 1e6:.1f} MB)")
-    return {"output": output, "grid": [cols, rows], "gap_px": g, "created": created, "tiles": chosen}
+    return {
+        "output": output,
+        "grid": [cols, rows],
+        "gap_px": g,
+        "created": created,
+        "tiles": chosen,
+    }
 
 
 def lambda_handler(event, context):
@@ -261,35 +314,86 @@ def lambda_handler(event, context):
 
 
 def handle(args: argparse.Namespace) -> None:
-    res = build_poster(args.source, args.output, args.poster, args.orientation, args.tile, args.dpi, args.mode,
-                       args.gap, not args.fixed_gap, args.seed, omit_freq=args.omit_freq,
-                       title=args.title, caption=not args.no_caption, font=args.font, font_size=args.font_size)
+    res = build_poster(
+        args.source,
+        args.output,
+        args.poster,
+        args.orientation,
+        args.tile,
+        args.dpi,
+        args.mode,
+        args.gap,
+        not args.fixed_gap,
+        args.seed,
+        omit_freq=args.omit_freq,
+        title=args.title,
+        caption=not args.no_caption,
+        font=args.font,
+        font_size=args.font_size,
+    )
     if args.manifest:
         cols = res["grid"][0]
         pos = list(snake_positions(cols, res["grid"][1]))
         grid = sorted(zip(pos, res["tiles"]))
         with open(args.manifest, "w") as f:
-            json.dump({"grid": res["grid"], "rows": [[u for (r, _), u in grid if r == i]
-                                                     for i in range(res["grid"][1])]}, f, indent=1)
+            json.dump(
+                {
+                    "grid": res["grid"],
+                    "rows": [
+                        [u for (r, _), u in grid if r == i]
+                        for i in range(res["grid"][1])
+                    ],
+                },
+                f,
+                indent=1,
+            )
 
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    parser.add_argument("source", help="s3://bucket/prefix or local directory of <uuid>.png (+ .json)")
-    parser.add_argument("output", help="output path or s3://bucket/key (.png/.jpg/.tif)")
-    parser.add_argument("--poster", default="24x36", help="poster size in inches, WxH (default 24x36)")
-    parser.add_argument("--orientation", choices=["portrait", "landscape"], default="portrait")
-    parser.add_argument("--tile", type=float, default=2.0, help="tile width in inches (default 2)")
+    parser.add_argument(
+        "source", help="s3://bucket/prefix or local directory of <uuid>.png (+ .json)"
+    )
+    parser.add_argument(
+        "output", help="output path or s3://bucket/key (.png/.jpg/.tif)"
+    )
+    parser.add_argument(
+        "--poster", default="24x36", help="poster size in inches, WxH (default 24x36)"
+    )
+    parser.add_argument(
+        "--orientation", choices=["portrait", "landscape"], default="portrait"
+    )
+    parser.add_argument(
+        "--tile", type=float, default=2.0, help="tile width in inches (default 2)"
+    )
     parser.add_argument("--dpi", type=int, default=150)
     parser.add_argument("--mode", choices=["random", "walk"], default="random")
-    parser.add_argument("--gap", type=float, default=0.125, help="minimum gap between tiles, inches")
-    parser.add_argument("--fixed-gap", action="store_true", help="use --gap exactly instead of widening it")
+    parser.add_argument(
+        "--gap", type=float, default=0.125, help="minimum gap between tiles, inches"
+    )
+    parser.add_argument(
+        "--fixed-gap",
+        action="store_true",
+        help="use --gap exactly instead of widening it",
+    )
     parser.add_argument("--seed", type=int)
     parser.add_argument("--omit-freq", type=float, default=0.0)
     parser.add_argument("--title", help="title printed in the bottom-right caption")
-    parser.add_argument("--no-caption", action="store_true", help="omit the bottom-right caption")
-    parser.add_argument("--font", help="path to a .ttf/.ttc (default: Helvetica, else a metric clone)")
-    parser.add_argument("--font-size", type=float, default=10, help="caption size in points (default 10)")
-    parser.add_argument("--manifest", help="optional: write chosen UUIDs (grid order, row-major) to this file")
+    parser.add_argument(
+        "--no-caption", action="store_true", help="omit the bottom-right caption"
+    )
+    parser.add_argument(
+        "--font", help="path to a .ttf/.ttc (default: Helvetica, else a metric clone)"
+    )
+    parser.add_argument(
+        "--font-size",
+        type=float,
+        default=10,
+        help="caption size in points (default 10)",
+    )
+    parser.add_argument(
+        "--manifest",
+        help="optional: write chosen UUIDs (grid order, row-major) to this file",
+    )
     parser.set_defaults(func=handle)
     return parser
 

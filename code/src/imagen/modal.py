@@ -46,16 +46,20 @@ def _s3_client(role_arn: str = AWS_OIDC_ROLE_ARN):
 
 
 def _sanitize_args(
-    args: argparse.Namespace, 
+    args: argparse.Namespace,
     ignore: set[str] = DEFAULT_IGNORE_ARGS,
 ) -> argparse.Namespace:
-    return argparse.Namespace(**{k: v for k, v in vars(args).items() if k not in ignore})
+    return argparse.Namespace(
+        **{k: v for k, v in vars(args).items() if k not in ignore}
+    )
 
 
-img = modal.Image.from_name(name="theunending").env({
-    "HF_HUB_OFFLINE": "1",
-    "HF_HOME": "/cache",
-})
+img = modal.Image.from_name(name="theunending").env(
+    {
+        "HF_HUB_OFFLINE": "1",
+        "HF_HOME": "/cache",
+    }
+)
 app = modal.App("theunending", image=img)
 vol = modal.Volume.from_name("hf-hub-cache")
 
@@ -63,7 +67,7 @@ vol = modal.Volume.from_name("hf-hub-cache")
 @app.function()
 def square(args: argparse.Namespace) -> int:
     print("This code is running on a remote worker!")
-    return args.value ** 2
+    return args.value**2
 
 
 def handle_test(args: argparse.Namespace) -> None:
@@ -73,7 +77,7 @@ def handle_test(args: argparse.Namespace) -> None:
 
 
 def _parse_args(
-    parser: argparse.ArgumentParser, 
+    parser: argparse.ArgumentParser,
     flags: Iterable[str] = (),
     **kwargs,
 ) -> argparse.Namespace:
@@ -97,7 +101,7 @@ def evaluate(args: dict | argparse.Namespace) -> None:
     if isinstance(args, dict):
         parser = eval_command(argparse.ArgumentParser())
         args = _parse_args(
-            parser, 
+            parser,
             flags=args.get("flags", ()),
             **args.get("kwargs", {}),
         )
@@ -125,7 +129,7 @@ def batch(args: dict | argparse.Namespace) -> None:
     if isinstance(args, dict):
         parser = batch_command(argparse.ArgumentParser())
         args = _parse_args(
-            parser, 
+            parser,
             flags=args.get("flags", ()),
             **args.get("kwargs", {}),
         )
@@ -153,7 +157,7 @@ def embed(args: dict | argparse.Namespace) -> None:
     if isinstance(args, dict):
         parser = embed_command(argparse.ArgumentParser())
         args = _parse_args(
-            parser, 
+            parser,
             flags=args.get("flags", ()),
             **args.get("kwargs", {}),
         )
@@ -169,7 +173,9 @@ def handle_embed(args: argparse.Namespace) -> None:
 
 def commands(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
-    subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
+    subparsers = parser.add_subparsers(
+        dest="command", required=True, help="Available commands"
+    )
 
     parser = subparsers.add_parser("test", help="Test modal")
     parser.add_argument("--value", type=int, required=True)

@@ -5,7 +5,9 @@ from .review import command as review_command
 
 
 def commands(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
+    subparsers = parser.add_subparsers(
+        dest="command", required=True, help="Available commands"
+    )
     embed_command(subparsers.add_parser("embed", help="Embed images"))
     review_command(subparsers.add_parser("review", help="Review image embeddings"))
     return parser

@@ -15,10 +15,10 @@ def handle(input: str, output: str) -> None:
         meta = json.load(f)
         paths = meta["paths"]
 
-    E = E / np.linalg.norm(E, axis=1, keepdims=True)   # L2-normalize → cosine = dot
-    S = E @ E.T                                        # 5000×5000, ~100MB float32
-    np.fill_diagonal(S, -1)                            # never recommend the image itself
-    idx = np.argpartition(-S, 4, axis=1)[:, :4]        # then sort those 4 by score
+    E = E / np.linalg.norm(E, axis=1, keepdims=True)  # L2-normalize → cosine = dot
+    S = E @ E.T  # 5000×5000, ~100MB float32
+    np.fill_diagonal(S, -1)  # never recommend the image itself
+    idx = np.argpartition(-S, 4, axis=1)[:, :4]  # then sort those 4 by score
 
     print(idx.shape, idx)
 
@@ -26,9 +26,9 @@ def handle(input: str, output: str) -> None:
         indices = idx[i]
         path = _clean_path(p)
         with open(f"{output}/{path}.json", "w") as f:
-            f.write(json.dumps({
-                "similar": [_clean_path(paths[int(j)]) for j in indices]
-            }))
+            f.write(
+                json.dumps({"similar": [_clean_path(paths[int(j)]) for j in indices]})
+            )
 
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:

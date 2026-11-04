@@ -8,6 +8,22 @@ flux2 := "black-forest-labs/FLUX.2-klein-4B"
 default:
     just --list
 
+# Install dependencies
+install:
+    uv sync
+
+# Format code
+format:
+    uv run ruff format src/imagen
+
+# Format-fix code
+fix:
+    uv run ruff check src/imagen --fix
+
+# Lint code
+lint:
+    uv run ruff check src/imagen
+
 run prompt rows cols width="512" height="512" model_id=flux2:
     PROMPT="{{ prompt }}" \
     ROWS={{ rows }} \

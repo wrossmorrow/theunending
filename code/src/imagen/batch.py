@@ -43,7 +43,7 @@ def count_s3_prefix_objects(
     prefix: str,
     suffix: str | Sequence[str] | None = ".png",
 ) -> int:
-    
+
     # Ensure prefix ends with a slash if targeting a "folder"
     if prefix and not prefix.endswith("/"):
         prefix += "/"
@@ -69,8 +69,8 @@ def count_s3_prefix_objects(
 
 
 def save_image_and_upload(
-    image, 
-    format: str, 
+    image,
+    format: str,
     outdir: str,
     s3_bucket: str,
     s3_prefix: str,
@@ -90,7 +90,7 @@ def save_image_and_upload(
 
     tmp = filename.with_suffix(".tmp")
     tmp.write_bytes(raw_bytes)
-    os.replace(tmp, filename)      # atomic on the same filesystem
+    os.replace(tmp, filename)  # atomic on the same filesystem
 
     s3.put_object(
         Bucket=s3_bucket,
@@ -122,7 +122,7 @@ def handle(
 
     if s3 is None:
         return handle(args, boto3.client("s3"))
-    
+
     admin_api = AdminAPI(
         url=args.status_update_url,
         auth_secret_name=args.status_update_auth_secret_name,
@@ -131,7 +131,6 @@ def handle(
     )
 
     try:
-
         admin_api.update_progress(
             status=Status.IN_PROGRESS,
             message="job has launched successfully",
@@ -154,7 +153,6 @@ def handle(
         chopped_prompt = args.prompt[:120]
 
         for idx in range(total):
-
             seed = random.randint(0, 2**32 - 1)
 
             gen = torch.Generator(device=DEVICE).manual_seed(seed)
@@ -199,29 +197,32 @@ def handle(
                 message=message,
             )
             return 1
-        
+
         print("All tasks finished and synced to S3.")
         if not args.embed:
             admin_api.update_progress(
                 status=Status.COMPLETED,
                 message="work completed successfully",
             )
-            
+
             return 0
 
         admin_api.update_progress(
             status=Status.IN_PROGRESS,
             message="image generation and s3 upload completed",
         )
-        
+
         print("Starting embedding on local images.")
         del pipe
         embed_parser = embed_command(argparse.ArgumentParser())
         embed_argv = [
             args.outdir,
-            "--device", DEVICE,
-            "--s3-bucket", args.s3_bucket,
-            "--s3-prefix", args.s3_prefix,
+            "--device",
+            DEVICE,
+            "--s3-bucket",
+            args.s3_bucket,
+            "--s3-prefix",
+            args.s3_prefix,
         ]
         embed_args = embed_parser.parse_args(embed_argv)
         embed(embed_args, s3)
@@ -243,26 +244,32 @@ def handle(
                 "function_name": fname,
                 "error": str(e),
                 "error_class": e.__class__.__name__,
-                "args": {k: v for k, v in vars(args).items()}
-            }
+                "args": {k: v for k, v in vars(args).items()},
+            },
         )
 
         return 1
 
     return 0
-            
+
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--prompt", type=str, required=True)
-    parser.add_argument("--s3-bucket", type=str, default=os.environ.get("AWS_S3_BUCKET_NAME"))
+    parser.add_argument(
+        "--s3-bucket", type=str, default=os.environ.get("AWS_S3_BUCKET_NAME")
+    )
     parser.add_argument("--s3-prefix", type=str, required=True)
     parser.add_argument("--max-images", type=int, default=5_000)
-    parser.add_argument("--format", type=str, default="PNG", choices=["PNG", "JPEG", "WEBP"])
+    parser.add_argument(
+        "--format", type=str, default="PNG", choices=["PNG", "JPEG", "WEBP"]
+    )
     parser.add_argument("--width", type=int, default=512)
     parser.add_argument("--height", type=int, default=512)
     parser.add_argument("--steps", type=int, default=4)
     parser.add_argument("--outdir", type=str, default="images")
-    parser.add_argument("--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B")
+    parser.add_argument(
+        "--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B"
+    )
     parser.add_argument("--embed", action="store_true", default=False)
     parser.add_argument(
         "--status-update-url",

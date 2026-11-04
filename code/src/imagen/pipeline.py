@@ -18,13 +18,13 @@ def load_pipeline(model_id: str) -> Callable:
             model_id,
             torch_dtype=TORCH_DTYPE,
         )
-        if "FLUX.1" in model_id else
-        Flux2KleinPipeline.from_pretrained(
+        if "FLUX.1" in model_id
+        else Flux2KleinPipeline.from_pretrained(
             model_id,
             torch_dtype=TORCH_DTYPE,
         )
     )
-    
+
     # Enable VRAM optimizations if running on consumer hardware
     if DEVICE == "cuda":
         vram_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
@@ -34,5 +34,5 @@ def load_pipeline(model_id: str) -> Callable:
             pipe.to(DEVICE)
     else:
         pipe.to(DEVICE)
-        
+
     return pipe

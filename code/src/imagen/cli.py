@@ -10,7 +10,9 @@ from .web_posters import command as wp_command
 
 
 def commands(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
+    subparsers = parser.add_subparsers(
+        dest="command", required=True, help="Available commands"
+    )
     eval_command(subparsers.add_parser("eval", help="Evaluate prompts"))
     batch_command(subparsers.add_parser("batch", help="Run a batch"))
     sim_commands(subparsers.add_parser("similarity", help="Similarity evals"))

@@ -30,10 +30,10 @@ from PIL import Image, ImageDraw, ImageFont
 OG_W, OG_H = 1200, 630
 
 FONT_CANDIDATES = [
-    "/System/Library/Fonts/Supplemental/Georgia.ttf",      # macOS, matches the site
+    "/System/Library/Fonts/Supplemental/Georgia.ttf",  # macOS, matches the site
     "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
     "/System/Library/Fonts/Helvetica.ttc",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",    # linux
+    "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",  # linux
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
 ]
 
@@ -50,18 +50,23 @@ def load_font(size):
 
 # ---------------------------------------------------------------- sources
 
+
 def list_local(path):
     return sorted(
-        os.path.join(path, n) for n in os.listdir(path)
+        os.path.join(path, n)
+        for n in os.listdir(path)
         if n.lower().endswith((".png", ".jpg", ".jpeg"))
     )
 
 
 def list_s3(bucket, prefix):
     import boto3
+
     s3 = boto3.client("s3")
     keys = []
-    for page in s3.get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix):
+    for page in s3.get_paginator("list_objects_v2").paginate(
+        Bucket=bucket, Prefix=prefix
+    ):
         for obj in page.get("Contents", []):
             if obj["Key"].lower().endswith((".png", ".jpg", ".jpeg")):
                 keys.append(obj["Key"])
@@ -75,12 +80,14 @@ def open_local(ref):
 
 def open_s3(bucket, key):
     import boto3
+
     s3 = boto3.client("s3")
     body = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
     return Image.open(io.BytesIO(body))
 
 
 # ---------------------------------------------------------------- drawing
+
 
 def square_crop(im, size):
     """Centre-crop to a square, then resize. Sources are already square, but a
@@ -138,8 +145,9 @@ def save(card, path, quality=85):
 
 # ---------------------------------------------------------------- main
 
+
 def pick(keys, n, seed):
-    rng = random.Random(seed)                 # deterministic per set
+    rng = random.Random(seed)  # deterministic per set
     return rng.sample(keys, min(n, len(keys)))
 
 
@@ -160,7 +168,7 @@ def handle(args: argparse.Namespace) -> None:
 
     pairs = {}
     if args.map:
-        text = open(args.map).read() # noqa: SIM115
+        text = open(args.map).read()  # noqa: SIM115
         try:
             pairs = json.loads(text)
         except json.JSONDecodeError:
@@ -176,24 +184,38 @@ def handle(args: argparse.Namespace) -> None:
         raise ValueError("need --map or --set")
 
     if not args.source and not args.bucket:
-        raise ValueError("need --bucket (or AWS_S3_BUCKET_NAME) unless --source is given")
+        raise ValueError(
+            "need --bucket (or AWS_S3_BUCKET_NAME) unless --source is given"
+        )
 
     per_card = args.cols * max(1, math.ceil(OG_H / (OG_W / args.cols)))
 
     for name, prefix in pairs.items():
         imgs = gather(args.source, args.bucket, prefix, name, per_card, name)
-        card = build_card(imgs, args.cols, args.title and name.replace("-", " ").title() or None,
-                          args.subtitle if args.title else None, args.gap)
+        card = build_card(
+            imgs,
+            args.cols,
+            args.title and name.replace("-", " ").title() or None,
+            args.subtitle if args.title else None,
+            args.gap,
+        )
         save(card, os.path.join(args.out, f"{name}.{args.ext}"))
 
     if args.site:
         # a few from each run so the site card isn't just one theme
         imgs, per_run = [], max(1, per_card // max(1, len(pairs)) + 1)
         for name, prefix in pairs.items():
-            imgs += gather(args.source, args.bucket, prefix, name, per_run, f"site-{name}")
+            imgs += gather(
+                args.source, args.bucket, prefix, name, per_run, f"site-{name}"
+            )
         random.Random("site").shuffle(imgs)
-        card = build_card(imgs, args.cols, "The Unending" if args.title else None,
-                          args.subtitle if args.title else None, args.gap)
+        card = build_card(
+            imgs,
+            args.cols,
+            "The Unending" if args.title else None,
+            args.subtitle if args.title else None,
+            args.gap,
+        )
         save(card, os.path.join(args.out, f"site.{args.ext}"))
 
 
@@ -205,12 +227,17 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--source", help="local directory instead of S3 (for testing)")
     parser.add_argument("--out", default="assets/og")
     parser.add_argument("--cols", type=int, default=6, help="tiles across (default 6)")
-    parser.add_argument("--gap", type=int, default=0, help="px between tiles (default 0)")
+    parser.add_argument(
+        "--gap", type=int, default=0, help="px between tiles (default 0)"
+    )
     parser.add_argument("--ext", default="jpg", choices=["jpg", "png"])
     parser.add_argument("--title", action="store_true", help="overlay the set name")
     parser.add_argument("--subtitle", default="theunending.ai")
-    parser.add_argument("--site", action="store_true",
-                   help="also build site.<ext> sampled across every run in --map")
+    parser.add_argument(
+        "--site",
+        action="store_true",
+        help="also build site.<ext> sampled across every run in --map",
+    )
     return parser
 
 

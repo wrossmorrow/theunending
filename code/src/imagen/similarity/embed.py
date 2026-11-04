@@ -67,7 +67,9 @@ def _get_ext(format: str) -> str:
 
 def _list_s3(s3: S3Client, bucket: str, prefix: str, ext: str) -> list[str]:
     keys = []
-    for page in s3.get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix):
+    for page in s3.get_paginator("list_objects_v2").paginate(
+        Bucket=bucket, Prefix=prefix
+    ):
         for obj in page.get("Contents", []):
             if obj["Key"].lower().endswith(ext):
                 keys.append(obj["Key"])
@@ -106,7 +108,7 @@ def handle(args: argparse.Namespace, s3: S3Client) -> int:
     # get data from S3 if we've been asked to, store in _first_ path arg
     if args.source_from_s3:
         _get_from_s3(
-            s3, 
+            s3,
             args.s3_bucket,
             args.s3_prefix,
             args.format,
@@ -179,7 +181,9 @@ def handle(args: argparse.Namespace, s3: S3Client) -> int:
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("paths", nargs="+", help="image files and/or directories")
     parser.add_argument("-o", "--out", default="embeddings.npy", help="output path")
-    parser.add_argument("--batch-size", type=int, default=8, help="images per batch [8]")
+    parser.add_argument(
+        "--batch-size", type=int, default=8, help="images per batch [8]"
+    )
     parser.add_argument("--format", type=str, default="PNG", help="image format")
     parser.add_argument(
         "--no-normalize", action="store_true", help="skip L2 normalization"
@@ -208,8 +212,8 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         help="model precision [float32]",
     )
     parser.add_argument(
-        "--s3-bucket", 
-        type=str, 
+        "--s3-bucket",
+        type=str,
         default=os.environ.get("AWS_S3_BUCKET_NAME"),
         help="S3 bucket name for upload and potentially sourcing images",
     )

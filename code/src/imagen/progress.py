@@ -55,7 +55,7 @@ def _request_with_retry(
     retry_strategy = Retrying(
         stop=stop_after_attempt(max_attempts),
         wait=wait_exponential(
-            multiplier=BACKOFF_MULTIPLIER, 
+            multiplier=BACKOFF_MULTIPLIER,
             min=BACKOFF_MINIMUM,
             max=BACKOFF_MAXIMUM,
         ),
@@ -94,14 +94,14 @@ def _update_progress(
     details: dict | None = None,
 ) -> None:
     _ = _request_with_retry(
-        method="PUT", 
-        url=url, 
+        method="PUT",
+        url=url,
         client=client,
         json={
             "status": status,
             "message": message,
             "details": details,
-        }
+        },
     )
 
 
@@ -110,7 +110,6 @@ def _create_basic_auth_header(credentials: str) -> str:
 
 
 class AdminAPI:
-
     def __init__(
         self,
         url: str | None,
@@ -142,7 +141,7 @@ class AdminAPI:
             headers["x-admin-run-id"] = admin_run_id
 
         print(headers)
-    
+
         self._http = httpx.Client(headers=headers)
 
     def update_progress(
@@ -170,7 +169,7 @@ class AdminAPI:
                 f"Update progress failed for ({status}, {message}, {details}): "
                 f"({e.response.status_code}) {e.response.text}"
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(
                 f"Update progress failed for ({status}, {message}, {details}): "
                 f"{e.__class__.__name__} {e}"
