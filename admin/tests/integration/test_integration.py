@@ -402,8 +402,9 @@ def test_redo_run_returns_new_run_returns_201(http_client: httpx.Client) -> None
     assert response.status_code == 201
     new_run = response.json()
     assert new_run["status"] == "PENDING"
-    assert new_run["external_run_id"] != run["external_run_id"]
+    assert new_run["external_run_id"] is None
     assert new_run["type"] == run["type"]
+    assert new_run["run_id"] != run["run_id"]
 
     assert _update_run_status(http_client, new_run["run_id"], "IN_PROGRESS")[
         "status"
