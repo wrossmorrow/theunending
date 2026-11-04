@@ -1,10 +1,9 @@
 """Draft route handlers."""
 
 from datetime import UTC, datetime
-from uuid import UUID, uuid7
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
-import httpx
 from fastapi import HTTPException
 from fastapi import status as http_status
 from sqlalchemy import exc as sqlalchemy_exc
@@ -13,7 +12,7 @@ from sqlmodel import select
 
 from api.database import models as database
 from api.settings import settings
-from api.utils.jobs import ExternalJobClient, JobParameters
+from api.utils.jobs import ExternalJobClient, JobParameters, JobRequest
 from api.utils.prompt import compute_model_prompt_hash
 from api.utils.s3 import create_presigned_url
 from api.v0.schema import models
@@ -51,48 +50,45 @@ async def create_draft(
         draft_id = draft.draft_id
         draft_model_prompt_hash = draft.model_prompt_hash
         session.add(draft)
-        try:
-            await session.commit()
-            await session.refresh(draft)
-        except sqlalchemy_exc.IntegrityError:
-            raise HTTPException(
-                status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail="Draft prompt already exists.",
-            )
-
-    run_id = uuid7()
-    try:
-        job_request = JobParameters(
-            model_id=model,
-            s3_bucket=settings.s3_bucket_name,
-            s3_prefix=f"{settings.s3_evaluate_prefix}/{draft_model_prompt_hash}",
-            prompt=draft.prompt,
-            status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
-            status_update_admin_run_id=run_id,
-        )
-        external_run_id = await job_client.create_job(
-            database.RunType.EVALUATION, job_request
-        )
-    except (httpx.HTTPError, KeyError) as e:
-        print(f"Failed to trigger external job: {e.__class__.__name__} {e}")
-        raise HTTPException(
-            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create external job.",
-        )
-
-    async with session_factory() as session:
         run = database.Run(
-            run_id=run_id,
-            external_run_id=external_run_id,
+            external_run_id=None,
             set_id=set_id,
             draft_id=draft_id,
             type=database.RunType.EVALUATION,
             status=database.RunStatus.PENDING,
         )
         session.add(run)
-        await session.commit()
+        try:
+            await session.commit()
+            await session.refresh(draft)
+            await session.refresh(run)
+        except sqlalchemy_exc.IntegrityError:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Draft prompt already exists.",
+            )
 
-    return draft
+        job_request = JobRequest(
+            run_id=run.run_id,
+            job_type=database.RunType.EVALUATION,
+            job_params=JobParameters(
+                model_id=model,
+                s3_bucket=settings.s3_bucket_name,
+                s3_prefix=f"{settings.s3_evaluate_prefix}/{draft_model_prompt_hash}",
+                prompt=draft.prompt,
+                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run.run_id}/status",
+                status_update_admin_run_id=run.run_id,
+            ),
+        )
+        try:
+            await job_client.request_job(job_request)
+        except Exception as e:
+            raise HTTPException(
+                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to enqueue external job.",
+            ) from e
+
+        return draft
 
 
 async def get_draft_preview(
@@ -198,10 +194,12 @@ async def commit_draft(
         set_ = (
             (
                 await session.execute(
-                    select(database.Set).where(
+                    select(database.Set)
+                    .where(
                         table.c.set_id == set_id,
                         table.c.status == database.SetStatus.DRAFT,
                     )
+                    .with_for_update()
                 )
             )
             .scalars()
@@ -231,52 +229,15 @@ async def commit_draft(
                 detail=f"Draft {draft_id} is not in COMPLETED status.",
             )
 
-    run_id = uuid7()
-    try:
-        job_request = JobParameters(
-            model_id=model,
-            s3_bucket=settings.s3_bucket_name,
-            s3_prefix=f"{settings.s3_batch_prefix}/{draft.model_prompt_hash}",
-            prompt=draft.prompt,
-            status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run_id}/status",
-            status_update_admin_run_id=run_id,
-        )
-        external_run_id = await job_client.create_job(
-            database.RunType.BATCH, job_request
-        )
-    except (httpx.HTTPError, KeyError) as e:
-        print(f"Failed to trigger external job: {e.__class__.__name__} {e}")
-        raise HTTPException(
-            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create external job.",
-        )
-
-    async with session_factory() as session:
-        set_ = (
-            (
-                await session.execute(
-                    select(database.Set)
-                    .where(table.c.set_id == set_id)
-                    .with_for_update()
-                )
-            )
-            .scalars()
-            .first()
-        )
-        if set_ is None:
-            raise HTTPException(
-                status_code=http_status.HTTP_404_NOT_FOUND,
-                detail=f"Set {set_id} not found.",
-            )
         set_.prompt = draft.prompt
         set_.post_date = (
             datetime.now(ZoneInfo("America/Los_Angeles")).date().isoformat()
         )
         set_.committed_at = datetime.now(UTC)
         set_.status = database.SetStatus.COMMITTED
+
         run = database.Run(
-            run_id=run_id,
-            external_run_id=external_run_id,
+            external_run_id=None,
             set_id=set_id,
             draft_id=draft_id,
             type=database.RunType.BATCH,
@@ -284,7 +245,30 @@ async def commit_draft(
         )
         session.add(set_)
         session.add(run)
+        await session.flush()
+        await session.refresh(run)
+
+        job_request = JobRequest(
+            run_id=run.run_id,
+            job_type=database.RunType.BATCH,
+            job_params=JobParameters(
+                model_id=model,
+                s3_bucket=settings.s3_bucket_name,
+                s3_prefix=f"{settings.s3_batch_prefix}/{draft.model_prompt_hash}",
+                prompt=draft.prompt,
+                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run.run_id}/status",
+                status_update_admin_run_id=run.run_id,
+            ),
+        )
+
+        try:
+            await job_client.request_job(job_request)
+        except Exception as e:
+            raise HTTPException(
+                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to enqueue external job.",
+            ) from e
+
         await session.commit()
         await session.refresh(set_)
-
-    return set_
+        return set_

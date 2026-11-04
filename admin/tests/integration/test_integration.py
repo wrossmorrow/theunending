@@ -1,6 +1,7 @@
 """Integration tests for the Unending Admin API against a live server."""
 
 import os
+import time
 from typing import Any
 from uuid import uuid4
 
@@ -39,6 +40,28 @@ def _unique_slug() -> str:
 def _unique_prompt() -> str:
     """Generate a unique draft prompt that satisfies the API prompt constraints."""
     return f"a cat {uuid4().hex}"
+
+
+def _get_run(http_client: httpx.Client, run_id: str) -> dict[str, Any]:
+    """Get a run by id and return its body."""
+    response = http_client.get(f"/api/v0/runs/{run_id}")
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def _wait_for_run_status(
+    http_client: httpx.Client, run_id: str, status: str, timeout: float = 30.0
+) -> dict[str, Any]:
+    """Poll a run until it reaches the given status."""
+    deadline = time.monotonic() + timeout
+    run = _get_run(http_client, run_id)
+    while run["status"] != status:
+        assert time.monotonic() < deadline, (
+            f"Timed out waiting for run status {status}."
+        )
+        time.sleep(0.25)
+        run = _get_run(http_client, run_id)
+    return run
 
 
 def _create_set(
@@ -187,11 +210,12 @@ def test_create_draft_returns_201_with_pending_run(http_client: httpx.Client) ->
     draft = _create_draft(http_client, set_id, prompt=_unique_prompt())
     draft_id = draft["draft_id"]
     run = _get_run_by_draft(http_client, draft_id)
-    assert run["status"] == "PENDING"
-    assert run["type"] == "EVALUATION"
-    assert run["external_run_id"]
-    assert run["set_id"] == set_id
-    assert run["draft_id"] == draft_id
+    submitted_run = _wait_for_run_status(http_client, run["run_id"], "SUBMITTED")
+    assert submitted_run["status"] == "SUBMITTED"
+    assert submitted_run["type"] == "EVALUATION"
+    assert submitted_run["external_run_id"]
+    assert submitted_run["set_id"] == set_id
+    assert submitted_run["draft_id"] == draft_id
 
 
 def test_create_draft_on_missing_set_returns_404(http_client: httpx.Client) -> None:
@@ -279,7 +303,7 @@ def test_full_flow_draft_to_committed_batch_to_completed(
     batch_runs = [run for run in runs_response.json()["runs"] if run["type"] == "BATCH"]
     assert len(batch_runs) == 1
     batch_run = batch_runs[0]
-    assert batch_run["status"] == "PENDING"
+    batch_run = _wait_for_run_status(http_client, batch_run["run_id"], "SUBMITTED")
 
     assert _update_run_status(http_client, batch_run["run_id"], "IN_PROGRESS")[
         "status"
@@ -378,8 +402,9 @@ def test_redo_run_returns_new_run_returns_201(http_client: httpx.Client) -> None
     assert response.status_code == 201
     new_run = response.json()
     assert new_run["status"] == "PENDING"
-    assert new_run["external_run_id"] != run["external_run_id"]
+    assert new_run["external_run_id"] is None
     assert new_run["type"] == run["type"]
+    assert new_run["run_id"] != run["run_id"]
 
     assert _update_run_status(http_client, new_run["run_id"], "IN_PROGRESS")[
         "status"

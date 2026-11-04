@@ -35,7 +35,7 @@ CREATE TABLE drafts (
 
 CREATE TABLE runs (
 	run_id UUID NOT NULL, 
-	external_run_id VARCHAR NOT NULL, 
+	external_run_id VARCHAR, 
 	set_id UUID NOT NULL, 
 	draft_id UUID NOT NULL, 
 	type runtype NOT NULL, 
@@ -45,6 +45,7 @@ CREATE TABLE runs (
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	updated_at TIMESTAMP WITH TIME ZONE, 
 	finished_at TIMESTAMP WITH TIME ZONE, 
+	submitted_at TIMESTAMP WITH TIME ZONE, 
 	PRIMARY KEY (run_id), 
 	FOREIGN KEY(set_id) REFERENCES sets (set_id), 
 	FOREIGN KEY(draft_id) REFERENCES drafts (draft_id)
