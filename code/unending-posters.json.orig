@@ -6190,5 +6190,293 @@
         "h": 450
       }
     }
+  },
+  "2026-10-30-poltergeist": {
+    "12x18": {
+      "name": "2026-10-30-poltergeist",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-10-30-poltergeist/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-30-poltergeist/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-10-30-poltergeist",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-10-30-poltergeist/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-30-poltergeist/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-10-30-poltergeist",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-10-30-poltergeist/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-30-poltergeist/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-10-30-poltergeist",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-10-30-poltergeist/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-30-poltergeist/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-10-30-poltergeist",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-10-30-poltergeist/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-10-30-poltergeist/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-11-01-this-is-not-a-statement": {
+    "12x18": {
+      "name": "2026-11-01-this-is-not-a-statement",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-11-01-this-is-not-a-statement/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-01-this-is-not-a-statement/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-11-01-this-is-not-a-statement",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-11-01-this-is-not-a-statement/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-01-this-is-not-a-statement/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-11-01-this-is-not-a-statement",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-11-01-this-is-not-a-statement/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-01-this-is-not-a-statement/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-11-01-this-is-not-a-statement",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-11-01-this-is-not-a-statement/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-01-this-is-not-a-statement/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-11-01-this-is-not-a-statement",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-11-01-this-is-not-a-statement/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-01-this-is-not-a-statement/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-11-04-floating-garden": {
+    "12x18": {
+      "name": "2026-11-04-floating-garden",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-11-04-floating-garden/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-04-floating-garden/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-11-04-floating-garden",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-11-04-floating-garden/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-04-floating-garden/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-11-04-floating-garden",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-11-04-floating-garden/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-04-floating-garden/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-11-04-floating-garden",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-11-04-floating-garden/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-04-floating-garden/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-11-04-floating-garden",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-11-04-floating-garden/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-04-floating-garden/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
+  },
+  "2026-11-04-memento-mori-catalog": {
+    "12x18": {
+      "name": "2026-11-04-memento-mori-catalog",
+      "size": "12x18",
+      "preview": {
+        "src": "previews/2026-11-04-memento-mori-catalog/12x18.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-04-memento-mori-catalog/12x18.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "18x24": {
+      "name": "2026-11-04-memento-mori-catalog",
+      "size": "18x24",
+      "preview": {
+        "src": "previews/2026-11-04-memento-mori-catalog/18x24.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-04-memento-mori-catalog/18x24.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "24x36": {
+      "name": "2026-11-04-memento-mori-catalog",
+      "size": "24x36",
+      "preview": {
+        "src": "previews/2026-11-04-memento-mori-catalog/24x36.webp",
+        "w": 1600,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-04-memento-mori-catalog/24x36.webp",
+        "w": 600,
+        "h": 900
+      }
+    },
+    "36x48": {
+      "name": "2026-11-04-memento-mori-catalog",
+      "size": "36x48",
+      "preview": {
+        "src": "previews/2026-11-04-memento-mori-catalog/36x48.webp",
+        "w": 1800,
+        "h": 2400
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-04-memento-mori-catalog/36x48.webp",
+        "w": 675,
+        "h": 900
+      }
+    },
+    "40x80": {
+      "name": "2026-11-04-memento-mori-catalog",
+      "size": "40x80",
+      "preview": {
+        "src": "previews/2026-11-04-memento-mori-catalog/40x80.webp",
+        "w": 2400,
+        "h": 1200
+      },
+      "thumb": {
+        "src": "thumbs/2026-11-04-memento-mori-catalog/40x80.webp",
+        "w": 900,
+        "h": 450
+      }
+    }
   }
 }

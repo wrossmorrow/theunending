@@ -453,3 +453,18 @@ sets:
     manifest: /assets/streams/this-is-not-a-statement.json
     meta: /assets/img/2026-11-01-this-is-not-a-statement/{id}.json
     thumb: b0a13a55-6434-4bb7-8de4-bc16a9ef205f
+  floating-garden:
+    base: https://theunending.ai/assets/img/2026-11-04-floating-garden/
+    manifest: /assets/streams/floating-garden.json
+    meta: /assets/img/2026-11-04-floating-garden/{id}.json
+    thumb: 0010bef5-3058-4b1d-bfe6-930ab2bfc234
+  memento-mori-catalog:
+    base: https://theunending.ai/assets/img/2026-11-04-memento-mori-catalog/
+    manifest: /assets/streams/memento-mori-catalog.json
+    meta: /assets/img/2026-11-04-memento-mori-catalog/{id}.json
+    thumb: 00012a7d-2814-46b4-94a4-1807dcb54082
+  inside-air:
+    base: https://theunending.ai/assets/img/2026-11-04-inside-air/
+    manifest: /assets/streams/inside-air.json
+    meta: /assets/img/2026-11-04-inside-air/{id}.json
+    thumb: 000289c0-44b8-4a2b-968a-5a5bd5edcee1
