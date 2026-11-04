@@ -33,7 +33,8 @@ _failures: list[Any] = []  # really Exception of BaseException
 _lock = threading.Lock()
 
 
-pool = ThreadPoolExecutor(max_workers=UPLOAD_OS_THREADS)
+upload_pool = ThreadPoolExecutor(max_workers=UPLOAD_OS_THREADS)
+progress_pool = ThreadPoolExecutor(max_workers=1)
 
 
 def count_s3_prefix_objects(
@@ -111,7 +112,7 @@ def _done(fut) -> None:
 
 def submit_upload(*a) -> None:
     _slots.acquire()
-    pool.submit(save_image_and_upload, *a).add_done_callback(_done)
+    upload_pool.submit(save_image_and_upload, *a).add_done_callback(_done)
 
 
 def handle(
@@ -181,12 +182,14 @@ def handle(
             if (idx + 1) % 50 == 0 or (idx + 1) == total:
                 message = f"Progress: [{idx + 1}/{total}] generated and queued."
                 print(message)
-                admin_api.update_progress(
+                progress_pool.submit(
+                    admin_api.update_progress,
                     status=Status.IN_PROGRESS,
                     message=message,
                 )
 
-        pool.shutdown(wait=True)
+        upload_pool.shutdown(wait=True)
+        progress_pool.shutdown(wait=True)
 
         if _failures:
             message = f"FAILED: {len(_failures)} uploads did not complete"
