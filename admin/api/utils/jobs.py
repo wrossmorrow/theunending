@@ -148,15 +148,27 @@ class ExternalJobClient:
                 request = self._queue.get_nowait()
             except asyncio.QueueEmpty:
                 return
-            response: JobAPIResponse | None = None
+            response: JobAPIResponse | Exception
             try:
                 response = await self.submit_job(request)
-                self._queue.task_done()
-                await self.update_job(request, response, RunStatus.SUBMITTED)
             except Exception as e:  # noqa: BLE001
+                response = e
+            finally:
                 self._queue.task_done()
+
+            if isinstance(response, Exception):
                 print(
                     "Permanently failed to submit enqueued job run for "
+                    f"{request.run_id} {response.__class__.__name__} {response}"
+                )
+                await self.update_job(request, None, RunStatus.FAILED)
+                continue
+
+            try:
+                await self.update_job(request, response, RunStatus.SUBMITTED)
+            except Exception as e:  # noqa: BLE001
+                print(
+                    "Failed to mark enqueued job run submitted in the database for "
                     f"{request.run_id} {e.__class__.__name__} {e}"
                 )
                 await self.update_job(request, None, RunStatus.FAILED)
