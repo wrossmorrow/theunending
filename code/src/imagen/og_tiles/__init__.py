@@ -238,6 +238,7 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         action="store_true",
         help="also build site.<ext> sampled across every run in --map",
     )
+    parser.set_defaults(func=handle)
     return parser
 
 
