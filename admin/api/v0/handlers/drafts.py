@@ -194,10 +194,12 @@ async def commit_draft(
         set_ = (
             (
                 await session.execute(
-                    select(database.Set).where(
+                    select(database.Set)
+                    .where(
                         table.c.set_id == set_id,
                         table.c.status == database.SetStatus.DRAFT,
                     )
+                    .with_for_update()
                 )
             )
             .scalars()

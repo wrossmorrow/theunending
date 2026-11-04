@@ -55,7 +55,18 @@ async def redo_run(
 ) -> database.Run:
     """Redo a run (requires FAILED status; creates a distinct run)."""
     async with session_factory() as session:
-        run = await session.get(database.Run, run_id)
+        runs_table = database.Run.metadata.tables[database.Run.__tablename__]
+        run = (
+            (
+                await session.execute(
+                    select(database.Run)
+                    .where(runs_table.c.run_id == run_id)
+                    .with_for_update()
+                )
+            )
+            .scalars()
+            .first()
+        )
         if run is None:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
@@ -153,7 +164,18 @@ async def update_run_status(
 ) -> database.Run:
     """Update a run status (system call)."""
     async with session_factory() as session:
-        run = await session.get(database.Run, run_id)
+        runs_table = database.Run.metadata.tables[database.Run.__tablename__]
+        run = (
+            (
+                await session.execute(
+                    select(database.Run)
+                    .where(runs_table.c.run_id == run_id)
+                    .with_for_update()
+                )
+            )
+            .scalars()
+            .first()
+        )
         if run is None:
             raise HTTPException(
                 status_code=http_status.HTTP_404_NOT_FOUND,
