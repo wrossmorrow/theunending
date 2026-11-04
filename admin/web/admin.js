@@ -270,6 +270,7 @@ const state = {
   current: null,      // { set, drafts, runs } for the open set
   pollTimer: null,
   loadSeq: 0,         // guards against out-of-order responses when switching sets
+  redoing: false,     // guards against duplicate redo submissions while in flight
 };
 
 /* One AbortController per rendered view; listeners on long-lived elements use its
@@ -550,11 +551,14 @@ function wireSetDetail(detail, setId) {
     }
 
     if (action === "redo") {
+      if (state.redoing) return;
+      state.redoing = true;
       try {
         await withBusy(btn, () => API.redoRun(btn.dataset.runId));
         toast("Run resubmitted.");
         await refreshCurrent(setId);
       } catch (err) { reportError(err); }
+      finally { state.redoing = false; }
     }
   }, { signal: viewSignal() });
 }
