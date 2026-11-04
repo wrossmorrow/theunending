@@ -52,7 +52,7 @@ def _check_auth(request: Request, token: HTTPAuthorizationCredentials = Depends(
 @api.exception_handler(Exception)
 async def _exception_handler(request: Request, exc: Exception) -> JSONResponse:
 
-    print(f"Caught unhandled exception for {request.method} {request._url}: {exc.__class__.__name__} {exc}")
+    print(f"Caught unhandled exception for {request.method} {request.url}: {exc.__class__.__name__} {exc}")
 
     if isinstance(exc, (HTTPException, StarletteHTTPException)):
         raise exc
@@ -69,7 +69,7 @@ async def _exception_handler(request: Request, exc: Exception) -> JSONResponse:
 @api.post("/evaluate")
 def _evaluate(payload: JobParameters, request: Request, authed: bool = Depends(_check_auth)):
 
-    print(f"Received {request.method} {request._url} with params: {payload.model_dump_json()}")
+    print(f"Received {request.method} {request.url} with params: {payload.model_dump_json()}")
 
     target = modal.Function.from_name(MODAL_APP_NAME, "evaluate")
     kwargs = payload.model_dump(mode="json")
@@ -89,7 +89,7 @@ def _evaluate(payload: JobParameters, request: Request, authed: bool = Depends(_
 @api.post("/batch")
 def _batch(payload: JobParameters, request: Request, authed: bool = Depends(_check_auth)):
 
-    print(f"Received {request.method} {request._url} with params: {payload.model_dump_json()}")
+    print(f"Received {request.method} {request.url} with params: {payload.model_dump_json()}")
 
     target = modal.Function.from_name(MODAL_APP_NAME, "batch")
     kwargs = payload.model_dump(mode="json")
