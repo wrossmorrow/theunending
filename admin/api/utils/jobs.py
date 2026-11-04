@@ -105,28 +105,26 @@ class ExternalJobClient:
                 # Timed out waiting for a queued job; try again.
                 continue
 
-            response: JobAPIResponse | None = None
-            submission_error: Exception | None = None
+            response: JobAPIResponse | Exception
             try:
                 response = await self.submit_job(request)
             except Exception as e:  # noqa: BLE001
-                submission_error = e
+                response = e
             finally:
                 self._queue.task_done()
 
-            if submission_error is not None:
+            if isinstance(response, Exception):
                 request.attempts += 1
                 if request.attempts < self._max_attempts:
                     await self._queue.put(request)
                 else:
                     print(
                         "Permanently failed to submit enqueued job run for "
-                        f"{request.run_id} {submission_error.__class__.__name__} {submission_error}"
+                        f"{request.run_id} {response.__class__.__name__} {response}"
                     )
                     await self.update_job(request, None, RunStatus.FAILED)
                 continue
 
-            assert response is not None
             try:
                 await self.update_job(request, response, RunStatus.SUBMITTED)
             except Exception as e:  # noqa: BLE001
