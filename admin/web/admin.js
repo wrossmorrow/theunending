@@ -215,6 +215,11 @@ function shortModel(model) {
   return model.split("/").pop();
 }
 
+// "(slug)" beside the name. Without a name the slug already is the title, so skip it.
+function slugLabel(set) {
+  return set.name && set.slug ? `(${set.slug})` : null;
+}
+
 function setTitle(set) {
   return set.name || set.slug || "Untitled set";
 }
@@ -314,6 +319,13 @@ function renderSetList() {
     title.className = "title";
     if (!set.name && !set.slug) title.classList.add("untitled");
     title.textContent = setTitle(set);
+    const slug = slugLabel(set);
+    if (slug) {
+      const s = document.createElement("span");
+      s.className = "slug";
+      s.textContent = slug;
+      title.append(s);
+    }
 
     const sub = document.createElement("span");
     sub.className = "sub";
@@ -571,6 +583,9 @@ function renderSetMeta(resetForm) {
   const title = field(detail, "title");
   title.textContent = setTitle(set);
   title.classList.toggle("untitled", !set.name && !set.slug);
+  const slugEl = field(detail, "slug");
+  slugEl.textContent = slugLabel(set) ?? "";
+  slugEl.hidden = !slugLabel(set);
   setBadge(field(detail, "status"), set.status);
 
   field(detail, "set_id").textContent = set.set_id;

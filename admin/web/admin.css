@@ -175,7 +175,19 @@ input.bad { border-color: var(--accent-color); }
 
 /* --- Detail --- */
 .set-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1em; }
-.set-head h2.untitled { color: var(--meta-color); font-style: italic; }
+.set-head h2 .untitled { color: var(--meta-color); font-style: italic; }
+
+/* Slug shown beside a set's name, when both are set */
+.slug {
+  font-family: var(--font-mono);
+  font-size: 0.6em;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0;
+  color: var(--meta-color);
+  white-space: nowrap;
+}
+.set-list .slug { font-size: 0.72rem; margin-left: 0.3em; }
 
 .meta-grid {
   display: grid;
