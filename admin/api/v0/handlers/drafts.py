@@ -233,6 +233,7 @@ async def commit_draft(
         set_.post_date = (
             datetime.now(ZoneInfo("America/Los_Angeles")).date().isoformat()
         )
+        set_.model_prompt_hash = draft.model_prompt_hash
         set_.committed_at = datetime.now(UTC)
         set_.status = database.SetStatus.COMMITTED
 
