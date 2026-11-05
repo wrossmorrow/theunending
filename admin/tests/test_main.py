@@ -766,6 +766,12 @@ def test_commit_draft_returns_200_and_commits_set(
         assert set_response.status_code == 200
         assert set_response.json()["status"] == "COMMITTED"
 
+        model = set_response.json()["model"]
+        prompt = set_response.json()["prompt"]
+        assert set_response.json()["model_prompt_hash"] == compute_model_prompt_hash(
+            model, prompt
+        )
+
 
 def test_commit_draft_with_draft_not_completed_returns_400(
     session_factory: async_sessionmaker[AsyncSession],
