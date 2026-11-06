@@ -29,6 +29,9 @@ module-name = ["imagen", "publish"]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
 
+[tool.uv]
+default-groups = ["dev", "imagen", "publish"]
+
 [dependency-groups]
 dev = [
     "boto3-stubs[s3]>=1.43.123",

@@ -18,7 +18,7 @@ COPY pyproject.toml uv.lock README.md ./
 ARG UV_GROUP=publish
 ENV APP_MODULE=${UV_GROUP}
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --group ${UV_GROUP} --no-install-project
+    uv sync --frozen --no-default-groups --group ${UV_GROUP} --no-install-project
 
 COPY src/${UV_GROUP} src/${UV_GROUP}
 
