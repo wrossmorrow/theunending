@@ -51,7 +51,7 @@ resource "aws_ecs_task_definition" "publish" {
       secrets = [
         {
           name = "ADMIN_API_TOKEN", 
-          valueFrom = data.aws_secretsmanager_secret.admin_api_auth.arn,
+          valueFrom = "${data.aws_secretsmanager_secret.admin_api_auth.arn}:ADMIN_API_TOKEN::",
         },
       ]
 
