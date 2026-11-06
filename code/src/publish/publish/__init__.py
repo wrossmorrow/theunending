@@ -28,6 +28,13 @@ def handle(args: argparse.Namespace) -> None:
 
     s3 = boto3.client("s3")
 
+    # first signal, job actually launched and nothing else
+
+    admin.update_progress(
+        Status.IN_PROGRESS,
+        "publish job launched",
+    )
+
     # Setup directories, copy down source images, and list manifest (could check size too)
 
     mkdirs("images", "similar", "posters", "og")
@@ -46,6 +53,16 @@ def handle(args: argparse.Namespace) -> None:
                 "error": str(e),
                 "error_class": e.__class__.__name__,
             },
+        )
+        raise
+    except Exception as e:
+        admin.update_progress(
+            Status.FAILED,
+            "an unexpected error occurred retrieving source content",
+            details={
+                "error": str(e),
+                "error_class": e.__class__.__name__,
+            }
         )
         raise
 
