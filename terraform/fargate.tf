@@ -48,12 +48,12 @@ resource "aws_ecs_task_definition" "publish" {
         "--help",
       ]
 
-      environment = [
-        {
-          name  = "SITE_BUCKET",
-          value = "theunending-ai-raw-content-use1",
-        }
-      ]
+      # environment = [
+      #   {
+      #     name  = "SITE_BUCKET",
+      #     value = "theunending-ai-raw-content-use1",
+      #   }
+      # ]
 
       secrets = [
         {
