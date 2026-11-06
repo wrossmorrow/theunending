@@ -26,7 +26,7 @@ class Set(BaseModel):
     model_prompt_hash: str
     slug: str
     name: str
-    status: Literal["COMPLETED"]  # others, but require COMPLETED
+    status: Literal["PUBLISHING"]  # others, but require PUBLISHING
 
 
 class PublishSettings(BaseSettings):
