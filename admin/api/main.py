@@ -34,10 +34,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         max_attempts=settings.max_attempts,
     )
     await app.state.job_client.start()
+    await app.state.publisher.start()
     await selectone(app.state.session_factory)
     yield
     await engine.dispose()
     await app.state.job_client.aclose()
+    await app.state.publisher.aclose()
 
 
 api = FastAPI(title="Unending Admin API", lifespan=lifespan)

@@ -77,7 +77,6 @@ async def redo_run(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Run {run_id} is not in FAILED status.",
             )
-        
         draft = await session.get(database.Draft, run.draft_id)
         if draft is None:
             raise HTTPException(
@@ -251,6 +250,8 @@ async def update_run_status(
                             if update.status == database.RunStatus.COMPLETED
                             else database.SetStatus.FAILED
                         )
+                        if update.status == database.RunStatus.COMPLETED:
+                            committed_set.published_at = datetime.now(UTC)
                         session.add(committed_set)
                         await session.commit()
                         await session.refresh(committed_set)

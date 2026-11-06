@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from fastapi import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from sqlmodel import and_, select
+from sqlmodel import select
 
 from api.database import models as database
 from api.utils.publish import Publisher, PublishRequest
@@ -125,22 +125,23 @@ async def publish_set(
                 detail=f"Set {set_id} is not in COMPLETED status.",
             )
 
-        stmt = (
-            select(database.Draft.draft_id)
+        runs_table = database.Run.metadata.tables[database.Run.__tablename__]
+        batch_run_stmt = (
+            select(database.Run)
             .where(
-                and_(
-                    database.Draft.set_id == set_id,
-                    database.Draft.status == database.DraftStatus.COMMITTED,
-                )
+                runs_table.c.set_id == set_id,
+                runs_table.c.type == database.RunType.BATCH,
+                runs_table.c.status == database.RunStatus.COMPLETED,
             )
-            .order_by(database.Draft.created_at.desc())
+            .order_by(runs_table.c.created_at.desc())
         )
-        draft_id = (await session.execute(stmt)).scalars().first()
-        if draft_id is None:
+        batch_run = (await session.execute(batch_run_stmt)).scalars().first()
+        if batch_run is None:
             raise HTTPException(
                 status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Set {set_id} had no COMMITTED draft, one expected.",
+                detail=f"Set {set_id} had no COMPLETED batch run, one expected.",
             )
+        draft_id = batch_run.draft_id
 
         run = database.Run(
             external_run_id=None,

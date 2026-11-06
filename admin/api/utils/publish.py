@@ -1,15 +1,14 @@
 import asyncio
 from uuid import UUID
 
-import boto3
+import boto3  # type: ignore[import-untyped]
 from fastapi import Request
 from pydantic import BaseModel
 
 from api.settings import settings
 
 
-class PublishLauchFailed(Exception):
-    ...
+class PublishLaunchFailed(Exception): ...
 
 
 class PublishRequest(BaseModel):
@@ -25,7 +24,7 @@ class Publisher:
         queue_timeout_seconds: float = 30.0,
         max_attempts: int = 3,
     ) -> None:
-        self._ecs = boto3.client("ecs")
+        self._ecs = boto3.client("ecs", region_name=settings.aws_region_name)
         self._queue: asyncio.Queue[PublishRequest] = asyncio.Queue()
         self._qtimeout_seconds = queue_timeout_seconds
         self._max_attempts = max_attempts
@@ -72,8 +71,7 @@ class Publisher:
 
             response: str | Exception
             try:
-                # NOTE: this blocking call may block everything under the GIL without mixing in threading?
-                response = self.publish(request)
+                response = await asyncio.to_thread(self.publish, request)
             except Exception as e:  # noqa: BLE001
                 response = e
             finally:
@@ -86,7 +84,7 @@ class Publisher:
                 else:
                     print(
                         "Permanently failed to submit enqueued publish run for "
-                        f"{request.set_id} {response.__class__.__name__} {response}"
+                        f"{request.run_id} {response.__class__.__name__} {response}"
                     )
 
     async def join(self) -> None:
@@ -100,8 +98,7 @@ class Publisher:
 
             response: str | Exception
             try:
-                # NOTE: this blocking call may block everything under the GIL without mixing in threading?
-                response = self.publish(request)
+                response = await asyncio.to_thread(self.publish, request)
             except Exception as e:  # noqa: BLE001
                 response = e
             finally:
@@ -131,7 +128,7 @@ class Publisher:
             overrides={
                 "containerOverrides": [
                     {
-                        "name": "publish",
+                        "name": settings.publish_container,
                         "command": [
                             "publish",
                             "--batch-run-id",
@@ -147,9 +144,13 @@ class Publisher:
         # e.g. capacity or config problems: the launch failed, retry from the outbox
         failures = response.get("failures")
         if failures:
-            raise PublishLauchFailed(f"Publish start failure(s): {failures}")
+            raise PublishLaunchFailed(f"Publish start failure(s): {failures}")
 
-        return response["tasks"][0]["taskArn"]
+        tasks = response.get("tasks") or []
+        if not tasks:
+            raise PublishLaunchFailed("Publish start response contained no tasks.")
+
+        return tasks[0]["taskArn"]
 
 
 def get_publisher(request: Request) -> Publisher:

@@ -11,6 +11,7 @@ CREATE TABLE sets (
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	updated_at TIMESTAMP WITH TIME ZONE, 
 	committed_at TIMESTAMP WITH TIME ZONE, 
+	published_at TIMESTAMP WITH TIME ZONE, 
 	abandoned_at TIMESTAMP WITH TIME ZONE, 
 	PRIMARY KEY (set_id)
 )
