@@ -143,7 +143,7 @@ class Publisher:
                         "command": [
                             "publish", # module
                             "publish", # command
-                            "--batch-run-id",
+                            "--run-id",
                             str(request.run_id),
                         ],
                     }

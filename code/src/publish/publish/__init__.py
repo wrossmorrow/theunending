@@ -17,13 +17,13 @@ from ..progress import AdminAPI, Status
 
 def handle(args: argparse.Namespace) -> None:
 
-    settings = PublishSettings(BATCH_RUN_ID=args.batch_run_id)
+    settings = PublishSettings(RUN_ID=args.run_id)
 
     admin = AdminAPI(
         url=settings.ADMIN_API_URL,
         auth_secret=settings.ADMIN_API_TOKEN,
         auth_secret_type="Bearer",
-        admin_run_id=settings.BATCH_RUN_ID,
+        admin_run_id=settings.RUN_ID,
     )
 
     s3 = boto3.client("s3")
@@ -31,7 +31,7 @@ def handle(args: argparse.Namespace) -> None:
     # first signal, job actually launched and nothing else; enforce idempotency via
     # cached property retrievals first, which need to be validated at launch
 
-    print(f"Publish job triggered for {settings.SET} ({settings.BATCH_RUN})")
+    print(f"Publish job triggered for {settings.SET} ({settings.RUN})")
 
     admin.update_progress(
         Status.IN_PROGRESS,

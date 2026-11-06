@@ -15,7 +15,7 @@ from .utils import do_uploads, get_source_content, list_image_ids, mkdirs
 
 def handle(args: argparse.Namespace) -> None:
 
-    settings = PublishSettings(BATCH_RUN_ID=args.batch_run_id)
+    settings = PublishSettings(RUN_ID=args.run_id)
 
     s3 = boto3.client("s3")
 
@@ -98,7 +98,7 @@ def handle(args: argparse.Namespace) -> None:
 
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    parser.add_argument("--batch-run-id", required=True)
+    parser.add_argument("--run-id", required=True)
     parser.set_defaults(func=handle)
     return parser
 

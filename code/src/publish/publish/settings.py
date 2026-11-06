@@ -34,7 +34,7 @@ class PublishSettings(BaseSettings):
 
     # required, not defaultable; keep ADMIN_API_TOKEN in env
 
-    BATCH_RUN_ID: UUID
+    RUN_ID: UUID
     ADMIN_API_TOKEN: str
 
     # needed, but defaultable
@@ -48,12 +48,12 @@ class PublishSettings(BaseSettings):
 
     @property
     def ADMIN_API_URL(self) -> str:
-        return f"{self.ADMIN_API_HOST}/api/v0/runs/{self.BATCH_RUN_ID}/status"
+        return f"{self.ADMIN_API_HOST}/api/v0/runs/{self.RUN_ID}/status"
 
     @cached_property
-    def BATCH_RUN(self) -> Run:
+    def RUN(self) -> Run:
         response = httpx.get(
-            url=f"{self.ADMIN_API_HOST}/api/v0/runs/{self.BATCH_RUN_ID}",
+            url=f"{self.ADMIN_API_HOST}/api/v0/runs/{self.RUN_ID}",
             headers={
                 "authorization": f"Bearer {self.ADMIN_API_TOKEN}",
             },
@@ -63,7 +63,7 @@ class PublishSettings(BaseSettings):
 
     @property
     def SET_ID(self) -> UUID:
-        return self.BATCH_RUN.set_id
+        return self.RUN.set_id
 
     @cached_property
     def SET(self) -> Set:
