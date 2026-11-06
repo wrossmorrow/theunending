@@ -27,7 +27,7 @@ def handle(args: argparse.Namespace) -> None:
         admin_run_id=settings.RUN_ID,
     )
 
-    s3 = boto3.client("s3", Config=Config(max_pool_connections=settings.MAX_S3_THREADS))
+    s3 = boto3.client("s3", config=Config(max_pool_connections=settings.MAX_S3_THREADS))
 
     # first signal, job actually launched and nothing else; enforce idempotency via
     # cached property retrievals first, which need to be validated at launch
@@ -159,8 +159,8 @@ def handle(args: argparse.Namespace) -> None:
 
     try:
         run_similar(
-            "embeddings.npy",
-            "similiar",
+            input="embeddings.npy",
+            output="similiar",
         )
     except Exception as e:
         admin.update_progress(
@@ -175,10 +175,10 @@ def handle(args: argparse.Namespace) -> None:
 
     try:
         run_og_tiles(
-            settings.SET_NAME,
-            settings.RAW_PREFIX,
-            "images",
-            "og",
+            set=settings.SET_NAME,
+            prefix=settings.RAW_PREFIX,
+            source="images",
+            output="og",
         )
     except Exception as e:
         admin.update_progress(
@@ -193,10 +193,10 @@ def handle(args: argparse.Namespace) -> None:
 
     try:
         run_posters(
-            settings.POSTER_SIZES,
-            settings.POST_TITLE,
-            "images",
-            "posters",
+            sizes=settings.POSTER_SIZES,
+            title=settings.POST_TITLE,
+            source="images",
+            output="posters",
         )
     except Exception as e:
         admin.update_progress(
@@ -211,7 +211,7 @@ def handle(args: argparse.Namespace) -> None:
 
     try:
         run_web_posters(
-            "posters",
+            source="posters",
         )
     except Exception as e:
         admin.update_progress(
