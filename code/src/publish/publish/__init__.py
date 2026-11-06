@@ -28,7 +28,10 @@ def handle(args: argparse.Namespace) -> None:
 
     s3 = boto3.client("s3")
 
-    # first signal, job actually launched and nothing else
+    # first signal, job actually launched and nothing else; enforce idempotency via
+    # cached property retrievals first, which need to be validated at launch
+
+    print(f"Publish job triggered for {settings.SET} ({settings.BATCH_RUN})")
 
     admin.update_progress(
         Status.IN_PROGRESS,

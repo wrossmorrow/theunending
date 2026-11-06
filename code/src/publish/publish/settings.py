@@ -16,7 +16,7 @@ class Run(BaseModel):
     run_id: UUID
     set_id: UUID
     type: Literal["PUBLISH"]  # also BATCH, EVALUATION; but require PUBLISH
-    status: Literal["PENDING"]  # others, but require PENDING (idempotency with updates)
+    status: Literal["PENDING"]  # others, but require PENDING
 
 
 class Set(BaseModel):
