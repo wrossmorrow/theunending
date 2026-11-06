@@ -1,42 +1,8 @@
 
-site_s3_bucket := "theunending-ai-site-content-use1"
-cloudfront_dist_id := "E134F26KPOO8Q5"
-
 default:
     just --list
 
 serve:
-    bash scripts/build-landing-pool.sh
-    bundle exec jekyll serve --livereload --drafts --future
-
-build env="production":
-    bash scripts/build-landing-pool.sh
-    JEKYLL_ENV={{ env }} bundle exec jekyll build
-
-# build, then upload without listing the whole bucket (never deletes); `just sync --dryrun` to preview
-sync *args: build
-    BUCKET={{ site_s3_bucket }} DIST={{ cloudfront_dist_id }} bash scripts/deploy.sh {{ args }}
-
-# one small WebP per set (streams.yml `thumb:`) for the index; extra args pass through
-thumbs *args:
-    uv run scripts/make-index-thumbs.py {{ args }}
-
-unpack post_date set_name:
-    aws s3 cp \
-        s3://theunending-ai-site-content-use1/drafts/{{post_date}}-{{set_name}}.json \
-        ./{{post_date}}-{{set_name}}.json
-    cat ./{{post_date}}-{{set_name}}.json \
-        | jq -r 'keys'
-    cat ./{{post_date}}-{{set_name}}.json \
-        | jq -r '.post_draft' \
-        > _drafts/{{post_date}}-{{set_name}}.md
-    cat ./{{post_date}}-{{set_name}}.json \
-        | jq -r '.image_manifest' \
-        > assets/streams/{{set_name}}.json
-    cat ./{{post_date}}-{{set_name}}.json \
-        | jq -r '.set_spec' \
-        | yq -y
-    cat ./{{post_date}}-{{set_name}}.json \
-        | jq -r '.posters_spec'
-    rm ./{{post_date}}-{{set_name}}.json
-    
+    cd site && just serve
+sync *args:
+    cd site && just serve {{args}}

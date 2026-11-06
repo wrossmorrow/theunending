@@ -21,9 +21,6 @@ image_stream:
   mask:     "true"
 prompt_idea_endpoint: "https://5mjwfedsoqywwgdigh55vrv4im0eaqsp.lambda-url.us-east-1.on.aws/"
 exclude:
-  - terraform/
-  - code/
-  - lambda/
   - scripts/
   - posters/
   - removed/
