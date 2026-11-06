@@ -116,3 +116,16 @@ class Run(SQLModel, table=True):
     )
     finished_at: datetime | None = Field(default=None)
     submitted_at: datetime | None = Field(default=None)
+
+
+class RunStatusEvent(SQLModel, table=True):
+    """A run status update payload received from an external status call."""
+
+    __tablename__ = "run_status_events"
+
+    event_id: UUID = Field(default_factory=uuid7, primary_key=True)
+    run_id: UUID = Field(index=True, foreign_key="runs.run_id")
+    status: RunStatus = Field()
+    message: str | None = Field(default=None, max_length=1024)
+    details: dict[str, Any] | None = Field(default=None, sa_type=postgresql.JSONB)
+    received_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

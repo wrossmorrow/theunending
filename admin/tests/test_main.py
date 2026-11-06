@@ -1,13 +1,15 @@
 """Forward-looking unit tests for the Unending Admin API."""
 
+import asyncio
 import hashlib
 from collections.abc import Iterator
 from contextlib import contextmanager
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import httpx
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from api.database import models as database
@@ -162,6 +164,18 @@ def _get_run_id_by_type(client: TestClient, set_id: str, run_type: str) -> str:
     runs = [run for run in runs_response.json()["runs"] if run["type"] == run_type]
     assert len(runs) == 1
     return runs[0]["run_id"]
+
+
+async def _get_status_events(
+    session_factory: async_sessionmaker[AsyncSession], run_id: UUID
+) -> list[database.RunStatusEvent]:
+    """Get the status events stored for a run from the database."""
+    async with session_factory() as session:
+        events_table = database.RunStatusEvent.metadata.tables[
+            database.RunStatusEvent.__tablename__
+        ]
+        stmt = select(database.RunStatusEvent).where(events_table.c.run_id == run_id)
+        return list((await session.execute(stmt)).scalars().all())
 
 
 def _create_set_with_draft(
@@ -740,6 +754,48 @@ def test_update_run_status_with_non_json_details_returns_422(
             json={"status": "IN_PROGRESS", "details": "not-an-object"},
         )
         assert response.status_code == 422
+
+
+def test_update_run_status_records_full_payload_as_status_event(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Updating a run status stores the received payload as a status event."""
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(client, session_factory)
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status",
+            json={
+                "status": "IN_PROGRESS",
+                "message": "external job started",
+                "details": {"phase": "IN_PROGRESS"},
+            },
+        )
+        assert response.status_code == 200, response.text
+
+    events = asyncio.run(_get_status_events(session_factory, UUID(run_id)))
+    assert len(events) == 1
+    event = events[0]
+    assert event.run_id == UUID(run_id)
+    assert event.status == database.RunStatus.IN_PROGRESS
+    assert event.message == "external job started"
+    assert event.details == {"phase": "IN_PROGRESS"}
+    assert event.received_at is not None
+
+
+def test_update_run_status_invalid_transition_does_not_record_status_event(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Updating a run status with an invalid transition does not record an event."""
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(client, session_factory)
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "COMPLETED"}
+        )
+        assert response.status_code == 400
+        assert "Invalid run status transition" in response.json()["detail"]
+
+    events = asyncio.run(_get_status_events(session_factory, UUID(run_id)))
+    assert len(events) == 0
 
 
 def test_update_run_status_failed_propagates_to_draft_returns_200(

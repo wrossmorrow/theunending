@@ -189,6 +189,16 @@ async def update_run_status(
                 ),
             )
 
+        session.add(
+            database.RunStatusEvent(
+                run_id=run_id,
+                status=update.status,
+                message=update.message,
+                details=update.details,
+                received_at=datetime.now(UTC),
+            )
+        )
+
         run.status = update.status
         run.updated_at = datetime.now(UTC)
         if update.status in (

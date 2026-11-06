@@ -275,6 +275,13 @@ admin/
     * updated_at (set to the latest update, UTC timestamp)
     * finished_at (set when finished, UTC timestamp)
     * submitted_at (set when the worker submitted the job to the external system, UTC timestamp)
+* run_status_events (one row per status update payload received via PUT /api/v0/runs/{run_id}/status):
+    * event_id (PK, uuidv7)
+    * run_id (FK to runs.run_id)
+    * status (status carried in the received update)
+    * message (optional, message carried in the received update)
+    * details (optional, JSON carried in the received update)
+    * received_at (UTC timestamp populated by the server at receipt of the update)
 
 ### HTTP calls
 
@@ -286,6 +293,7 @@ admin/
     - create a new run by "redoing" an existing run (for it's set and draft)
 * PUT /api/v0/runs/{run_id:uuidv7}/status
     - update a run status (system call); may carry optional `message` and JSON `details`
+    - the full received update payload is stored in `run_status_events` with `received_at` stamped at receipt
 
 ### Details
 
