@@ -4,12 +4,16 @@ import asyncio
 import contextlib
 import time
 from collections.abc import Callable
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import boto3  # type: ignore[import-untyped]
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlmodel import select
 
+from api.database import models as database
 from api.settings import settings
+from api.utils.prompt import compute_model_prompt_hash
 from api.utils.publish import Publisher, PublishRequest
 
 
@@ -78,6 +82,95 @@ async def _run_publisher_until(
 def _publish_request() -> PublishRequest:
     """Build a publish request for a fresh run."""
     return PublishRequest(set_id=uuid4(), draft_id=uuid4(), run_id=uuid4())
+
+
+async def _create_completed_set_and_publish_run(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> tuple[database.Set, database.Run]:
+    """Create a COMPLETED set and a PENDING publish run for the publisher tests."""
+    async with session_factory() as session:
+        set_ = database.Set(
+            model="black-forest-labs/FLUX.2-klein-4B",
+            status=database.SetStatus.COMPLETED,
+        )
+        session.add(set_)
+        await session.flush()
+        draft = database.Draft(
+            set_id=set_.set_id,
+            prompt="a cat",
+            model_prompt_hash=compute_model_prompt_hash(set_.model, "a cat"),
+            status=database.DraftStatus.COMMITTED,
+        )
+        session.add(draft)
+        await session.flush()
+        run = database.Run(
+            external_run_id=None,
+            set_id=set_.set_id,
+            draft_id=draft.draft_id,
+            type=database.RunType.PUBLISH,
+            status=database.RunStatus.PENDING,
+        )
+        session.add(run)
+        await session.commit()
+        await session.refresh(set_)
+        await session.refresh(run)
+        return set_, run
+
+
+async def _get_run(
+    session_factory: async_sessionmaker[AsyncSession], run_id: UUID
+) -> database.Run | None:
+    """Get a run by id from the database."""
+    async with session_factory() as session:
+        return (
+            (
+                await session.execute(
+                    select(database.Run).where(database.Run.run_id == run_id)
+                )
+            )
+            .scalars()
+            .first()
+        )
+
+
+def test_publisher_marks_run_failed_and_set_failed_on_permanent_launch_failure(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The publisher marks the run FAILED and the set FAILED when launch attempts exhaust."""
+
+    async def scenario() -> None:
+        set_, run = await _create_completed_set_and_publish_run(session_factory)
+        monkeypatch.setattr(
+            boto3, "client", lambda *args, **kwargs: MockEcsClient(fail_times=1)
+        )
+        publisher = Publisher(
+            queue_timeout_seconds=0.25,
+            max_attempts=1,
+            session_factory=session_factory,
+        )
+        task = asyncio.create_task(publisher.run())
+        try:
+            await publisher.put(
+                PublishRequest(
+                    set_id=set_.set_id,
+                    draft_id=run.draft_id,
+                    run_id=run.run_id,
+                )
+            )
+            await _wait_for_condition(
+                lambda: run.status == database.RunStatus.FAILED, timeout=5.0
+            )
+        finally:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+            await publisher.aclose()
+
+        failed_run = await _get_run(session_factory, run.run_id)
+        assert failed_run is not None
+        assert failed_run.status == database.RunStatus.FAILED
+        assert set_.status == database.SetStatus.FAILED
 
 
 def test_publisher_submits_ecs_task_and_succeeds(
