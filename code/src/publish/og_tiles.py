@@ -201,7 +201,7 @@ def handle(args: argparse.Namespace) -> None:
             args.subtitle if args.title else None,
             args.gap,
         )
-        save(card, os.path.join(args.out, f"{name}.{args.ext}"))
+        save(card, os.path.join(args.output, f"{name}.{args.ext}"))
 
     if args.site:
         # a few from each run so the site card isn't just one theme
@@ -218,7 +218,7 @@ def handle(args: argparse.Namespace) -> None:
             args.subtitle if args.title else None,
             args.gap,
         )
-        save(card, os.path.join(args.out, f"site.{args.ext}"))
+        save(card, os.path.join(args.output, f"site.{args.ext}"))
 
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
@@ -227,7 +227,7 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--map", help="YAML/JSON mapping of set name -> prefix")
     parser.add_argument("--set", help="single set name")
     parser.add_argument("--source", help="local directory instead of S3 (for testing)")
-    parser.add_argument("--output", default="assets/og")
+    parser.add_argument("--output", default="og")
     parser.add_argument("--cols", type=int, default=6, help="tiles across (default 6)")
     parser.add_argument(
         "--gap", type=int, default=0, help="px between tiles (default 0)"
