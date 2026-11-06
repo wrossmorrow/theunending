@@ -85,7 +85,7 @@ class Draft(SQLModel, table=True):
     set_id: UUID = Field(index=True, foreign_key="sets.set_id")
     prompt: str = Field(min_length=1, max_length=1023)
     model_prompt_hash: str = Field(index=True, unique=True)
-    status: DraftStatus = Field(default=DraftStatus.PENDING)
+    status: DraftStatus = Field(default=DraftStatus.PENDING, index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),

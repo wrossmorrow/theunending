@@ -206,7 +206,7 @@ admin/
 * POST /api/v0/sets/{set_id:uuidv7}/drafts
     - create a set draft, returning a server-generated draft_id (uuidv7)
 * GET /api/v0/sets/{set_id:uuidv7}/drafts
-    - get all set drafts, ordered by create time descending
+    - get all set drafts, ordered by create time descending, with optional status query param filter
 * GET /api/v0/sets/{set_id:uuidv7}/drafts/{draft_id}
     - get a specific set draft
 * POST /api/v0/sets/{set_id:uuidv7}/drafts/{draft_id}/commit

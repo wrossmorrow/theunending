@@ -42,9 +42,12 @@ async def list_drafts(
     session_factory: Annotated[
         async_sessionmaker[AsyncSession], Depends(get_session_factory)
     ],
+    status: database.DraftStatus | None = None,
 ) -> models.DraftsResponse:
     """List set drafts (created_at desc)."""
-    return await drafts_handlers.list_drafts(set_id, session_factory)
+    return await drafts_handlers.list_drafts(
+        set_id, status=status, session_factory=session_factory
+    )
 
 
 @drafts_router.get(

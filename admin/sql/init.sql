@@ -39,6 +39,7 @@ CREATE TABLE drafts (
 );
 
 CREATE INDEX ix_drafts_set_id ON drafts (set_id);
+CREATE INDEX ix_drafts_status ON drafts (status);
 
 ---
 
