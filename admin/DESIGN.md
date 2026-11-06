@@ -415,6 +415,7 @@ Derived from the resolved design decisions in this document.
 
 ## Open items carried forward
 
+* Pagination for list endpoints (e.g. `GET /api/v0/runs/{run_id}/events`) is not yet needed; if introduced, prefer uuid7-based keyset pagination over offset/limit, and extend response wrapper fields (e.g. adding page data) rather than changing existing shapes to keep responses backward compatible.
 * None of the top-10 design questions remain open; implementation planning can proceed against the resolved decisions.
 
 # Abbreviations 
