@@ -42,14 +42,12 @@ def handle(args: argparse.Namespace) -> None:
 
     # Setup directories, copy down source images, and list manifest (could check size too)
 
-    directories = {
-        "i": "images",
-        "s": "similar",
-        "p": "posters",
-        "o": "og",
-    }
-
-    for dir in directories.values():
+    for dir in (
+        settings.IMAGES_DIR,
+        settings.SIMILAR_DIR,
+        settings.OG_TILE_DIR,
+        settings.POSTERS_DIR,
+    ):
         Path(f"./{dir}").mkdir(parents=True, exist_ok=True)
 
     print(f"Directories: {[d for d in Path('.').iterdir()]}")
@@ -82,7 +80,7 @@ def handle(args: argparse.Namespace) -> None:
         )
         raise
 
-    image_ids = list_image_ids()
+    image_ids = list_image_ids(settings.IMAGES_DIR)
 
     admin.update_progress(
         Status.IN_PROGRESS,
@@ -171,7 +169,7 @@ def handle(args: argparse.Namespace) -> None:
     try:
         run_similar(
             input="embeddings.npy",
-            output=directories["s"],
+            output=settings.SIMILAR_DIR,
         )
     except Exception as e:
         admin.update_progress(
@@ -188,8 +186,8 @@ def handle(args: argparse.Namespace) -> None:
         run_og_tiles(
             set=settings.SET_NAME,
             prefix=settings.RAW_PREFIX,
-            source=directories["i"],
-            output=directories["o"],
+            source=settings.IMAGES_DIR,
+            output=settings.OG_TILE_DIR,
         )
     except Exception as e:
         admin.update_progress(
@@ -206,8 +204,8 @@ def handle(args: argparse.Namespace) -> None:
         run_posters(
             sizes=settings.POSTER_SIZES,
             title=settings.POST_TITLE,
-            source=directories["i"],
-            output=directories["p"],
+            source=settings.IMAGES_DIR,
+            output=settings.POSTERS_DIR,
         )
     except Exception as e:
         admin.update_progress(
@@ -222,7 +220,7 @@ def handle(args: argparse.Namespace) -> None:
 
     try:
         run_web_posters(
-            source=directories["p"],
+            source=settings.POSTERS_DIR,
         )
     except Exception as e:
         admin.update_progress(

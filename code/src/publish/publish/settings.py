@@ -46,6 +46,11 @@ class PublishSettings(BaseSettings):
 
     MAX_S3_THREADS: int = 32
 
+    IMAGES_DIR: str = "images"
+    SIMILAR_DIR: str = "similar"
+    OG_TILE_DIR: str = "og"
+    POSTERS_DIR: str = "posters"
+
     # derived (including from API call responses)
 
     @property
