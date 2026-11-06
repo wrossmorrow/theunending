@@ -220,6 +220,7 @@ def handle(args: argparse.Namespace) -> None:
 
     try:
         run_web_posters(
+            sizes=settings.POSTER_SIZES,
             source=settings.POSTERS_DIR,
         )
     except Exception as e:

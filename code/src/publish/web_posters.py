@@ -56,7 +56,7 @@ def fit_budget(src, long_px, max_bytes, fmt, q_lo=55, q_hi=90):
         long_px = int(long_px * 0.85)
 
 
-def handle(args: argparse.Namespace) -> None:
+def handle_old_unstable_claude(args: argparse.Namespace) -> None:
 
     print(f"Running web posters; {args}")
 
@@ -124,12 +124,41 @@ def handle(args: argparse.Namespace) -> None:
     )
 
 
+
+def handle(args: argparse.Namespace) -> None:
+
+    print(f"Running web posters; {args}")
+
+    fmt = "WEBP" if args.format == "webp" else "JPEG"
+    for kind, px, kb, out in (
+        ("previews", args.preview_px, args.preview_kb, args.preview_output),
+        ("thumbs", args.thumb_px, args.thumb_kb, args.thumb_output),
+    ):
+        src = Image.open(args.source).convert("RGB")
+        data, (w, h), q = fit_budget(src, px, kb * 1000, fmt)
+        with open(out, "wb") as f:
+            f.write(data)
+        print(f" web poster ({kind}): {w}x{h} q{q} {len(data) / 1000:.0f} KB -> {out}", file=sys.stderr)
+
+
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument(
         "--source",
         type=str,
         required=True,
-        help="the posters/ directory",
+        help="the poster file to convert into a web version",
+    )
+    parser.add_argument(
+        "--preview-output",
+        type=str,
+        required=True,
+        help="the saved preview version",
+    )
+    parser.add_argument(
+        "--thumb-output",
+        type=str,
+        required=True,
+        help="the saved thumb version",
     )
     parser.add_argument(
         "--thumb-px", type=int, default=900, help="thumbnail long edge (default 900)"

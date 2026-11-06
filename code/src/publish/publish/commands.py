@@ -119,7 +119,25 @@ def run_poster(
 
 
 def run_web_posters(
+    sizes: dict[str, str],
     source: str,
+) -> None:
+    """
+    uv run imagen web-posters --source posters
+    """
+    for size in sizes:
+        poster_filename = f"{source}/{size}.png"
+        run_web_poster(
+            poster_filename,
+            f"{source}/previews/{size}.webp",
+            f"{source}/thumbs/{size}.webp",
+        )
+
+
+def run_web_poster(
+    source: str,
+    preview_output: str,
+    thumb_output: str,
 ) -> None:
     """
     uv run imagen web-posters --source posters
@@ -129,6 +147,10 @@ def run_web_posters(
         [
             "--source",
             source,
+            "--preview-output",
+            preview_output,
+            "--thumb-output",
+            thumb_output,
         ]
     )
     args.func(args)
