@@ -5,6 +5,7 @@ from .evaluate import command as eval_command
 from .full_posters import command as fp_command
 from .modal import commands as modal_commands
 from .og_tiles import command as ogt_command
+from .publish import command as publish_commands
 from .similarity.cli import commands as sim_commands
 from .web_posters import command as wp_command
 
@@ -19,7 +20,8 @@ def commands(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     ogt_command(subparsers.add_parser("og-tiles", help="OG tiles"))
     fp_command(subparsers.add_parser("full-posters", help="Full posters"))
     wp_command(subparsers.add_parser("web-posters", help="Web posters"))
-    modal_commands(subparsers.add_parser("modal", help="Test modal"))
+    modal_commands(subparsers.add_parser("modal", help="Run on modal"))
+    publish_commands(subparsers.add_parser("publish", help="Publish results"))
     return parser
 
 

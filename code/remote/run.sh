@@ -115,7 +115,7 @@ uv run imagen og-tiles \
     --set "${SET_NAME}" \
     --prefix "${RAW_PREFIX}" \
     --source ./images \
-    --out og
+    --output og
 
 aws s3 cp "og/${SET_NAME}.jpg" "${SITE_OG_IMAGE_PREFIX}/${SET_NAME}.jpg"
 
@@ -132,15 +132,15 @@ for SIZE in "${!POSTER_SIZES[@]}"; do
             --dpi 150 \
             --tile 1.5 \
             --title "${POST_TITLE}" \
-            "${SITE_IMG_ASSETS}" \
-            ${OUTPUT_NAME}
+            --source "${SITE_IMG_ASSETS}" \
+            --output ${OUTPUT_NAME}
         aws s3 cp "${OUTPUT_NAME}" "${SITE_POSTER_RAW_PREFIX}/${POST_NAME}/${SIZE}.png"
     fi
 done
 
 # webp's for poster printable page, upload previews and thumbs to s3
 
-uv run imagen web-posters posters
+uv run imagen web-posters --source posters
 aws s3 cp \
     "posters/previews/${POST_DATE}-${SET_NAME}/" \
     "${SITE_POSTER_PREVIEW_PREFIX}/${POST_DATE}-${SET_NAME}/" \

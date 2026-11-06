@@ -225,7 +225,7 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--map", help="YAML/JSON mapping of set name -> prefix")
     parser.add_argument("--set", help="single set name")
     parser.add_argument("--source", help="local directory instead of S3 (for testing)")
-    parser.add_argument("--out", default="assets/og")
+    parser.add_argument("--output", default="assets/og")
     parser.add_argument("--cols", type=int, default=6, help="tiles across (default 6)")
     parser.add_argument(
         "--gap", type=int, default=0, help="px between tiles (default 0)"

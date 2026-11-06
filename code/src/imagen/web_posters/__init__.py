@@ -60,8 +60,8 @@ def handle(args: argparse.Namespace) -> None:
 
     fmt = "WEBP" if args.format == "webp" else "JPEG"
     index = []
-    for size in sorted(os.listdir(args.root)):
-        sdir = os.path.join(args.root, size)
+    for size in sorted(os.listdir(args.source)):
+        sdir = os.path.join(args.source, size)
         if not (SIZE_DIR.match(size) and os.path.isdir(sdir)):
             continue  # skips thumbs/, previews/, stray files
         for fn in sorted(os.listdir(sdir)):
@@ -75,8 +75,8 @@ def handle(args: argparse.Namespace) -> None:
                 ("previews", args.preview_px, args.preview_kb),
                 ("thumbs", args.thumb_px, args.thumb_kb),
             ):
-                out = os.path.join(args.root, kind, name, f"{size}.{args.format}")
-                rel = os.path.relpath(out, args.root)
+                out = os.path.join(args.source, kind, name, f"{size}.{args.format}")
+                rel = os.path.relpath(out, args.source)
                 if (
                     not args.force
                     and os.path.exists(out)
@@ -95,7 +95,7 @@ def handle(args: argparse.Namespace) -> None:
                 print(f"{rel}: {w}x{h} q{q} {len(data) / 1000:.0f} KB", file=sys.stderr)
             index.append(entry)
 
-    with open(os.path.join(args.root, "web.json"), "w") as f:
+    with open(os.path.join(args.source, "web.json"), "w") as f:
         json.dump(index, f, indent=1)
 
     restructured: dict = {}
@@ -106,17 +106,22 @@ def handle(args: argparse.Namespace) -> None:
             restructured[name] = {}
         restructured[name][size] = d
 
-    with open(os.path.join(args.root, "unending-posters.json"), "w") as f:
+    with open(os.path.join(args.source, "unending-posters.json"), "w") as f:
         json.dump(restructured, f, indent=1)
 
     print(
-        f"{len(index)} posters indexed in {os.path.join(args.root, 'web.json')}",
+        f"{len(index)} posters indexed in {os.path.join(args.source, 'web.json')}",
         file=sys.stderr,
     )
 
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    parser.add_argument("root", help="the posters/ directory")
+    parser.add_argument(
+        "--source",
+        type=str,
+        required=True,
+        help="the posters/ directory",
+    )
     parser.add_argument(
         "--thumb-px", type=int, default=900, help="thumbnail long edge (default 900)"
     )

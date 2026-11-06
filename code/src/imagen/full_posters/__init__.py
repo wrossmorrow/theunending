@@ -351,10 +351,16 @@ def handle(args: argparse.Namespace) -> None:
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument(
-        "source", help="s3://bucket/prefix or local directory of <uuid>.png (+ .json)"
+        "--source",
+        type=str,
+        required=True,
+        help="s3://bucket/prefix or local directory of <uuid>.png (+ .json)",
     )
     parser.add_argument(
-        "output", help="output path or s3://bucket/key (.png/.jpg/.tif)"
+        "--output",
+        type=str,
+        required=True,
+        help="output path or s3://bucket/key (.png/.jpg/.tif)",
     )
     parser.add_argument(
         "--poster", default="24x36", help="poster size in inches, WxH (default 24x36)"
