@@ -31,11 +31,11 @@ lint group:
 # Containerize the application
 containerize group tag=`git rev-parse --short HEAD`:
     docker build --build-arg UV_GROUP={{group}} \
-        . -t {{registry}}/{{namespace}}/{{image_name}}:{{tag}}
+        . -t {{registry}}/{{namespace}}/{{group}}:{{tag}}
 
 # publish container
-publish tag=`git rev-parse --short HEAD`: (containerize tag)
-    docker push {{registry}}/{{namespace}}/{{image_name}}:{{tag}}
+publish group tag=`git rev-parse --short HEAD`: (containerize group tag)
+    docker push {{registry}}/{{namespace}}/{{group}}:{{tag}}
 
 run prompt rows cols width="512" height="512" model_id=flux2:
     PROMPT="{{ prompt }}" \

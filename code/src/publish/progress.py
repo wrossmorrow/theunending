@@ -1,5 +1,5 @@
 import base64
-import os
+from json import dumps, loads
 from collections.abc import Collection
 from enum import StrEnum
 from typing import Any
@@ -129,6 +129,9 @@ class AdminAPI:
             headers["authorization"] = f"{auth_secret_type or 'Bearer'} {auth_secret}"
         if admin_run_id is not None:
             headers["x-admin-run-id"] = admin_run_id
+
+        # make sure plain strings no complex types
+        headers = loads(dumps(headers, default=str))
 
         self._http = httpx.Client(headers=headers)
 
