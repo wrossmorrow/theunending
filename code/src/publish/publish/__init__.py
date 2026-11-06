@@ -42,7 +42,14 @@ def handle(args: argparse.Namespace) -> None:
 
     # Setup directories, copy down source images, and list manifest (could check size too)
 
-    for dir in ("images", "similar", "posters", "og"):
+    directories = {
+        "i": "images",
+        "s": "similar",
+        "p": "posters",
+        "o": "og",
+    }
+
+    for dir in directories.values():
         Path(f"./{dir}").mkdir(parents=True, exist_ok=True)
 
     print(f"Directories: {[d for d in Path('.').iterdir()]}")
@@ -164,7 +171,7 @@ def handle(args: argparse.Namespace) -> None:
     try:
         run_similar(
             input="embeddings.npy",
-            output="similiar",
+            output=directories["s"],
         )
     except Exception as e:
         admin.update_progress(
@@ -181,8 +188,8 @@ def handle(args: argparse.Namespace) -> None:
         run_og_tiles(
             set=settings.SET_NAME,
             prefix=settings.RAW_PREFIX,
-            source="images",
-            output="og",
+            source=directories["i"],
+            output=directories["o"],
         )
     except Exception as e:
         admin.update_progress(
@@ -199,8 +206,8 @@ def handle(args: argparse.Namespace) -> None:
         run_posters(
             sizes=settings.POSTER_SIZES,
             title=settings.POST_TITLE,
-            source="images",
-            output="posters",
+            source=directories["i"],
+            output=directories["p"],
         )
     except Exception as e:
         admin.update_progress(
@@ -215,7 +222,7 @@ def handle(args: argparse.Namespace) -> None:
 
     try:
         run_web_posters(
-            source="posters",
+            source=directories["p"],
         )
     except Exception as e:
         admin.update_progress(
