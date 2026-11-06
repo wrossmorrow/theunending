@@ -68,11 +68,11 @@ def run_posters(
         run_poster(
             size,
             orientation,
-            dpi,
-            tile,
             title,
             source,
             output,
+            dpi=dpi,
+            tile=tile,
         )
 
 
