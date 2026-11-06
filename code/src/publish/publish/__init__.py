@@ -6,6 +6,7 @@ from random import choice
 
 import boto3
 from botocore.exceptions import ClientError
+from pydantic import ValidationError
 
 from .commands import run_og_tiles, run_posters, run_similar, run_web_posters
 from .post import post_draft
@@ -30,11 +31,24 @@ def handle(args: argparse.Namespace) -> None:
     # Setup directories, copy down source images, and list manifest (could check size too)
 
     mkdirs("images", "similar", "posters", "og")
-    get_source_content(
-        s3=s3,
-        bucket=settings.RAW_BUCKET,
-        prefix=settings.RAW_PREFIX,
-    )
+
+    try:
+        get_source_content(
+            s3=s3,
+            bucket=settings.RAW_BUCKET,
+            prefix=settings.RAW_PREFIX,
+        )
+    except ValidationError as e:
+        admin.update_progress(
+            Status.FAILED,
+            "settings configuration failure when retrieving source",
+            details={
+                "error": str(e),
+                "error_class": e.__class__.__name__,
+            },
+        )
+        raise
+
     image_ids = list_image_ids()
 
     admin.update_progress(
@@ -73,7 +87,7 @@ def handle(args: argparse.Namespace) -> None:
         s3.put_object(
             Bucket=settings.SITE_BUCKET,
             Key=f"drafts/{settings.POST_NAME}.json",
-            Body=dumps(draft_manifest).encode("utf-8"),
+            Body=dumps(draft_manifest, default=str).encode("utf-8"),
             ContentType="application/json",
             IfNoneMatch="*",
         )
@@ -116,29 +130,77 @@ def handle(args: argparse.Namespace) -> None:
                 "error_class": e.__class__.__name__,
             }
         )
+        raise
 
     # Create additional content needed (similar JSONs, OG tiles, posters)
     # TODO: images we get are "full" size, create thumbs and "mid" size
 
-    run_similar(
-        "embeddings.npy",
-        "similiar",
-    )
-    run_og_tiles(
-        settings.SET_NAME,
-        settings.RAW_PREFIX,
-        "images",
-        "og",
-    )
-    run_posters(
-        settings.POSTER_SIZES,
-        settings.POST_TITLE,
-        "images",
-        "posters",
-    )
-    run_web_posters(
-        "posters",
-    )
+    try:
+        run_similar(
+            "embeddings.npy",
+            "similiar",
+        )
+    except Exception as e:
+        admin.update_progress(
+            Status.FAILED,
+            "failed to create similarity mappings",
+            details={
+                "error": str(e),
+                "error_class": e.__class__.__name__,
+            }
+        )
+        raise
+
+    try:
+        run_og_tiles(
+            settings.SET_NAME,
+            settings.RAW_PREFIX,
+            "images",
+            "og",
+        )
+    except Exception as e:
+        admin.update_progress(
+            Status.FAILED,
+            "failed to create OG tile image(s)",
+            details={
+                "error": str(e),
+                "error_class": e.__class__.__name__,
+            }
+        )
+        raise
+
+    try:
+        run_posters(
+            settings.POSTER_SIZES,
+            settings.POST_TITLE,
+            "images",
+            "posters",
+        )
+    except Exception as e:
+        admin.update_progress(
+            Status.FAILED,
+            "failed to create full size posters",
+            details={
+                "error": str(e),
+                "error_class": e.__class__.__name__,
+            }
+        )
+        raise
+
+    try:
+        run_web_posters(
+            "posters",
+        )
+    except Exception as e:
+        admin.update_progress(
+            Status.FAILED,
+            "failed to create similarity mappings",
+            details={
+                "error": str(e),
+                "error_class": e.__class__.__name__,
+            }
+        )
+        raise
 
     admin.update_progress(
         Status.IN_PROGRESS,
@@ -146,7 +208,18 @@ def handle(args: argparse.Namespace) -> None:
     )
 
     # Upload additional content to S3, actual site source
-    do_uploads(settings, s3)
+    try:
+        do_uploads(settings, s3)
+    except Exception as e:
+        admin.update_progress(
+            Status.FAILED,
+            "failed to upload publishable content",
+            details={
+                "error": str(e),
+                "error_class": e.__class__.__name__,
+            }
+        )
+        raise
 
     admin.update_progress(
         Status.IN_PROGRESS,

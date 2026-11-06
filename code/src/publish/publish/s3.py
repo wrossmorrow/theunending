@@ -36,6 +36,10 @@ def cp_from_s3(
     s3: S3Client, bucket: str, prefix: str, local: Path, ext: str | None = None
 ) -> None:
 
+    if isinstance(local, str):
+        cp_from_s3(s3, bucket, prefix, Path(local), ext=ext)
+        return
+
     if not prefix.endswith("/"):
         local.parent.mkdir(parents=True, exist_ok=True)
         s3.download_file(bucket, prefix, str(local))
