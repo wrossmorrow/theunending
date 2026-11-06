@@ -136,6 +136,7 @@ def handle(args: argparse.Namespace) -> None:
     ):
         src = Image.open(args.source).convert("RGB")
         data, (w, h), q = fit_budget(src, px, kb * 1000, fmt)
+        os.makedirs(os.path.dirname(out), exist_ok=True)
         with open(out, "wb") as f:
             f.write(data)
         print(f" web poster ({kind}): {w}x{h} q{q} {len(data) / 1000:.0f} KB -> {out}", file=sys.stderr)
