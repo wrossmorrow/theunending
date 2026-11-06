@@ -103,6 +103,18 @@ async def _get_run(
         )
 
 
+async def _get_status_events(
+    session_factory: async_sessionmaker[AsyncSession], run_id: UUID
+) -> list[database.RunStatusEvent]:
+    """Get the status events stored for a run from the database."""
+    async with session_factory() as session:
+        events_table = database.RunStatusEvent.metadata.tables[
+            database.RunStatusEvent.__tablename__
+        ]
+        stmt = select(database.RunStatusEvent).where(events_table.c.run_id == run_id)
+        return list((await session.execute(stmt)).scalars().all())
+
+
 async def _wait_for_run_status(
     session_factory: async_sessionmaker[AsyncSession],
     run_id: UUID,
@@ -156,6 +168,11 @@ def test_worker_submits_enqueued_job_and_marks_run_submitted(
             assert submitted.external_run_id.startswith("external-")
             assert submitted.submitted_at is not None
             assert submitted.finished_at is None
+
+            events = await _get_status_events(session_factory, run.run_id)
+            assert len(events) == 1
+            assert events[0].status == database.RunStatus.SUBMITTED
+            assert events[0].source == database.RunStatusEventSource.INTERNAL
         finally:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):

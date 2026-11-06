@@ -275,6 +275,14 @@ admin/
     * updated_at (set to the latest update, UTC timestamp)
     * finished_at (set when finished, UTC timestamp)
     * submitted_at (set when the worker submitted the job to the external system, UTC timestamp)
+* run_status_events (one row per status update payload received via PUT /api/v0/runs/{run_id}/status, plus internal status writes):
+    * event_id (PK, uuidv7)
+    * run_id (FK to runs.run_id)
+    * status (status carried in the received update)
+    * message (optional, message carried in the received update)
+    * details (optional, JSON carried in the received update)
+    * source (EXTERNAL for updates received via the API status call, INTERNAL for worker-driven finalize status writes)
+    * received_at (UTC timestamp populated by the server at receipt of the update)
 
 ### HTTP calls
 
@@ -286,6 +294,9 @@ admin/
     - create a new run by "redoing" an existing run (for it's set and draft)
 * PUT /api/v0/runs/{run_id:uuidv7}/status
     - update a run status (system call); may carry optional `message` and JSON `details`
+    - the full received update payload is stored in `run_status_events` with `received_at` stamped at receipt, source: EXTERNAL
+* GET /api/v0/runs/{run_id:uuidv7}/events
+    - list the status events stored for a run (404 when the run is not found)
 
 ### Details
 
@@ -404,6 +415,7 @@ Derived from the resolved design decisions in this document.
 
 ## Open items carried forward
 
+* Pagination for list endpoints (e.g. `GET /api/v0/runs/{run_id}/events`) is not yet needed; if introduced, prefer uuid7-based keyset pagination over offset/limit, and extend response wrapper fields (e.g. adding page data) rather than changing existing shapes to keep responses backward compatible.
 * None of the top-10 design questions remain open; implementation planning can proceed against the resolved decisions.
 
 # Abbreviations 

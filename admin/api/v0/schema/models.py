@@ -8,6 +8,7 @@ from api.database.models import (
     Draft,
     Run,
     RunStatus,
+    RunStatusEvent,
     Set,
 )
 
@@ -28,6 +29,12 @@ class RunsResponse(BaseModel):
     """Response wrapper: a collection of runs."""
 
     runs: list[Run] = Field(default_factory=list)
+
+
+class RunStatusEventsResponse(BaseModel):
+    """Response wrapper: a collection of run status events."""
+
+    events: list[RunStatusEvent] = Field(default_factory=list)
 
 
 class SetCreate(BaseModel):
