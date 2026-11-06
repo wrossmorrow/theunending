@@ -15,7 +15,8 @@ CREATE TABLE sets (
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	updated_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	committed_at TIMESTAMP WITH TIME ZONE, 
-	abandoned_at TIMESTAMP WITH TIME ZONE
+	abandoned_at TIMESTAMP WITH TIME ZONE, 
+	published_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX ix_sets_model ON sets (model);

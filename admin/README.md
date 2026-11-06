@@ -46,7 +46,8 @@ built.
 ## API
 
 - Health: `GET /health/alive`, `GET /health/ready`
-- Sets: `POST/GET/PATCH/DELETE /api/v0/sets...`
+- Sets: `POST/GET/PATCH/DELETE /api/v0/sets...`, publish at
+  `POST /api/v0/sets/{set_id}/publish`
 - Drafts: `GET/POST /api/v0/sets/{set_id}/drafts...`, commit at
   `POST /api/v0/sets/{set_id}/drafts/{draft_id}/commit`
 - Runs: `GET/POST /api/v0/runs...`, status at `PUT /api/v0/runs/{run_id}/status`
