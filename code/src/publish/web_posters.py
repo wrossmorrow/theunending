@@ -100,7 +100,7 @@ def handle(args: argparse.Namespace) -> None:
                     f.write(data)
                     
                 entry[kind[:-1]] = {"src": rel, "w": w, "h": h}
-                print(f"{rel}: {w}x{h} q{q} {len(data) / 1000:.0f} KB", file=sys.stderr)
+                print(f"{rel}: {w}x{h} q{q} {len(data) / 1000:.0f} KB -> {out}", file=sys.stderr)
 
             index.append(entry)
 

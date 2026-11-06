@@ -129,7 +129,7 @@ def do_uploads(
             content_type="image/png",
         )
 
-    # posters/spreviews/*.webp -> SITE_BUCKET, assets/img/posters/previews/POST_NAME/*
+    # posters/previews/*.webp -> SITE_BUCKET, assets/img/posters/previews/POST_NAME/*
 
     for path in glob(f"{settings.POSTERS_DIR}/previews/*.webp"):
         put_file_no_overwrite(
