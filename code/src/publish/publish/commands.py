@@ -65,12 +65,13 @@ def run_posters(
     tile: float = 1.5,
 ) -> None:
     for size, orientation in sizes.items():
+        poster_filename = f"{output}/{size}.png"
         run_poster(
             size,
             orientation,
             title,
             source,
-            f"{output}/{size.png}",
+            poster_filename,
             dpi=dpi,
             tile=tile,
         )
