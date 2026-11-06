@@ -316,6 +316,7 @@ admin/
     * if that changes (external jobs restart) we can revisit this status flow
 * "redoing" a run requires the run referenced by id to be in a FAILED status
 * "redoing" a run _creates a distinct run object_ linked to the same set and draft
+* a redo of a FAILED PUBLISH run enqueues a new publish run through the publisher queue (ECS Fargate task) and marks the linked set PUBLISHING, rather than through the external job system queue
 * when updating a run status, we should match the status of the linked DRAFT
     * note that we can't redo a run for the same draft without a run having failed
     * run updates are job specific, and probably have little row-level concurrency concerns

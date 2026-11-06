@@ -943,6 +943,50 @@ def test_redo_run_returns_new_run_returns_201(
         assert new_run_response.json()["external_run_id"] is None
 
 
+def test_redo_run_of_failed_publish_run_returns_201_and_enqueues_publish(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Redoing a failed publish run creates a new PUBLISH run and enqueues it."""
+    with TestClient(api) as client:
+        set_id, draft_id, _batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        with mock_publisher(session_factory) as publisher:
+            response = client.post(f"/api/v0/sets/{set_id}/publish")
+            assert response.status_code == 200, response.text
+            publish_run_id = _get_run_id_by_type(client, set_id, "PUBLISH")
+            assert (
+                client.put(
+                    f"/api/v0/runs/{publish_run_id}/status", json={"status": "FAILED"}
+                ).status_code
+                == 200
+            )
+            assert client.get(f"/api/v0/sets/{set_id}").json()["status"] == "FAILED"
+            publisher.enqueued_requests.clear()
+
+            response = client.post(f"/api/v0/runs/{publish_run_id}")
+            assert response.status_code == 201, response.text
+            new_run_id = response.json()["run_id"]
+            new_run_response = client.get(f"/api/v0/runs/{new_run_id}")
+            assert new_run_response.status_code == 200
+            assert new_run_response.json()["status"] == "PENDING"
+            assert new_run_response.json()["type"] == "PUBLISH"
+            assert new_run_response.json()["external_run_id"] is None
+            assert new_run_id != publish_run_id
+
+            assert len(publisher.enqueued_requests) == 1
+            enqueued = publisher.enqueued_requests[0]
+            assert str(enqueued.set_id) == set_id
+            assert str(enqueued.draft_id) == draft_id
+            assert str(enqueued.run_id) == new_run_id
+            assert enqueued.attempts == 0
+
+            set_response = client.get(f"/api/v0/sets/{set_id}")
+            assert set_response.status_code == 200
+            assert set_response.json()["status"] == "PUBLISHING"
+
+
 def test_commit_draft_returns_200_and_commits_set(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:

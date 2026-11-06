@@ -141,8 +141,8 @@ class Publisher:
                     {
                         "name": settings.publish_container,
                         "command": [
-                            "publish", # module
-                            "publish", # command
+                            "publish",  # module
+                            "publish",  # command
                             "--run-id",
                             str(request.run_id),
                         ],
