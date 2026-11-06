@@ -31,11 +31,8 @@ def get_source_content(
     cp_from_s3(s3, bucket, f"{prefix}/{emb_file}.json", f"{emb_file}.json")
 
 
-def list_image_ids(
-    source: str,
-    ext: str = ".png",
-) -> list[str]:
-    return [fn.strip(f"{source}/").strip(ext) for fn in glob(f"{source}/*{ext}")]
+def list_image_ids(source: str, ext: str = ".png") -> list[str]:
+    return [Path(fn).stem for fn in glob(f"{source}/*{ext}")]
 
 
 def put_file_no_overwrite(
