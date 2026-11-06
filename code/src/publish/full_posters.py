@@ -51,7 +51,8 @@ FONT_CANDIDATES = [
 ]
 
 FONTS_DIR = Path(__file__).resolve().parent / "fonts"
-DEFAULT_FONT = "texgyreheros-regular.otf"
+DEFAULT_FONT_DIR = "texgyreheros"
+DEFAULT_FONT_NAME = "texgyreheros-regular.otf"
 
 def log(msg):
     print(msg, file=sys.stderr)
@@ -125,8 +126,8 @@ def load_font(px, path=None):
     return ImageFont.load_default(px), "default"
 
 
-def caption_font(size: int, font_name: str = DEFAULT_FONT) -> ImageFont.FreeTypeFont:
-    path = FONTS_DIR / font_name
+def caption_font(size: int) -> ImageFont.FreeTypeFont:
+    path = FONTS_DIR / DEFAULT_FONT_DIR / DEFAULT_FONT_NAME
     if not path.is_file():
         raise FileNotFoundError(f"caption font missing: {path}")
     return ImageFont.truetype(str(path), size)
