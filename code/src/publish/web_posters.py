@@ -63,12 +63,15 @@ def handle(args: argparse.Namespace) -> None:
     fmt = "WEBP" if args.format == "webp" else "JPEG"
     index = []
     for size in sorted(os.listdir(args.source)):
+
         sdir = os.path.join(args.source, size)
         if not (SIZE_DIR.match(size) and os.path.isdir(sdir)):
             continue  # skips thumbs/, previews/, stray files
+
         for fn in sorted(os.listdir(sdir)):
             if not fn.lower().endswith((".png", ".tif", ".tiff", ".jpg", ".jpeg")):
                 continue
+
             src_path = os.path.join(sdir, fn)
             name = os.path.splitext(fn)[0]
             entry = {"name": name, "size": size}
@@ -87,14 +90,18 @@ def handle(args: argparse.Namespace) -> None:
                     with Image.open(out) as im:
                         entry[kind[:-1]] = {"src": rel, "w": im.width, "h": im.height}
                     continue
+
                 if src is None:
                     src = Image.open(src_path).convert("RGB")
+
                 data, (w, h), q = fit_budget(src, px, kb * 1000, fmt)
                 os.makedirs(os.path.dirname(out), exist_ok=True)
                 with open(out, "wb") as f:
                     f.write(data)
+                    
                 entry[kind[:-1]] = {"src": rel, "w": w, "h": h}
                 print(f"{rel}: {w}x{h} q{q} {len(data) / 1000:.0f} KB", file=sys.stderr)
+
             index.append(entry)
 
     with open(os.path.join(args.source, "web.json"), "w") as f:

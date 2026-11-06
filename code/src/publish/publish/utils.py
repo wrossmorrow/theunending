@@ -65,7 +65,7 @@ def do_uploads(
         fn = path.split("/")[-1]
         put_file_no_overwrite(
             s3,
-            fn,
+            path,
             settings.SITE_BUCKET,
             f"{settings.SITE_IMG_ASSETS_PREFIX}/{fn}",
             "image/png",
@@ -76,7 +76,7 @@ def do_uploads(
         fn = path.split("/")[-1]
         put_file_no_overwrite(
             s3,
-            fn,
+            path,
             settings.SITE_BUCKET,
             f"{settings.SITE_IMG_ASSETS_PREFIX}/{fn}",
             "application/json",
