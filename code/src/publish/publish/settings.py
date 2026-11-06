@@ -15,7 +15,7 @@ from pydantic_settings import BaseSettings
 class Run(BaseModel):
     run_id: UUID
     set_id: UUID
-    type: Literal["BATCH"]  # EVALUATION, but require BATCH
+    type: Literal["PUBLISH"]  # also BATCH, EVALUATION; but require PUBLISH
     status: Literal["COMPLETED"]  # others, but require COMPLETED
 
 
