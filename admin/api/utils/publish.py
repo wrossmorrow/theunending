@@ -149,7 +149,7 @@ class Publisher:
                 ]
             },
             startedBy=f"{request.set_id}-{request.run_id}"[:128],
-            clientToken=str(request.set_id),
+            clientToken=str(request.run_id),
         )
 
         # e.g. capacity or config problems: the launch failed, retry from the outbox
