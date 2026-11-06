@@ -324,6 +324,18 @@ data "aws_iam_policy_document" "publish_task_s3" {
       "arn:aws:s3:::theunending-ai-site-content-use1/assets/*",
     ]
   }
+  
+  statement {
+    sid       = "AssetsAreWriteOnce"
+    effect    = "Deny"
+    actions   = ["s3:PutObject"]
+    resources = ["arn:aws:s3:::theunending-ai-site-content-use1/assets/*"]
+    condition {
+      test     = "Null"
+      variable = "s3:if-none-match"
+      values   = ["true"]
+    }
+  }
 
   # Deliberately no s3:DeleteObject anywhere.
 }
