@@ -145,6 +145,8 @@ admin/
     - get one set (or 404)
 * PATCH /api/v0/sets/{set_id:uuidv7}
     - update set fields
+* POST /api/v0/sets/{set_id:uuidv7}/publish
+    - publish a COMPLETED set (enqueues a publish run, which runs the publish task)
 * DELETE /api/v0/sets/{set_id:uuidv7}
     - mark ABANDONED
 
@@ -176,12 +178,16 @@ admin/
 * The DELETE implementation will be _soft_: mark ABANDONED, leave in database
 * set "COMPLETION" will happen based on the result on an external job and handled with run updates described below
 * set semantics: a set is a named container for many images (thousands); COMMITTED means "ready to execute the creation of thousands", COMPLETED means "we've done it, we have all our images". A set has one commit and should be immutable after that, up to reconciling batch job failures that change state. A COMPLETED set can be a new entry on a webpage, but that is not being discussed yet.
+* set "PUBLISHING" and "PUBLISHED" cover the step after COMPLETED: the set is being published, then published (with published_at stamped on PUBLISHED).
 * set status flow:
     * DRAFT -> COMMITTED (when a draft is committed, see below)
     * DRAFT -> ABANDONED (when DELETE /api/v0/sets/{set_id} called)
     * COMMITTED -> COMPLETED (when external type: BATCH job finishes successfully)
     * COMMITTED -> FAILED (when external type: BATCH job finishes unsuccessfully)
     * FAILED -> COMPLETED (when a re-run external job finished successfully)
+    * COMPLETED -> PUBLISHING (when the set is published, see below)
+    * PUBLISHING -> PUBLISHED (when the publish run finishes successfully)
+    * PUBLISHING -> FAILED (when the publish run finishes unsuccessfully)
 
 ## drafts
 
@@ -192,7 +198,7 @@ admin/
     * set_id (FK, uuidv7)
     * prompt (required, string/text)
     * model_prompt_hash (generated on creation, defined as sha256(sets[set_id].model::prompt))
-    * status (PENDING, IN_PROGRESS, FAILED, COMPLETED)
+    * status (PENDING, IN_PROGRESS, FAILED, COMPLETED, COMMITTED)
     * created_at (generated on creation, UTC timestamp)
 
 ### HTTP calls
@@ -219,6 +225,7 @@ admin/
     * PENDING -> FAILED (external job created, but failed to start)
     * IN_PROGRESS -> COMPLETED | FAILED (external job finished, with success or error)
     * FAILED -> COMPLETED (a re-run of the external job finished successfully)
+    * COMPLETED -> COMMITTED (when the draft is committed, see below)
     * implement any X -> X state transition (same state as current) as a no-op success
 * drafts are the way to evaluate options before committing a set; drafts associated with a set are the "drafting" phase. Holding "commit" at the draft level lets the user pick the draft that works best, and "commit" the set with that draft's prompt, model_prompt_hash, and the commit "post_date".
 * There is no "direct" way to update a draft status, the system will do this as described elsewhere
@@ -242,6 +249,7 @@ admin/
         * set[set_id].post_date <- current date in YYYY-MM-DD format for Los Angeles/Pacific TZ
         * set[set_id].committed_at <- current UTC timestamp
         * set[set_id].status <- COMMITTED
+        * draft[draft_id].status <- COMMITTED
         * runs an external job
             * we create a run for this set/draft storing:
                 * the set_id/draft_id FK's
@@ -259,7 +267,7 @@ admin/
     * external_run_id (nullable, string/text, from job system response; set when the worker submits the job)
     * set_id (FK, uuidv7)
     * draft_id (FK, uuidv7)
-    * type (EVALUATION, BATCH)
+    * type (EVALUATION, BATCH, PUBLISH)
     * status (PENDING, SUBMITTED, IN_PROGRESS, FAILED, COMPLETED)
     * message (optional, string/text, human-readable status message from the external job)
     * details (optional, JSON, structured details from the external job)
@@ -284,6 +292,7 @@ admin/
 * run_id should be server-generated (uuidv7) and unique per external job
 * external_run_id is returned from the job system and used to correlate the external job with its run.
 * run objects should only be created by the code, from draft creation, set committing, and internally for "redos"
+* run types: EVALUATION (draft image eval), BATCH (committed set image creation), PUBLISH (committed set publishing to the site). PUBLISH runs are launched by the API publisher worker (ECS Fargate task) rather than through the external job system queue.
 * runs are immutable except timestamps and status; status updates may also carry optional `message` and JSON `details`
 * run statuses are linear: PENDING -> SUBMITTED -> IN_PROGRESS -> COMPLETED | FAILED are the valid changes
     * PENDING -> SUBMITTED (the worker submitted the job to the external system and got an external run id)
@@ -346,6 +355,18 @@ user -> create draft (POST /api/v0/sets/{set_id}/drafts)
 
 user -> update set (PATCH /api/v0/sets/{set_id}) with slug/name
     <- 400, set already COMMITTED
+
+user -> publish set (POST /api/v0/sets/{set_id}/publish)
+    -> do checks on set status
+        -> set must be in status: COMPLETED (the batch run has finished)
+        -> create/store a new type: PUBLISH run object (status: PENDING, external_run_id: NULL)
+        -> enqueue the publish run onto the local publish queue, which launches an ECS Fargate task
+        ("in the background"; the task runs the publish command and reports status via PUT /api/v0/runs/{run_id}/status)
+            <- publish task starts, calls PUT /api/v0/runs/{run_id}/status ("IN_PROGRESS")
+            <- publish task fails, calls PUT /api/v0/runs/{run_id}/status ("FAILED")
+            <- publish task completes, calls PUT /api/v0/runs/{run_id}/status ("COMPLETED")
+            on COMPLETED, set the set.status to PUBLISHED (and set published_at), on FAILED, set the set.status to FAILED
+    <- 200, 400, etc
 
 Notes:
 * the "external jobs" referenced below are triggerable by a plain HTTP call. We will need to align on the payloads through working on the design, but triggering them won't be any more complicated than this.

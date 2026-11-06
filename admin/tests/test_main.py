@@ -13,8 +13,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from api.database import models as database
 from api.main import api
 from api.settings import settings
-from api.utils.jobs import ExternalJobClient, JobRequest, get_job_client
+from api.utils.jobs import (
+    ExternalJobClient,
+    JobAPIResponse,
+    JobRequest,
+    get_job_client,
+)
 from api.utils.prompt import compute_model_prompt_hash
+from api.utils.publish import Publisher, PublishRequest, get_publisher
 
 
 class MockExternalJobClient(ExternalJobClient):
@@ -51,6 +57,111 @@ def mock_job_client(
         yield client
     finally:
         api.dependency_overrides.pop(get_job_client, None)
+
+
+class MockPublisher(Publisher):
+    """Mock publisher that records enqueued publish requests."""
+
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+        """Create a mock publisher that records enqueued publish requests."""
+        super().__init__(
+            queue_timeout_seconds=0.25,
+            max_attempts=3,
+        )
+        self.enqueued_requests: list[PublishRequest] = []
+
+    async def put(self, request: PublishRequest) -> None:
+        """Record an enqueued publish request without launching a task."""
+        self.enqueued_requests.append(request)
+
+
+@contextmanager
+def mock_publisher(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> Iterator[MockPublisher]:
+    """Override the publisher dependency with a mock that records enqueues."""
+    publisher = MockPublisher(session_factory=session_factory)
+    api.dependency_overrides[get_publisher] = lambda: publisher
+    try:
+        yield publisher
+    finally:
+        api.dependency_overrides.pop(get_publisher, None)
+
+
+def _set_run_status(client: TestClient, run_id: str, status: str) -> None:
+    """Drive a run through an allowed status update and assert the response."""
+    response = client.put(f"/api/v0/runs/{run_id}/status", json={"status": status})
+    assert response.status_code == 200, response.text
+
+
+def _create_completed_set(
+    client: TestClient,
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[str, str, str]:
+    """Create a set that has completed its batch run and return (set_id, draft_id, batch_run_id)."""
+
+    async def _fake_submit_job(
+        self: ExternalJobClient, job_request: JobRequest
+    ) -> JobAPIResponse:
+        """Fake an external job submission so the worker does not drive run statuses."""
+        return JobAPIResponse(external_run_id=f"external-{job_request.run_id}")
+
+    monkeypatch.setattr(ExternalJobClient, "submit_job", _fake_submit_job)
+
+    created = client.post(
+        "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+    )
+    set_id = created.json()["set_id"]
+    with mock_job_client(session_factory) as job_client:
+        response = client.post(
+            f"/api/v0/sets/{set_id}/drafts",
+            json={"prompt": f"a cat {uuid4().hex}"},
+        )
+    assert response.status_code == 201
+    draft_id = response.json()["draft_id"]
+    run_id = next(
+        run["run_id"]
+        for run in client.get("/api/v0/runs", params={"draft_id": draft_id}).json()[
+            "runs"
+        ]
+    )
+    assert len(job_client.enqueued_requests) == 1
+
+    _set_run_status(client, run_id, "SUBMITTED")
+    _set_run_status(client, run_id, "IN_PROGRESS")
+    _set_run_status(client, run_id, "COMPLETED")
+
+    client.patch(
+        f"/api/v0/sets/{set_id}",
+        json={"slug": "completed-set", "name": "Completed Set"},
+    )
+    commit_response = client.post(f"/api/v0/sets/{set_id}/drafts/{draft_id}/commit")
+    assert commit_response.status_code == 200, commit_response.text
+    assert commit_response.json()["status"] == "COMMITTED"
+
+    runs_response = client.get("/api/v0/runs", params={"set_id": set_id})
+    assert runs_response.status_code == 200
+    batch_runs = [run for run in runs_response.json()["runs"] if run["type"] == "BATCH"]
+    assert len(batch_runs) == 1
+    batch_run_id = batch_runs[0]["run_id"]
+    _set_run_status(client, batch_run_id, "SUBMITTED")
+    _set_run_status(client, batch_run_id, "IN_PROGRESS")
+    _set_run_status(client, batch_run_id, "COMPLETED")
+
+    set_response = client.get(f"/api/v0/sets/{set_id}")
+    assert set_response.status_code == 200
+    assert set_response.json()["status"] == "COMPLETED"
+    return set_id, draft_id, batch_run_id
+
+
+def _get_run_id_by_type(client: TestClient, set_id: str, run_type: str) -> str:
+    """Get the run id of the latest run of a given type for a set."""
+    runs_response = client.get("/api/v0/runs", params={"set_id": set_id})
+    assert runs_response.status_code == 200
+    runs = [run for run in runs_response.json()["runs"] if run["type"] == run_type]
+    assert len(runs) == 1
+    return runs[0]["run_id"]
 
 
 def _create_set_with_draft(
@@ -697,7 +808,7 @@ def test_update_run_status_failed_batch_run_marks_set_failed(
         assert set_response.json()["status"] == "FAILED"
         draft_response = client.get(f"/api/v0/sets/{set_id}/drafts/{draft_id}")
         assert draft_response.status_code == 200
-        assert draft_response.json()["status"] == "COMPLETED"
+        assert draft_response.json()["status"] == "COMMITTED"
 
 
 def test_redo_run_requires_failed_status_returns_400(
@@ -826,3 +937,124 @@ def test_create_draft_with_failing_job_returns_500(
         finally:
             api.dependency_overrides.pop(get_job_client, None)
         assert response.status_code == 500
+
+
+def test_publish_set_returns_200_and_enqueues_publish_run(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Publishing a COMPLETED set returns 200 and enqueues a publish run."""
+    with TestClient(api) as client:
+        set_id, draft_id, batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        with mock_publisher(session_factory) as publisher:
+            response = client.post(f"/api/v0/sets/{set_id}/publish")
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["status"] == "PUBLISHING"
+        assert len(publisher.enqueued_requests) == 1
+        enqueued = publisher.enqueued_requests[0]
+        assert str(enqueued.set_id) == set_id
+        assert str(enqueued.draft_id) == draft_id
+        assert str(enqueued.run_id) != batch_run_id
+        assert enqueued.attempts == 0
+
+
+def test_publish_set_not_completed_returns_400() -> None:
+    """Publishing a set that is not COMPLETED returns 400."""
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        response = client.post(f"/api/v0/sets/{set_id}/publish")
+        assert response.status_code == 400
+        assert "COMPLETED" in response.json()["detail"]
+
+
+def test_publish_set_not_found_returns_404() -> None:
+    """Publishing a missing set returns 404."""
+    with TestClient(api) as client:
+        response = client.post(f"/api/v0/sets/{uuid4()}/publish")
+        assert response.status_code == 404
+
+
+def test_update_run_status_publish_completed_marks_set_published(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A completed publish run marks the set PUBLISHED and stamps published_at."""
+    with TestClient(api) as client:
+        set_id, _draft_id, _batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        with mock_publisher(session_factory):
+            response = client.post(f"/api/v0/sets/{set_id}/publish")
+        assert response.status_code == 200, response.text
+        publish_run_id = _get_run_id_by_type(client, set_id, "PUBLISH")
+
+        assert (
+            client.put(
+                f"/api/v0/runs/{publish_run_id}/status", json={"status": "IN_PROGRESS"}
+            ).status_code
+            == 200
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{publish_run_id}/status", json={"status": "COMPLETED"}
+            ).status_code
+            == 200
+        )
+        set_response = client.get(f"/api/v0/sets/{set_id}")
+        assert set_response.status_code == 200
+        assert set_response.json()["status"] == "PUBLISHED"
+        assert set_response.json()["published_at"]
+
+
+def test_update_run_status_publish_failed_marks_set_failed(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failed publish run marks the set FAILED."""
+    with TestClient(api) as client:
+        set_id, _draft_id, _batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        with mock_publisher(session_factory):
+            response = client.post(f"/api/v0/sets/{set_id}/publish")
+        assert response.status_code == 200, response.text
+        publish_run_id = _get_run_id_by_type(client, set_id, "PUBLISH")
+
+        assert (
+            client.put(
+                f"/api/v0/runs/{publish_run_id}/status", json={"status": "FAILED"}
+            ).status_code
+            == 200
+        )
+        set_response = client.get(f"/api/v0/sets/{set_id}")
+        assert set_response.status_code == 200
+        assert set_response.json()["status"] == "FAILED"
+        assert set_response.json()["published_at"] is None
+
+
+def test_update_run_status_publish_invalid_transition_returns_400(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Updating a publish run status without a valid transition returns 400."""
+    with TestClient(api) as client:
+        set_id, _draft_id, _batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        with mock_publisher(session_factory):
+            response = client.post(f"/api/v0/sets/{set_id}/publish")
+        assert response.status_code == 200, response.text
+        publish_run_id = _get_run_id_by_type(client, set_id, "PUBLISH")
+
+        response = client.put(
+            f"/api/v0/runs/{publish_run_id}/status", json={"status": "COMPLETED"}
+        )
+        assert response.status_code == 400
+        assert "Invalid run status transition" in response.json()["detail"]
+        assert client.get(f"/api/v0/sets/{set_id}").json()["status"] == "PUBLISHING"

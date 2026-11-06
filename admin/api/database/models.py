@@ -16,6 +16,8 @@ class SetStatus(str, Enum):
     COMMITTED = "COMMITTED"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+    PUBLISHING = "PUBLISHING"
+    PUBLISHED = "PUBLISHED"
 
 
 class DraftStatus(str, Enum):
@@ -23,11 +25,13 @@ class DraftStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     FAILED = "FAILED"
     COMPLETED = "COMPLETED"
+    COMMITTED = "COMMITTED"
 
 
 class RunType(str, Enum):
     EVALUATION = "EVALUATION"
     BATCH = "BATCH"
+    PUBLISH = "PUBLISH"
 
 
 class RunStatus(str, Enum):
@@ -63,6 +67,7 @@ class Set(SQLModel, table=True):
         ),
     )
     committed_at: datetime | None = Field(default=None)
+    published_at: datetime | None = Field(default=None)
     abandoned_at: datetime | None = Field(default=None)
 
 
