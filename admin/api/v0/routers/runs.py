@@ -24,12 +24,13 @@ async def list_runs(
         async_sessionmaker[AsyncSession], Depends(get_session_factory)
     ],
     status: database.RunStatus | None = None,
+    type: database.RunType | None = None,
     set_id: UUID | None = None,
     draft_id: UUID | None = None,
 ) -> models.RunsResponse:
     """List runs with query filters."""
     return await runs_handlers.list_runs(
-        session_factory, status=status, set_id=set_id, draft_id=draft_id
+        session_factory, status=status, run_type=type, set_id=set_id, draft_id=draft_id
     )
 
 

@@ -106,7 +106,7 @@ class Run(SQLModel, table=True):
     external_run_id: str | None = Field(min_length=1)
     set_id: UUID = Field(index=True, foreign_key="sets.set_id")
     draft_id: UUID = Field(index=True, foreign_key="drafts.draft_id")
-    type: RunType = Field()
+    type: RunType = Field(index=True)
     status: RunStatus = Field(default=RunStatus.PENDING)
     message: str | None = Field(default=None, max_length=1024)
     details: dict[str, Any] | None = Field(default=None, sa_type=postgresql.JSONB)

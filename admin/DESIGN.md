@@ -287,7 +287,7 @@ admin/
 ### HTTP calls
 
 * GET /api/v0/runs
-    - list runs with query param filters (set, draft, status, ...)
+    - list runs with query param filters (set, draft, status, type, ...)
 * GET /api/v0/runs/{run_id:uuidv7}
     - return a specific run by it's id alone or 404
 * POST /api/v0/runs/{run_id:uuidv7}

@@ -726,6 +726,43 @@ def test_list_runs_by_status_returns_completed_run(
         assert any(r["run_id"] == run_id for r in body["runs"])
 
 
+def test_list_runs_by_type_returns_expected_runs(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Filtering runs by type returns only the runs of that type."""
+    with TestClient(api) as client:
+        set_id, draft_id, batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        response = client.get(
+            "/api/v0/runs", params={"type": "EVALUATION", "set_id": set_id}
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body["runs"]) == 1
+        assert body["runs"][0]["type"] == "EVALUATION"
+        assert body["runs"][0]["draft_id"] == str(draft_id)
+
+        response = client.get(
+            "/api/v0/runs", params={"type": "BATCH", "set_id": set_id}
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body["runs"]) == 1
+        assert body["runs"][0]["type"] == "BATCH"
+        assert body["runs"][0]["run_id"] == batch_run_id
+
+        response = client.get(
+            "/api/v0/runs", params={"type": "PUBLISH", "set_id": set_id}
+        )
+        assert response.status_code == 200
+        assert response.json()["runs"] == []
+
+        response = client.get("/api/v0/runs", params={"type": "NOT_A_TYPE"})
+        assert response.status_code == 422
+
+
 def test_get_run_returns_created_run(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:

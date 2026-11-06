@@ -18,6 +18,7 @@ from api.v0.schema import models
 async def list_runs(
     session_factory: async_sessionmaker[AsyncSession],
     status: database.RunStatus | None = None,
+    run_type: database.RunType | None = None,
     set_id: UUID | None = None,
     draft_id: UUID | None = None,
 ) -> models.RunsResponse:
@@ -27,6 +28,8 @@ async def list_runs(
         stmt = select(database.Run)
         if status is not None:
             stmt = stmt.where(table.c.status == status)
+        if run_type is not None:
+            stmt = stmt.where(table.c.type == run_type)
         if set_id is not None:
             stmt = stmt.where(table.c.set_id == set_id)
         if draft_id is not None:
