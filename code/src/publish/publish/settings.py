@@ -132,9 +132,18 @@ class PublishSettings(BaseSettings):
         return f"assets/img/{self.POST_NAME}"
 
     SITE_OG_IMAGE_PREFIX: str = "assets/og"
-    SITE_POSTER_RAW_PREFIX: str = "assets/img/posters/raw"
-    SITE_POSTER_PREVIEW_PREFIX: str = "assets/img/posters/previews"
-    SITE_POSTER_THUMBS_PREFIX: str = "assets/img/posters/thumbs"
+
+    @property
+    def SITE_POSTER_RAW_PREFIX(self) -> str:
+        return f"assets/img/posters/raw/{self.POST_NAME}"
+
+    @property
+    def SITE_POSTER_PREVIEW_PREFIX(self) -> str:
+        return f"assets/img/posters/previews/{self.POST_NAME}"
+
+    @property
+    def SITE_POSTER_THUMBS_PREFIX(self) -> str:
+        return f"assets/img/posters/thumbs/{self.POST_NAME}"
 
     # verbose stuff about posters
 
