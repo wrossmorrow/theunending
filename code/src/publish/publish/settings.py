@@ -112,7 +112,7 @@ class PublishSettings(BaseSettings):
         return {
             "base": f"https://theunending.ai/assets/img/{self.POST_NAME}/",
             "manifest": f"assets/streams/{self.SET_NAME}.json",
-            "meta": f"assets/img/{self.POST_NAME}/{{id}}.json",
+            "meta": f"/assets/img/{self.POST_NAME}/{{id}}.json",
         }
 
     # raw source(s)
