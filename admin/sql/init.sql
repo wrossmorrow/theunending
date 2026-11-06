@@ -63,6 +63,7 @@ CREATE TABLE runs (
 
 CREATE INDEX ix_runs_set_id ON runs (set_id);
 CREATE INDEX ix_runs_draft_id ON runs (draft_id);
+CREATE INDEX ix_runs_type ON runs (type);
 
 
 CREATE TABLE run_status_events (
