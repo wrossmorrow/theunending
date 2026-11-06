@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from api.database import models as database
 from api.database.db import get_session_factory
+from api.utils.publish import Publisher, get_publisher
 from api.v0.handlers import sets as sets_handlers
 from api.v0.schema import models
 
@@ -70,6 +71,22 @@ async def patch_set(
 ) -> database.Set:
     """Update set fields (only slug/name; DRAFT only)."""
     return await sets_handlers.patch_set(set_id, update, session_factory)
+
+
+@sets_router.post(
+    "/sets/{set_id}/publish",
+    response_model=database.Set,
+    status_code=status.HTTP_200_OK,
+)
+async def publish_set(
+    set_id: UUID,
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
+    publisher: Annotated[Publisher, Depends(get_publisher)],
+) -> database.Set:
+    """Update set fields (only slug/name; DRAFT only)."""
+    return await sets_handlers.publish_set(set_id, session_factory, publisher)
 
 
 @sets_router.delete(

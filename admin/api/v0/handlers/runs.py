@@ -77,6 +77,7 @@ async def redo_run(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Run {run_id} is not in FAILED status.",
             )
+        
         draft = await session.get(database.Draft, run.draft_id)
         if draft is None:
             raise HTTPException(
@@ -212,30 +213,53 @@ async def update_run_status(
                 status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Draft {run.draft_id} not found.",
             )
-        if (
-            run_type == database.RunType.EVALUATION
-            and update.status != database.RunStatus.SUBMITTED
-        ):
-            draft.status = database.DraftStatus(update.status.value)
-            draft.updated_at = datetime.now(UTC)
-            session.add(draft)
-            await session.commit()
-            await session.refresh(draft)
 
-        if run_type == database.RunType.BATCH and update.status in (
-            database.RunStatus.COMPLETED,
-            database.RunStatus.FAILED,
-        ):
-            committed_set = await session.get(database.Set, run_set_id)
-            if committed_set is not None:
-                committed_set.status = (
-                    database.SetStatus.COMPLETED
-                    if update.status == database.RunStatus.COMPLETED
-                    else database.SetStatus.FAILED
+        match run_type:
+            case database.RunType.EVALUATION:
+                if update.status != database.RunStatus.SUBMITTED:
+                    draft.status = database.DraftStatus(update.status.value)
+                    draft.updated_at = datetime.now(UTC)
+                    session.add(draft)
+                    await session.commit()
+                    await session.refresh(draft)
+
+            case database.RunType.BATCH:
+                if update.status in (
+                    database.RunStatus.COMPLETED,
+                    database.RunStatus.FAILED,
+                ):
+                    committed_set = await session.get(database.Set, run_set_id)
+                    if committed_set is not None:
+                        committed_set.status = (
+                            database.SetStatus.COMPLETED
+                            if update.status == database.RunStatus.COMPLETED
+                            else database.SetStatus.FAILED
+                        )
+                        session.add(committed_set)
+                        await session.commit()
+                        await session.refresh(committed_set)
+
+            case database.RunType.PUBLISH:
+                if update.status in (
+                    database.RunStatus.COMPLETED,
+                    database.RunStatus.FAILED,
+                ):
+                    committed_set = await session.get(database.Set, run_set_id)
+                    if committed_set is not None:
+                        committed_set.status = (
+                            database.SetStatus.PUBLISHED
+                            if update.status == database.RunStatus.COMPLETED
+                            else database.SetStatus.FAILED
+                        )
+                        session.add(committed_set)
+                        await session.commit()
+                        await session.refresh(committed_set)
+
+            case _:
+                raise HTTPException(
+                    status_code=http_status.HTTP_400_BAD_REQUEST,
+                    detail=f"Unsupported run type {run_type} for update.",
                 )
-                session.add(committed_set)
-                await session.commit()
-                await session.refresh(committed_set)
 
         await session.refresh(run)
         return run

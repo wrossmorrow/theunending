@@ -6,9 +6,10 @@ from uuid import UUID
 from fastapi import HTTPException
 from fastapi import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from sqlmodel import select
+from sqlmodel import and_, select
 
 from api.database import models as database
+from api.utils.publish import Publisher, PublishRequest
 from api.v0.schema import models
 
 
@@ -86,14 +87,82 @@ async def patch_set(
                 status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Set {set_id} not found.",
             )
+
         if set_.status != database.SetStatus.DRAFT:
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Set {set_id} is not in DRAFT status.",
             )
+
         set_.slug = update.slug
         set_.name = update.name
+
         set_.updated_at = datetime.now(UTC)
+        session.add(set_)
+        await session.commit()
+        await session.refresh(set_)
+        return set_
+
+
+async def publish_set(
+    set_id: UUID,
+    session_factory: async_sessionmaker[AsyncSession],
+    publisher: Publisher,
+) -> database.Set:
+    """Publish set"""
+    async with session_factory() as session:
+        table = database.Set.metadata.tables[database.Set.__tablename__]
+        stmt = select(database.Set).where(table.c.set_id == set_id).with_for_update()
+        set_ = (await session.execute(stmt)).scalars().first()
+        if set_ is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Set {set_id} not found.",
+            )
+        if set_.status != database.SetStatus.COMPLETED:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=f"Set {set_id} is not in COMPLETED status.",
+            )
+
+        stmt = (
+            select(database.Draft.draft_id)
+            .where(
+                and_(
+                    database.Draft.set_id == set_id,
+                    database.Draft.status == database.DraftStatus.COMMITTED,
+                )
+            )
+            .order_by(database.Draft.created_at.desc())
+        )
+        draft_id = (await session.execute(stmt)).scalars().first()
+        if draft_id is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Set {set_id} had no COMMITTED draft, one expected.",
+            )
+
+        run = database.Run(
+            external_run_id=None,
+            set_id=set_id,
+            draft_id=draft_id,
+            type=database.RunType.PUBLISH,
+            status=database.RunStatus.PENDING,
+        )
+        session.add(run)
+        await session.flush()
+        await session.refresh(run)
+
+        await publisher.put(
+            PublishRequest(
+                set_id=set_id,
+                draft_id=draft_id,
+                run_id=run.run_id,
+            )
+        )
+
+        set_.updated_at = datetime.now(UTC)
+        set_.status = database.SetStatus.PUBLISHING
         session.add(set_)
         await session.commit()
         await session.refresh(set_)

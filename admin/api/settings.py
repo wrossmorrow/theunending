@@ -26,5 +26,11 @@ class Settings(BaseSettings):
     submit_timeout_seconds: float = 60
     max_attempts: int = 3
 
+    publish_private_subnet_ids: list[str] = []
+    publish_security_group_id: str = ""
+    publish_ecs_cluster: str = "theunending-publish"
+    publish_container: str = "publish"
+    publish_task_family: str = "theunending-publish"
+
 
 settings = Settings()
