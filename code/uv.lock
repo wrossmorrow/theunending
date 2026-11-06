@@ -589,70 +589,6 @@ wheels = [
 ]
 
 [[package]]
-name = "imagen"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "boto3" },
-    { name = "httpx" },
-    { name = "numpy" },
-    { name = "pillow" },
-    { name = "protobuf" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "tenacity" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "boto3-stubs", extra = ["s3"] },
-    { name = "fastapi" },
-    { name = "mypy" },
-    { name = "ruff" },
-]
-imagen = [
-    { name = "accelerate" },
-    { name = "diffusers" },
-    { name = "modal" },
-    { name = "open-clip-torch" },
-    { name = "sentencepiece" },
-    { name = "torch" },
-    { name = "torchvision" },
-    { name = "transformers" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "boto3", specifier = ">=1.43.92" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "numpy", specifier = ">=1.26" },
-    { name = "pillow", specifier = ">=12.3.0" },
-    { name = "protobuf", specifier = ">=7.36.1" },
-    { name = "pydantic", specifier = ">=2.14.2" },
-    { name = "pydantic-settings", specifier = ">=2.16.2" },
-    { name = "tenacity", specifier = ">=9.2.1" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "boto3-stubs", extras = ["s3"], specifier = ">=1.43.123" },
-    { name = "fastapi", specifier = ">=0.162.0" },
-    { name = "mypy", specifier = ">=2.4.1" },
-    { name = "ruff", specifier = ">=0.17.3" },
-]
-imagen = [
-    { name = "accelerate", specifier = ">=1.15.0" },
-    { name = "diffusers", specifier = ">=0.40.0" },
-    { name = "modal", specifier = ">=1.6.3" },
-    { name = "open-clip-torch", specifier = ">=2.32" },
-    { name = "sentencepiece", specifier = ">=0.2.2" },
-    { name = "torch", specifier = ">=2.14.0" },
-    { name = "torchvision", specifier = ">=0.29.0" },
-    { name = "transformers", specifier = ">=5.17.0" },
-]
-publish = []
-
-[[package]]
 name = "importlib-metadata"
 version = "9.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1465,6 +1401,70 @@ sdist = { url = "https://files.pythonhosted.org/packages/82/9e/497c1c8ebe5a5b5d1
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d6/26/1ff2b0721ac66a3ec5b1402b333110b352ab0a8724052ac279a7b82d40c4/tenacity-9.2.1-py3-none-any.whl", hash = "sha256:9e56f17539296baab7beabb08b92f6ee3d7be92d8be72d763360677c2ad6580e", size = 32310, upload-time = "2026-10-07T12:13:00.102Z" },
 ]
+
+[[package]]
+name = "theunending"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "boto3" },
+    { name = "httpx" },
+    { name = "numpy" },
+    { name = "pillow" },
+    { name = "protobuf" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "tenacity" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "boto3-stubs", extra = ["s3"] },
+    { name = "fastapi" },
+    { name = "mypy" },
+    { name = "ruff" },
+]
+imagen = [
+    { name = "accelerate" },
+    { name = "diffusers" },
+    { name = "modal" },
+    { name = "open-clip-torch" },
+    { name = "sentencepiece" },
+    { name = "torch" },
+    { name = "torchvision" },
+    { name = "transformers" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "boto3", specifier = ">=1.43.92" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "numpy", specifier = ">=1.26" },
+    { name = "pillow", specifier = ">=12.3.0" },
+    { name = "protobuf", specifier = ">=7.36.1" },
+    { name = "pydantic", specifier = ">=2.14.2" },
+    { name = "pydantic-settings", specifier = ">=2.16.2" },
+    { name = "tenacity", specifier = ">=9.2.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "boto3-stubs", extras = ["s3"], specifier = ">=1.43.123" },
+    { name = "fastapi", specifier = ">=0.162.0" },
+    { name = "mypy", specifier = ">=2.4.1" },
+    { name = "ruff", specifier = ">=0.17.3" },
+]
+imagen = [
+    { name = "accelerate", specifier = ">=1.15.0" },
+    { name = "diffusers", specifier = ">=0.40.0" },
+    { name = "modal", specifier = ">=1.6.3" },
+    { name = "open-clip-torch", specifier = ">=2.32" },
+    { name = "sentencepiece", specifier = ">=0.2.2" },
+    { name = "torch", specifier = ">=2.14.0" },
+    { name = "torchvision", specifier = ">=0.29.0" },
+    { name = "transformers", specifier = ">=5.17.0" },
+]
+publish = []
 
 [[package]]
 name = "timm"

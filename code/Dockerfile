@@ -16,9 +16,11 @@ ENV UV_NO_DEV=1 \
 COPY pyproject.toml uv.lock README.md ./
 
 ARG UV_GROUP=publish
+ENV APP_MODULE=${UV_GROUP}
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project --no-dev --group ${UV_GROUP}
+    uv sync --frozen --no-dev --group ${UV_GROUP} --no-install-project
 
-COPY src/publish src/publish
+COPY src/${UV_GROUP} src/${UV_GROUP}
 
-ENTRYPOINT ["uv", "run"]
+ENV PYTHONPATH=/app/src
+ENTRYPOINT ["python", "-m"]

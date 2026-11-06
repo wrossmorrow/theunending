@@ -1,5 +1,5 @@
 [project]
-name = "imagen"
+name = "theunending"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -21,8 +21,10 @@ dependencies = [
 [project.scripts]
 imagen = "imagen:main"
 embed = "embed:main"
+publish = "publish:main"
 
 [build-system]
+module-name = ["imagen", "publish"]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
 
