@@ -30,5 +30,5 @@ locals {
   public_subnet_ids = aws_subnet.public[*].id
   private_subnet_ids = aws_subnet.private[*].id
 
-  image_ref = "${local.account}.dkr.ecr.${local.region}.amazonaws.com/theunending/theunending:${var.publish_image_tag}"
+  image_ref = "${local.account}.dkr.ecr.${local.region}.amazonaws.com/theunending/publish:${var.publish_image_tag}"
 }

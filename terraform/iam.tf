@@ -316,10 +316,9 @@ data "aws_iam_policy_document" "publish_task_s3" {
   # GetObject so a 412 can be compared against what's already there.
   statement {
     sid       = "WriteSitePrefixes"
-    actions   = [
-      "s3:PutObject",
-    ]
+    actions   = ["s3:PutObject"]
     resources = [
+      "arn:aws:s3:::theunending-ai-raw-content-use1/*",
       "arn:aws:s3:::theunending-ai-site-content-use1/drafts/*",
       "arn:aws:s3:::theunending-ai-site-content-use1/assets/*",
     ]

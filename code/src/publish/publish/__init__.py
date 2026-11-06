@@ -257,7 +257,7 @@ def handle(args: argparse.Namespace) -> None:
 
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    parser.add_argument("--batch-run-id", required=True)
+    parser.add_argument("--run-id", required=True)
     parser.set_defaults(func=handle)
     return parser
 

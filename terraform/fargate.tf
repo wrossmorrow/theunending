@@ -42,10 +42,17 @@ resource "aws_ecs_task_definition" "publish" {
       image     = local.image_ref
       essential = true
 
-      # Overridden per launch: ["publish", "--batch-run-id", "<run_id>"]
+      # Overridden per launch: ["publish", "publish", "--run-id", "<run_id>"]
       command = [
         "publish",
         "--help",
+      ]
+
+      environment = [
+        {
+          name  = "SITE_BUCKET",
+          value = "theunending-ai-raw-content-use1",
+        }
       ]
 
       secrets = [
