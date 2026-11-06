@@ -236,6 +236,7 @@ async def commit_draft(
         set_.model_prompt_hash = draft.model_prompt_hash
         set_.committed_at = datetime.now(UTC)
         set_.status = database.SetStatus.COMMITTED
+        draft.status = database.DraftStatus.COMMITTED
 
         run = database.Run(
             external_run_id=None,
