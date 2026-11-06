@@ -37,6 +37,23 @@ def list_image_ids(
     return [fn.strip(f"{source}/").strip(ext) for fn in glob(f"{source}/*{ext}")]
 
 
+def put_file_no_overwrite(
+    s3: S3Client,
+    filename: str,
+    bucket: str,
+    key: str,
+    content_type: str,
+) -> None:
+    with open(filename, "rb") as f:
+        s3.put_object(
+            Bucket=bucket,
+            Key=key,
+            Body=f,
+            ContentType=content_type,
+            IfNoneMatch="*",
+        )
+
+
 def do_uploads(
     settings: PublishSettings,
     s3: S3Client,
@@ -45,49 +62,64 @@ def do_uploads(
     # images/*.png -> SITE_BUCKET, assets/img/POST_NAME/
     for path in glob("images/*.png"):
         fn = path.split("/")[-1]
-        s3.upload_file(
-            Filename=fn,
-            Bucket=settings.SITE_BUCKET,
-            Key=f"{settings.SITE_IMG_ASSETS_PREFIX}/{fn}",
+        put_file_no_overwrite(
+            s3,
+            fn,
+            settings.SITE_BUCKET,
+            f"{settings.SITE_IMG_ASSETS_PREFIX}/{fn}",
+            "image/png",
         )
+        "application/json",
 
     # images/*.json -> SITE_BUCKET, assets/img/POST_NAME/
     for path in glob("similar/*.json"):
         fn = path.split("/")[-1]
-        s3.upload_file(
-            Filename=fn,
-            Bucket=settings.SITE_BUCKET,
-            Key=f"{settings.SITE_IMG_ASSETS_PREFIX}/{fn}",
+        put_file_no_overwrite(
+            s3,
+            fn,
+            settings.SITE_BUCKET,
+            f"{settings.SITE_IMG_ASSETS_PREFIX}/{fn}",
+            "application/json",
         )
 
     # og/SET_NAME.jpg -> SITE_BUCKET, assets/og/SET_NAME.jpg
-    s3.upload_file(
-        Filename=f"og/{settings.SET_NAME}.jpg",
-        Bucket=settings.SITE_BUCKET,
-        Key=f"{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg",
+    put_file_no_overwrite(
+        s3,
+        f"og/{settings.SET_NAME}.jpg",
+        settings.SITE_BUCKET,
+        f"{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg",
+        "image/jpeg",
     )
 
     # posters/*.png -> SITE_BUCKET, assets/img/posters/raw/POST_NAME/* (TODO: block public access?)
     for path in glob("posters/*.png"):
         fn = path.split("/")[-1]
-        s3.upload_file(
-            Filename=fn,
-            Bucket=settings.SITE_BUCKET,
-            Key=f"{settings.SITE_POSTER_RAW_PREFIX}/{fn}",
+        put_file_no_overwrite(
+            s3,
+            path,
+            settings.SITE_BUCKET,
+            f"{settings.SITE_POSTER_RAW_PREFIX}/{fn}",
+            "image/png",
         )
 
     # posters/{previews,thumbs}/*.webp -> SITE_BUCKET, assets/img/posters/{previews,thumbs}/POST_NAME/*
+
     for path in glob("posters/previews/*.webp"):
         fn = path.split("/")[-1]
-        s3.upload_file(
-            Filename=fn,
-            Bucket=settings.SITE_BUCKET,
-            Key=f"{settings.SITE_POSTER_PREVIEW_PREFIX}/{fn}",
+        put_file_no_overwrite(
+            s3,
+            path,
+            settings.SITE_BUCKET,
+            f"{settings.SITE_POSTER_PREVIEW_PREFIX}/{fn}",
+            "image/webp",
         )
+
     for path in glob("posters/thumbs/*.webp"):
         fn = path.split("/")[-1]
-        s3.upload_file(
-            Filename=fn,
-            Bucket=settings.SITE_BUCKET,
-            Key=f"{settings.SITE_POSTER_THUMBS_PREFIX}/{fn}",
+        put_file_no_overwrite(
+            s3,
+            path,
+            settings.SITE_BUCKET,
+            f"{settings.SITE_POSTER_THUMBS_PREFIX}/{fn}",
+            "image/webp",
         )
