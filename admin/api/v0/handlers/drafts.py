@@ -123,6 +123,7 @@ async def get_draft_preview(
             select(database.Run)
             .where(
                 database.Run.draft_id == draft_id,
+                database.Run.type == database.RunType.EVALUATION,
                 database.Run.status == database.RunStatus.COMPLETED,
             )
             .order_by(runs_table.c.created_at.desc())

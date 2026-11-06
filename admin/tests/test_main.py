@@ -609,6 +609,79 @@ def test_get_draft_preview_returns_presigned_url_when_completed(
         assert body["preview_url"].startswith("https://s3.example/")
 
 
+def test_get_draft_preview_after_committed_batch_returns_presigned_url(
+    monkeypatch: pytest.MonkeyPatch,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """A committed draft's preview still resolves via its EVALUATION run.
+
+    Committing a draft creates a new BATCH run for the same draft; the preview must
+    keep resolving through the completed EVALUATION run rather than the later BATCH run.
+    """
+    with TestClient(api) as client:
+        set_id, draft_id, run_id = _create_set_with_draft(client, session_factory)
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+        )
+        assert response.status_code == 200
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status",
+            json={
+                "status": "COMPLETED",
+                "details": {
+                    "keys": [f"drafts/{draft_id}/thematic-grid-0.png"],
+                    "bucket": "wrossmorrow-genai-repetitions-use1",
+                },
+            },
+        )
+        assert response.status_code == 200
+        monkeypatch.setattr(
+            "api.v0.handlers.drafts.create_presigned_url",
+            lambda bucket, key, expires_in=300: f"https://s3.example/{bucket}/{key}",
+        )
+        client.patch(
+            f"/api/v0/sets/{set_id}",
+            json={"slug": "committed-preview-set", "name": "Committed Preview Set"},
+        )
+        with mock_job_client(session_factory):
+            assert (
+                client.post(
+                    f"/api/v0/sets/{set_id}/drafts/{draft_id}/commit"
+                ).status_code
+                == 200
+            )
+        runs_response = client.get("/api/v0/runs", params={"set_id": set_id})
+        assert runs_response.status_code == 200
+        batch_runs = [
+            run for run in runs_response.json()["runs"] if run["type"] == "BATCH"
+        ]
+        assert len(batch_runs) == 1
+        batch_run_id = batch_runs[0]["run_id"]
+        assert (
+            client.put(
+                f"/api/v0/runs/{batch_run_id}/status", json={"status": "SUBMITTED"}
+            ).status_code
+            == 200
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{batch_run_id}/status", json={"status": "IN_PROGRESS"}
+            ).status_code
+            == 200
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{batch_run_id}/status", json={"status": "COMPLETED"}
+            ).status_code
+            == 200
+        )
+
+        response = client.get(f"/api/v0/sets/{set_id}/drafts/{draft_id}/preview")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["preview_url"].startswith("https://s3.example/")
+
+
 def test_list_runs_returns_created_run(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:

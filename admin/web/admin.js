@@ -814,8 +814,11 @@ function renderDrafts() {
       commit.title = reasons.length ? `Can't commit yet: ${reasons.join(", ")}` : "Commit the set with this prompt and run the batch";
     }
 
-    // Preview grid for completed drafts (presigned URL fetched from the API)
-    if (draft.status === "COMPLETED") showPreview(set.set_id, draft.draft_id, field(node, "preview"));
+    // Preview grid for completed drafts (presigned URL fetched from the API); committed
+    // drafts keep their preview since the draft status flips to COMMITTED on commit.
+    if (draft.status === "COMPLETED" || draft.status === "COMMITTED") {
+      showPreview(set.set_id, draft.draft_id, field(node, "preview"));
+    }
 
     // Evaluation runs for this draft
     const runsBox = field(node, "runs");
