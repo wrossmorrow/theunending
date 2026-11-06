@@ -239,6 +239,13 @@ async def finalize_run_status(
         run.updated_at = datetime.now(UTC)
         if status in (RunStatus.COMPLETED, RunStatus.FAILED):
             run.finished_at = datetime.now(UTC)
+        session.add(
+            database.RunStatusEvent(
+                run_id=run_id,
+                status=status,
+                source=database.RunStatusEventSource.INTERNAL,
+            )
+        )
         session.add(run)
         if status in (RunStatus.COMPLETED, RunStatus.FAILED):
             # Worker-driven terminal status updates follow the same draft/set

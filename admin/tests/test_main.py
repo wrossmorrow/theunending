@@ -780,6 +780,7 @@ def test_update_run_status_records_full_payload_as_status_event(
     assert event.message == "external job started"
     assert event.details == {"phase": "IN_PROGRESS"}
     assert event.received_at is not None
+    assert event.source == database.RunStatusEventSource.EXTERNAL
 
 
 def test_update_run_status_invalid_transition_does_not_record_status_event(

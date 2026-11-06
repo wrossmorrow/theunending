@@ -44,6 +44,7 @@ CREATE INDEX ix_drafts_set_id ON drafts (set_id);
 
 CREATE TYPE runtype AS ENUM ('EVALUATION', 'BATCH', 'PUBLISH');
 CREATE TYPE runstatus AS ENUM ('PENDING', 'SUBMITTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED');
+CREATE TYPE runstatuseventsource AS ENUM ('EXTERNAL', 'INTERNAL');
 
 CREATE TABLE runs (
 	run_id UUID NOT NULL PRIMARY KEY, 
@@ -70,6 +71,7 @@ CREATE TABLE run_status_events (
 	status runstatus NOT NULL, 
 	message VARCHAR(1024), 
 	details JSONB, 
+	source runstatuseventsource NOT NULL, 
 	received_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	PRIMARY KEY (event_id)
 )

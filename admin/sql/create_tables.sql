@@ -61,6 +61,7 @@ CREATE TABLE run_status_events (
 	status runstatus NOT NULL, 
 	message VARCHAR(1024), 
 	details JSONB, 
+	source runstatuseventsource NOT NULL, 
 	received_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	PRIMARY KEY (event_id)
 )

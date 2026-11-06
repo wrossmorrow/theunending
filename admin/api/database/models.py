@@ -42,6 +42,11 @@ class RunStatus(str, Enum):
     COMPLETED = "COMPLETED"
 
 
+class RunStatusEventSource(str, Enum):
+    EXTERNAL = "EXTERNAL"
+    INTERNAL = "INTERNAL"
+
+
 class Set(SQLModel, table=True):
     """A named container for many images (thousands)."""
 
@@ -128,4 +133,5 @@ class RunStatusEvent(SQLModel, table=True):
     status: RunStatus = Field()
     message: str | None = Field(default=None, max_length=1024)
     details: dict[str, Any] | None = Field(default=None, sa_type=postgresql.JSONB)
+    source: RunStatusEventSource = Field(default=RunStatusEventSource.EXTERNAL)
     received_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

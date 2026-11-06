@@ -227,6 +227,7 @@ async def update_run_status(
                 status=update.status,
                 message=update.message,
                 details=update.details,
+                source=database.RunStatusEventSource.EXTERNAL,
                 received_at=datetime.now(UTC),
             )
         )
