@@ -478,3 +478,8 @@ sets:
     manifest: /assets/streams/ordinary.json
     meta: /assets/img/2026-11-04-ordinary/{id}.json
     thumb: 13950ef3-d53d-4b89-8c55-0faa03e51a83
+  thursday-nov-5-heatmap:
+    thumb: 307e2c3e-508d-42b0-8766-974ec6d4ecf6
+    base: https://theunending.ai/assets/img/2026-11-06-thursday-nov-5-heatmap/
+    manifest: assets/streams/thursday-nov-5-heatmap.json
+    meta: /assets/img/2026-11-06-thursday-nov-5-heatmap/{id}.json

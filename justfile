@@ -20,3 +20,23 @@ sync *args: build
 # one small WebP per set (streams.yml `thumb:`) for the index; extra args pass through
 thumbs *args:
     uv run scripts/make-index-thumbs.py {{ args }}
+
+unpack post_date set_name:
+    aws s3 cp \
+        s3://theunending-ai-site-content-use1/drafts/{{post_date}}-{{set_name}}.json \
+        ./{{post_date}}-{{set_name}}.json
+    cat ./{{post_date}}-{{set_name}}.json \
+        | jq -r 'keys'
+    cat ./{{post_date}}-{{set_name}}.json \
+        | jq -r '.post_draft' \
+        > _drafts/{{post_date}}-{{set_name}}.md
+    cat ./{{post_date}}-{{set_name}}.json \
+        | jq -r '.image_manifest' \
+        > assets/streams/{{set_name}}.json
+    cat ./{{post_date}}-{{set_name}}.json \
+        | jq -r '.set_spec' \
+        | yq -y
+    cat ./{{post_date}}-{{set_name}}.json \
+        | jq -r '.posters_spec'
+    rm ./{{post_date}}-{{set_name}}.json
+    
