@@ -197,7 +197,7 @@ def test_publisher_submits_ecs_task_and_succeeds(
     override = kwargs["overrides"]["containerOverrides"][0]
     assert override["name"] == settings.publish_container
     assert override["command"][0] == "publish"
-    assert override["command"][1] == "--batch-run-id"
+    assert override["command"][1] == "--run-id"
 
 
 def test_publisher_retries_failed_task_launches_then_succeeds(

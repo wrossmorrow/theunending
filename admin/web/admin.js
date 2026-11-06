@@ -153,6 +153,7 @@ const API = {
   commitDraft: (setId, draftId) => api("POST", `/sets/${setId}/drafts/${draftId}/commit`),
   listRuns: (params) => api("GET", `/runs${query(params)}`),
   redoRun: (runId) => api("POST", `/runs/${runId}`),
+  publishSet: (setId) => api("POST", `/sets/${setId}/publish`),
   draftPreview: (setId, draftId) => api("GET", `/sets/${setId}/drafts/${draftId}/preview`),
 };
 
@@ -276,6 +277,7 @@ const state = {
   pollTimer: null,
   loadSeq: 0,         // guards against out-of-order responses when switching sets
   redoing: false,     // guards against duplicate redo submissions while in flight
+  publishing: false,  // guards against duplicate publish submissions while in flight
 };
 
 /* One AbortController per rendered view; listeners on long-lived elements use its
@@ -562,6 +564,27 @@ function wireSetDetail(detail, setId) {
       }
     }
 
+    if (action === "publish") {
+      const { set } = state.current;
+      if (state.publishing || set.status !== "COMPLETED") return;
+      state.publishing = true;
+      try {
+        const ok = await confirmDialog({
+          title: `Publish “${setTitle(set)}”?`,
+          body: "This starts the publish task: it builds the set's assets and ships them to the site bucket.\n\nPublished assets are write-once.",
+          ok: "Publish",
+        });
+        if (!ok) return;
+        try {
+          await withBusy(btn, () => API.publishSet(setId));
+          toast("Publishing. Publish run started.");
+          await Promise.all([refreshCurrent(setId, state.loadSeq, { resetForm: true }), loadSets()]);
+        } catch (err) { reportError(err); }
+      } finally {
+        state.publishing = false;
+      }
+    }
+
     if (action === "redo") {
       if (state.redoing) return;
       state.redoing = true;
@@ -596,7 +619,14 @@ function renderSetMeta(resetForm) {
   field(detail, "abandoned_at").textContent = fmtTime(set.abandoned_at);
   field(detail, "prompt").textContent = set.prompt ?? "";
 
-  const committed = !!set.committed_at || ["COMMITTED", "COMPLETED", "FAILED"].includes(set.status);
+  field(detail, "published_at").textContent = fmtTime(set.published_at);
+  $$('[data-show="published"]', detail).forEach((el) => { el.hidden = !set.published_at; });
+
+  // Publish: only a COMPLETED set (a failed publish is retried from its run instead)
+  detail.querySelector('[data-action="publish"]').hidden = set.status !== "COMPLETED";
+
+  const committed = !!set.committed_at ||
+    ["COMMITTED", "COMPLETED", "FAILED", "PUBLISHING", "PUBLISHED"].includes(set.status);
   $$('[data-show="committed"]', detail).forEach((el) => { el.hidden = !committed; });
   $$('[data-show="abandoned"]', detail).forEach((el) => { el.hidden = set.status !== "ABANDONED"; });
 
@@ -681,8 +711,11 @@ function renderBatch() {
   const detail = $("#detail");
   const section = $('[data-section="batch"]', detail);
   const batchRuns = state.current.runs
-    .filter((r) => r.type === "BATCH")
+    .filter((r) => r.type === "BATCH" || r.type === "PUBLISH")
     .sort((a, b) => (parseUtc(b.created_at) ?? 0) - (parseUtc(a.created_at) ?? 0));
+  // Retry is offered only on the newest run of each type
+  const newestOfType = new Map();
+  for (const r of batchRuns) if (!newestOfType.has(r.type)) newestOfType.set(r.type, r.run_id);
 
   section.hidden = batchRuns.length === 0 && set.status === "DRAFT";
   const box = field(detail, "batch-runs");
@@ -696,7 +729,7 @@ function renderBatch() {
     }
     return;
   }
-  batchRuns.forEach((run, i) => box.append(renderRun(run, { latest: i === 0 })));
+  batchRuns.forEach((run) => box.append(renderRun(run, { latest: newestOfType.get(run.type) === run.run_id })));
 }
 
 /* Preview images: the API hands out short-lived presigned S3 URLs. <img> can't send

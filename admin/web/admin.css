@@ -219,15 +219,18 @@ input.bad { border-color: var(--accent-color); }
 .badge.small { font-size: 0.6rem; padding: 0.05em 0.4em; }
 .badge.s-DRAFT { color: var(--text-color); }
 .badge.s-PENDING { color: var(--meta-color); }
-.badge.s-IN_PROGRESS { color: var(--busy-color); }
-.badge.s-IN_PROGRESS::before { content: "◐ "; display: inline-block; animation: spin 1.2s linear infinite; }
+.badge.s-IN_PROGRESS, .badge.s-PUBLISHING { color: var(--busy-color); }
+.badge.s-IN_PROGRESS::before, .badge.s-PUBLISHING::before { content: "◐ "; display: inline-block; animation: spin 1.2s linear infinite; }
 .badge.s-COMMITTED { color: var(--info-color); }
 .badge.s-COMPLETED { color: var(--ok-color); }
+.badge.s-PUBLISHED { color: var(--bg-color); background: var(--ok-color); border-color: var(--ok-color); }
 .badge.s-FAILED { color: var(--accent-color); }
 .badge.s-ABANDONED { color: var(--meta-color); text-decoration: line-through; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .badge.s-IN_PROGRESS::before { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .badge.s-IN_PROGRESS::before, .badge.s-PUBLISHING::before { animation: none; } }
+
+.set-head-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5em; }
 
 .tag {
   font-family: var(--font-mono);
@@ -265,7 +268,8 @@ input.bad { border-color: var(--accent-color); }
 }
 .run-type { text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-color); }
 .run-message { color: var(--text-color); font-weight: 600; }
-.run-details { color: var(--text-color); }
+.run-details { color: var(--meta-color); cursor: help; }
+.run-details:empty { display: none; }
 .run-id { font-size: 0.95em; background: none; padding: 0; color: var(--meta-color); }
 
 .batch .run { font-size: 0.8rem; }

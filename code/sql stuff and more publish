@@ -1,0 +1,41 @@
+
+
+DELETE FROM runs
+WHERE run_id = '01a1aee2-3989-71a5-ad28-56d70783f3f6';
+
+INSERT INTO runs (
+    run_id,
+    set_id,
+    draft_id,
+    type,
+    status,
+    created_at,
+    updated_at
+)
+VALUES (
+    '01a1aee6-1634-72d6-b9b1-c6df17035d8b',
+    '01a1adeb-95cc-70e3-9132-378b887bb236',
+    '01a1adf0-705e-7408-b623-06f42fe71e1b',
+    'PUBLISH',
+    'PENDING',
+    NOW(),
+    NOW()
+);
+
+
+DELETE FROM runs
+WHERE run_id = '01a1aee6-1634-72d6-b9b1-c6df17035d8b';
+
+
+Publisher().publish(PublishRequest(set_id=UUID('01a1adeb-95cc-70e3-9132-378b887bb236'), draft_id=UUID('01a1adf0-705e-7408-b623-06f42fe71e1b'), run_id=UUID('01a1aee6-1634-72d6-b9b1-c6df17035d8b')))
+
+
+
+PUBLISH_SECURITY_GROUP_ID="sg-062704d84aa7a6066" PUBLISH_PRIVATE_SUBNET_IDS='["subnet-0f94aac34013a3343","subnet-091afa30f85bb10ed"]'
+
+curl -H 'authorization: Bearer Kf9r7jEoNW3uYYRi308x8ylbUO8194vE' \
+    -X POST https://admin.theunending.ai/api/v0/sets/01a1adeb-95cc-70e3-9132-378b887bb236/publish
+
+
+
+    

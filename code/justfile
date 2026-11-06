@@ -1,4 +1,8 @@
 
+registry := "396610714890.dkr.ecr.us-east-1.amazonaws.com"
+namespace := "theunending"
+image_name := "theunending"
+
 raw_S3_bucket := "wrossmorrow-genai-repetitions-use1"
 site_s3_bucket := "theunending-ai-site-content-use1"
 ssh_key := "imagen-lambda.pem"
@@ -7,6 +11,31 @@ flux2 := "black-forest-labs/FLUX.2-klein-4B"
 
 default:
     just --list
+
+# Install dependencies
+install group:
+    uv sync --group {{group}}
+
+# Format code
+format group:
+    uv run ruff format src/{{group}}
+
+# Format-fix code
+fix group:
+    uv run ruff check src/{{group}} --fix
+
+# Lint code
+lint group:
+    uv run ruff check src/{{group}}
+
+# Containerize the application
+containerize group tag=`git rev-parse --short HEAD`:
+    docker build --build-arg UV_GROUP={{group}} \
+        . -t {{registry}}/{{namespace}}/{{group}}:{{tag}}
+
+# publish container
+publish group tag=`git rev-parse --short HEAD`: (containerize group tag)
+    docker push {{registry}}/{{namespace}}/{{group}}:{{tag}}
 
 run prompt rows cols width="512" height="512" model_id=flux2:
     PROMPT="{{ prompt }}" \
@@ -56,6 +85,11 @@ regen prompt regen loc width="512" height="512":
         ${TILES} \
         s3://dac2ef3da2-exercises-or-excuses-site-content-use1/assets/img/{{ loc }}/ \
         --exclude "*" --include "*.png" --recursive
+
+deploy-modal:
+    uv run python modal/image.py
+    uv run modal deploy -m src.imagen.modal
+    uv run modal deploy modal/api.py
 
 ssh ip ssh_key=ssh_key user="ubuntu" *flags="":
     ssh -i ~/.ssh/{{ ssh_key }} {{ user }}@{{ ip }} {{ flags }}

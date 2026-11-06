@@ -1,5 +1,5 @@
 # define these
-POST_TITLE="Intérieure Air"
-SET_NAME="inside-air"
-PROMPT="an “en plein air” painting in a crowded commuter train. a small easel is set up in the aisle, with a shelf for supplies. on the easel is a canvas with a sketchy, rough painting in muted colors of the scene behind it: a crowded commuter train car with any people sitting and standing on their way to work. behind the painting setup there are many people, sitting and standing, packed closely together behind the easel and canvas. the back of the train seats we can see are a light gray. iPhone photograph for a social media post."
+POST_TITLE="Memento Mori"
+SET_NAME="memento-mori-illustration"
+PROMPT="a still life in the style of a 1960s catalog illustration on aged poster paper. an open book lays on a wooden desk with a skull nearby and a brass candle holder next to the book. scattered dead flowers lay around the book on the desk. shadowy dark background."
 MODEL_ID="black-forest-labs/FLUX.2-klein-4B"
