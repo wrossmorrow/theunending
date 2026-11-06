@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from json import dumps
+from pathlib import Path
 from random import choice
 
 import boto3
@@ -41,7 +42,10 @@ def handle(args: argparse.Namespace) -> None:
 
     # Setup directories, copy down source images, and list manifest (could check size too)
 
-    mkdirs("images", "similar", "posters", "og")
+    for dir in ("images", "similar", "posters", "og"):
+        Path(f"./{dir}").mkdir(parents=True, exist_ok=True)
+
+    print(f"Directories: {[d for d in Path('.').iterdir()]}")
 
     try:
         get_source_content(
