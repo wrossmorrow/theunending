@@ -131,25 +131,10 @@ class PublishSettings(BaseSettings):
     def SITE_IMG_ASSETS_PREFIX(self) -> str:
         return f"assets/img/{self.POST_NAME}"
 
-    @property
-    def SITE_IMG_ASSETS(self) -> str:
-        return f"s3://{self.SITE_BUCKET}/{self.SITE_IMG_ASSETS_PREFIX}/"
-
-    @property
-    def SITE_OG_IMAGE_PREFIX(self) -> str:
-        return f"s3://{self.SITE_BUCKET}/assets/og"
-
-    @property
-    def SITE_POSTER_RAW_PREFIX(self) -> str:
-        return f"s3://{self.SITE_BUCKET}/assets/img/posters/raw"
-
-    @property
-    def SITE_POSTER_PREVIEW_PREFIX(self) -> str:
-        return f"s3://{self.SITE_BUCKET}/assets/img/posters/previews"
-
-    @property
-    def SITE_POSTER_THUMBS_PREFIX(self) -> str:
-        return f"s3://{self.SITE_BUCKET}/assets/img/posters/thumbs"
+    SITE_OG_IMAGE_PREFIX: str = "assets/og"
+    SITE_POSTER_RAW_PREFIX: str = "assets/img/posters/raw"
+    SITE_POSTER_PREVIEW_PREFIX: str = "assets/img/posters/previews"
+    SITE_POSTER_THUMBS_PREFIX: str = "assets/img/posters/thumbs"
 
     # verbose stuff about posters
 
