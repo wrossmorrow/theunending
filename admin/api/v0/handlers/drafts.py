@@ -109,10 +109,13 @@ async def get_draft_preview(
                 status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Draft {draft_id} not found.",
             )
-        if draft.status != database.DraftStatus.COMPLETED:
+        if draft.status not in (
+            database.DraftStatus.COMPLETED,
+            database.DraftStatus.COMMITTED,
+        ):
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail=f"Draft {draft_id} must be in COMPLETED status for a preview.",
+                detail=f"Draft {draft_id} must be in COMPLETED or COMMITTED status for a preview.",
             )
 
         runs_table = database.Run.metadata.tables[database.Run.__tablename__]

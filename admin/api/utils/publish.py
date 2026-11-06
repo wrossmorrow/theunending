@@ -4,8 +4,11 @@ from uuid import UUID
 import boto3  # type: ignore[import-untyped]
 from fastapi import Request
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from api.database import models as database
 from api.settings import settings
+from api.utils.jobs import finalize_run_status
 
 
 class PublishLaunchFailed(Exception): ...
@@ -23,11 +26,13 @@ class Publisher:
         self,
         queue_timeout_seconds: float = 30.0,
         max_attempts: int = 3,
+        session_factory: async_sessionmaker[AsyncSession] | None = None,
     ) -> None:
         self._ecs = boto3.client("ecs", region_name=settings.aws_region_name)
         self._queue: asyncio.Queue[PublishRequest] = asyncio.Queue()
         self._qtimeout_seconds = queue_timeout_seconds
         self._max_attempts = max_attempts
+        self._session_factory = session_factory
         self._worker_task: asyncio.Task | None = None
         self._closed = False
 
@@ -82,6 +87,12 @@ class Publisher:
                 if request.attempts < self._max_attempts:
                     await self._queue.put(request)
                 else:
+                    if self._session_factory is not None:
+                        await finalize_run_status(
+                            session_factory=self._session_factory,
+                            run_id=request.run_id,
+                            status=database.RunStatus.FAILED,
+                        )
                     print(
                         "Permanently failed to submit enqueued publish run for "
                         f"{request.run_id} {response.__class__.__name__} {response}"
