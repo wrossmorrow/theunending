@@ -458,13 +458,23 @@ sets:
     manifest: /assets/streams/floating-garden.json
     meta: /assets/img/2026-11-04-floating-garden/{id}.json
     thumb: 0010bef5-3058-4b1d-bfe6-930ab2bfc234
-  memento-mori-catalog:
-    base: https://theunending.ai/assets/img/2026-11-04-memento-mori-catalog/
-    manifest: /assets/streams/memento-mori-catalog.json
-    meta: /assets/img/2026-11-04-memento-mori-catalog/{id}.json
-    thumb: 00012a7d-2814-46b4-94a4-1807dcb54082
+  memento-mori-illustration:
+    base: https://theunending.ai/assets/img/2026-11-04-memento-mori-illustration/
+    manifest: /assets/streams/memento-mori-illustration.json
+    meta: /assets/img/2026-11-04-memento-mori-illustration/{id}.json
+    thumb: 08445a5a-08d6-4ad2-b9e8-b20da9733244
   inside-air:
     base: https://theunending.ai/assets/img/2026-11-04-inside-air/
     manifest: /assets/streams/inside-air.json
     meta: /assets/img/2026-11-04-inside-air/{id}.json
     thumb: 000289c0-44b8-4a2b-968a-5a5bd5edcee1
+  fake-lines:
+    base: https://theunending.ai/assets/img/2026-11-04-fake-lines/
+    manifest: /assets/streams/fake-lines.json
+    meta: /assets/img/2026-11-04-fake-lines/{id}.json
+    thumb: fcb1af9c-eea6-439a-a569-de0a013754b2
+  ordinary:
+    base: https://theunending.ai/assets/img/2026-11-04-ordinary/
+    manifest: /assets/streams/ordinary.json
+    meta: /assets/img/2026-11-04-ordinary/{id}.json
+    thumb: 13950ef3-d53d-4b89-8c55-0faa03e51a83
