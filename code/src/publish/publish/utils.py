@@ -145,7 +145,7 @@ def do_uploads(
     for path in glob(f"{settings.POSTERS_DIR}/thumbs/*.webp"):
         put_file_no_overwrite(
             s3=s3,
-            flename=path,
+            filename=path,
             bucket=settings.SITE_BUCKET,
             key=f"{settings.SITE_POSTER_THUMBS_PREFIX}/{Path(path).name}",
             content_type="image/webp",

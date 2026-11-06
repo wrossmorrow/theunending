@@ -4,7 +4,7 @@ FROM python:${PYTHON_VERSION} AS base
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update \
-    && apt-get install -y curl \
+    && apt-get install -y --no-install-recommends fonts-urw-base35 curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
