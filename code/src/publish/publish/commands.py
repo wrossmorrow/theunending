@@ -70,7 +70,7 @@ def run_posters(
             orientation,
             title,
             source,
-            output,
+            f"{output}/{size.png}",
             dpi=dpi,
             tile=tile,
         )
