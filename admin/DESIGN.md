@@ -294,6 +294,8 @@ admin/
 * PUT /api/v0/runs/{run_id:uuidv7}/status
     - update a run status (system call); may carry optional `message` and JSON `details`
     - the full received update payload is stored in `run_status_events` with `received_at` stamped at receipt
+* GET /api/v0/runs/{run_id:uuidv7}/events
+    - list the status events stored for a run (404 when the run is not found)
 
 ### Details
 

@@ -798,6 +798,50 @@ def test_update_run_status_invalid_transition_does_not_record_status_event(
     assert len(events) == 0
 
 
+def test_list_run_status_events_returns_stored_events(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Listing run status events returns the stored status update payloads."""
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(client, session_factory)
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status",
+                json={
+                    "status": "IN_PROGRESS",
+                    "message": "external job started",
+                    "details": {"phase": "IN_PROGRESS"},
+                },
+            ).status_code
+            == 200
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status",
+                json={"status": "COMPLETED"},
+            ).status_code
+            == 200
+        )
+        response = client.get(f"/api/v0/runs/{run_id}/events")
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert len(body["events"]) == 2
+        assert {event["status"] for event in body["events"]} == {
+            "IN_PROGRESS",
+            "COMPLETED",
+        }
+        for event in body["events"]:
+            assert event["run_id"] == run_id
+            assert event["received_at"]
+
+
+def test_list_run_status_events_for_unknown_run_returns_404() -> None:
+    """Listing status events for an unknown run returns 404."""
+    with TestClient(api) as client:
+        response = client.get(f"/api/v0/runs/{uuid4()}/events")
+        assert response.status_code == 404
+
+
 def test_update_run_status_failed_propagates_to_draft_returns_200(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:

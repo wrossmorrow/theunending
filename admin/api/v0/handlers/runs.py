@@ -48,6 +48,38 @@ async def get_run(
         return run
 
 
+async def list_run_status_events(
+    run_id: UUID, session_factory: async_sessionmaker[AsyncSession]
+) -> models.RunStatusEventsResponse:
+    """List the status events stored for a run (or 404)."""
+    async with session_factory() as session:
+        runs_table = database.Run.metadata.tables[database.Run.__tablename__]
+        run = (
+            (
+                await session.execute(
+                    select(database.Run).where(runs_table.c.run_id == run_id)
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if run is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Run {run_id} not found.",
+            )
+        events_table = database.RunStatusEvent.metadata.tables[
+            database.RunStatusEvent.__tablename__
+        ]
+        events_stmt = (
+            select(database.RunStatusEvent)
+            .where(events_table.c.run_id == run_id)
+            .order_by(events_table.c.received_at)
+        )
+        events = list((await session.execute(events_stmt)).scalars().all())
+    return models.RunStatusEventsResponse(events=events)
+
+
 async def redo_run(
     run_id: UUID,
     session_factory: async_sessionmaker[AsyncSession],

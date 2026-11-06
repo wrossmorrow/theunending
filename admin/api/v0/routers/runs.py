@@ -61,6 +61,21 @@ async def redo_run(
     return await runs_handlers.redo_run(run_id, session_factory, job_client)
 
 
+@runs_router.get(
+    "/runs/{run_id}/events",
+    response_model=models.RunStatusEventsResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def list_run_status_events(
+    run_id: UUID,
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
+) -> models.RunStatusEventsResponse:
+    """List status events for a specific run."""
+    return await runs_handlers.list_run_status_events(run_id, session_factory)
+
+
 @runs_router.put(
     "/runs/{run_id}/status",
     response_model=database.Run,
