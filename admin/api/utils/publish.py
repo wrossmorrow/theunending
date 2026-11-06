@@ -141,7 +141,8 @@ class Publisher:
                     {
                         "name": settings.publish_container,
                         "command": [
-                            "publish",
+                            "publish", # module
+                            "publish", # command
                             "--batch-run-id",
                             str(request.run_id),
                         ],
