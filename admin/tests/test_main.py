@@ -352,6 +352,44 @@ def test_create_set_with_empty_name_returns_422() -> None:
         assert response.status_code == 422
 
 
+def test_list_sets_by_post_date_returns_committed_set(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    with TestClient(api) as client:
+        set_id, draft_id, run_id = _create_set_with_draft(client, session_factory)
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "SUBMITTED"}
+            ).status_code
+            == 200
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+            ).status_code
+            == 200
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "COMPLETED"}
+            ).status_code
+            == 200
+        )
+        client.patch(
+            f"/api/v0/sets/{set_id}",
+            json={"slug": "post-date-filter-set", "name": "Post Date Filter Set"},
+        )
+        commit_response = client.post(f"/api/v0/sets/{set_id}/drafts/{draft_id}/commit")
+        assert commit_response.status_code == 200
+        post_date = commit_response.json()["post_date"]
+        response = client.get(
+            "/api/v0/sets", params={"status": "COMMITTED", "post_date": post_date}
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert any(s["set_id"] == set_id for s in body["sets"])
+
+
 def test_list_sets_by_status_returns_abandoned_set() -> None:
     with TestClient(api) as client:
         created = client.post(
@@ -364,6 +402,25 @@ def test_list_sets_by_status_returns_abandoned_set() -> None:
         assert response.status_code == 200
         body = response.json()
         assert any(s["set_id"] == set_id for s in body["sets"])
+
+
+def test_list_sets_by_slug_and_name_returns_created_set() -> None:
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets",
+            json={
+                "model": "black-forest-labs/FLUX.2-klein-4B",
+                "slug": "list-filter-set",
+                "name": "List Filter Set",
+            },
+        )
+        response = client.get(
+            "/api/v0/sets",
+            params={"slug": "list-filter-set", "name": "List Filter Set"},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert any(s["set_id"] == created.json()["set_id"] for s in body["sets"])
 
 
 def test_health_alive_returns_200() -> None:
@@ -565,6 +622,35 @@ def test_list_runs_returns_created_run(
         assert response.status_code == 200
         body = response.json()
         assert any(r["set_id"] == set_id for r in body["runs"])
+
+
+def test_list_runs_by_status_returns_completed_run(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    with TestClient(api) as client:
+        _set_id, _draft_id, run_id = _create_set_with_draft(client, session_factory)
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "SUBMITTED"}
+            ).status_code
+            == 200
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+            ).status_code
+            == 200
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "COMPLETED"}
+            ).status_code
+            == 200
+        )
+        response = client.get("/api/v0/runs", params={"status": "COMPLETED"})
+        assert response.status_code == 200
+        body = response.json()
+        assert any(r["run_id"] == run_id for r in body["runs"])
 
 
 def test_get_run_returns_created_run(
