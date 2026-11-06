@@ -1,6 +1,14 @@
 terraform {
   required_version = ">= 1.6"
 
+  backend "s3" {
+    bucket         = "theunending-ai-site-content-use1"
+    key            = "terraform/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    use_lockfile   = true 
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
