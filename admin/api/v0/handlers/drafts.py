@@ -145,16 +145,17 @@ async def get_draft_preview(
 
 
 async def list_drafts(
-    set_id: UUID, session_factory: async_sessionmaker[AsyncSession]
+    set_id: UUID,
+    session_factory: async_sessionmaker[AsyncSession],
+    status: database.DraftStatus | None = None,
 ) -> models.DraftsResponse:
     """List set drafts (created_at desc)."""
     async with session_factory() as session:
         table = database.Draft.metadata.tables[database.Draft.__tablename__]
-        stmt = (
-            select(database.Draft)
-            .where(table.c.set_id == set_id)
-            .order_by(table.c.created_at.desc())
-        )
+        stmt = select(database.Draft).where(table.c.set_id == set_id)
+        if status is not None:
+            stmt = stmt.where(table.c.status == status)
+        stmt = stmt.order_by(table.c.created_at.desc())
         drafts = list((await session.execute(stmt)).scalars().all())
     return models.DraftsResponse(drafts=drafts)
 

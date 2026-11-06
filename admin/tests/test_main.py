@@ -423,6 +423,63 @@ def test_list_sets_by_slug_and_name_returns_created_set() -> None:
         assert any(s["set_id"] == created.json()["set_id"] for s in body["sets"])
 
 
+def test_list_drafts_by_status_returns_expected_drafts(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Filtering drafts by status returns only the drafts of that status."""
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        with mock_job_client(session_factory):
+            created_draft = client.post(
+                f"/api/v0/sets/{set_id}/drafts",
+                json={"prompt": f"a cat {uuid4().hex}"},
+            )
+        assert created_draft.status_code == 201
+        created_draft_id = created_draft.json()["draft_id"]
+        created_run_id = next(
+            run["run_id"]
+            for run in client.get(
+                "/api/v0/runs", params={"draft_id": created_draft_id}
+            ).json()["runs"]
+        )
+        _set_run_status(client, created_run_id, "SUBMITTED")
+        _set_run_status(client, created_run_id, "IN_PROGRESS")
+        _set_run_status(client, created_run_id, "COMPLETED")
+
+        with mock_job_client(session_factory):
+            created_draft_2 = client.post(
+                f"/api/v0/sets/{set_id}/drafts",
+                json={"prompt": f"a cat {uuid4().hex}"},
+            )
+        assert created_draft_2.status_code == 201
+
+        response = client.get(
+            f"/api/v0/sets/{set_id}/drafts", params={"status": "COMPLETED"}
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body["drafts"]) == 1
+        assert body["drafts"][0]["status"] == "COMPLETED"
+        assert body["drafts"][0]["draft_id"] == created_draft_id
+
+        response = client.get(
+            f"/api/v0/sets/{set_id}/drafts", params={"status": "PENDING"}
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body["drafts"]) == 1
+        assert body["drafts"][0]["status"] == "PENDING"
+        assert body["drafts"][0]["draft_id"] == created_draft_2.json()["draft_id"]
+
+        response = client.get(
+            f"/api/v0/sets/{set_id}/drafts", params={"status": "NOT_A_STATUS"}
+        )
+        assert response.status_code == 422
+
+
 def test_health_alive_returns_200() -> None:
     with TestClient(api) as client:
         response = client.get("/health/alive")
