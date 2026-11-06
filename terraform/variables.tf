@@ -49,6 +49,11 @@ variable "interface_endpoints" {
   default     = ["ecr.api", "ecr.dkr"]
 }
 
+variable "publish_image_tag" {
+  description = "Image tag to run, e.g. a git short SHA."
+  type        = string   # no default
+}
+
 variable "tags" {
   description = "Extra tags for every resource."
   type        = map(string)

@@ -287,26 +287,28 @@ resource "aws_iam_role" "publish_task" {
 }
 
 data "aws_iam_policy_document" "publish_task_s3" {
-  
-  statement {
-    sid       = "ReadRuns"
-    actions   = [
-      "s3:GetObject",
-    ]
-    resources = [
-      "arn:aws:s3:::wrossmorrow-genai-repetitions-use1/*",
-      "arn:aws:s3:::theunending-ai-raw-content-use1/*",
-    ]
-  }
 
   statement {
-    sid       = "ListRuns"
+    sid       = "List"
     actions   = [
       "s3:ListBucket"
     ]
     resources = [
       "arn:aws:s3:::wrossmorrow-genai-repetitions-use1",
       "arn:aws:s3:::theunending-ai-raw-content-use1",
+      "arn:aws:s3:::theunending-ai-site-content-use1",
+    ]
+  }
+  
+  statement {
+    sid       = "ReadRunsAndSite"
+    actions   = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "arn:aws:s3:::wrossmorrow-genai-repetitions-use1/runs/*",
+      "arn:aws:s3:::theunending-ai-raw-content-use1/runs/*",
+      "arn:aws:s3:::theunending-ai-site-content-use1/*",
     ]
   }
 
@@ -316,20 +318,10 @@ data "aws_iam_policy_document" "publish_task_s3" {
     sid       = "WriteSitePrefixes"
     actions   = [
       "s3:PutObject",
-      "s3:GetObject",
     ]
     resources = [
-      "arn:aws:s3:::theunending-ai-site-content-use1/*",
-    ]
-  }
-
-  statement {
-    sid       = "ListSitePrefixes"
-    actions   = [
-      "s3:ListBucket"
-    ]
-    resources = [
-      "arn:aws:s3:::theunending-ai-site-content-use1",
+      "arn:aws:s3:::theunending-ai-site-content-use1/drafts/*",
+      "arn:aws:s3:::theunending-ai-site-content-use1/assets/*",
     ]
   }
 
@@ -351,11 +343,7 @@ data "aws_iam_policy_document" "launcher" {
       "ecs:RunTask",
     ]
     # Any revision of this family, so new image deploys don't need IAM changes.
-    resources = [
-      aws_ecs_task_definition.publish.arn,
-      "${aws_ecs_task_definition.publish.arn}:*",
-      # "arn:${local.partition}:ecs:${local.region}:${local.account}:task-definition/theunending:*",
-    ]
+    resources = ["${aws_ecs_task_definition.publish.arn_without_revision}:*"]
 
     condition {
       test     = "ArnEquals"
@@ -370,11 +358,14 @@ data "aws_iam_policy_document" "launcher" {
       "ecs:DescribeTasks",
       "ecs:StopTask",
     ]
-    resources = [
-      aws_ecs_cluster.publish.arn,
-      "${aws_ecs_cluster.publish.arn}/*",
-      # "arn:${local.partition}:ecs:${local.region}:${local.account}:task/${aws_ecs_cluster.publish.name}/*",
-    ]
+    # DescribeTasks / StopTask: tasks in the cluster
+    resources = ["${replace(aws_ecs_cluster.publish.arn, ":cluster/", ":task/")}/*"]
+
+    condition {
+      test     = "ArnEquals"
+      variable = "ecs:cluster"
+      values   = [aws_ecs_cluster.publish.arn]
+    }
   }
 
   # The classic missing piece: RunTask hands both roles to ECS.
