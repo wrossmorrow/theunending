@@ -182,6 +182,11 @@ def handle(args: argparse.Namespace) -> None:
         )
         raise
 
+    admin.update_progress(
+        Status.IN_PROGRESS,
+        "prepared similar image manifests",
+    )
+
     try:
         run_og_tiles(
             set=settings.SET_NAME,
@@ -199,6 +204,11 @@ def handle(args: argparse.Namespace) -> None:
             }
         )
         raise
+
+    admin.update_progress(
+        Status.IN_PROGRESS,
+        "prepared og tile(s)",
+    )
 
     try:
         run_posters(
@@ -218,6 +228,11 @@ def handle(args: argparse.Namespace) -> None:
         )
         raise
 
+    admin.update_progress(
+        Status.IN_PROGRESS,
+        "prepared full posters",
+    )
+
     try:
         run_web_posters(
             sizes=settings.POSTER_SIZES,
@@ -236,7 +251,7 @@ def handle(args: argparse.Namespace) -> None:
 
     admin.update_progress(
         Status.IN_PROGRESS,
-        "prepared publishable content",
+        "prepared web posters",
     )
 
     # Upload additional content to S3, actual site source
