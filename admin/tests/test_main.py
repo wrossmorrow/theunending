@@ -808,7 +808,7 @@ def test_update_run_status_failed_batch_run_marks_set_failed(
         assert set_response.json()["status"] == "FAILED"
         draft_response = client.get(f"/api/v0/sets/{set_id}/drafts/{draft_id}")
         assert draft_response.status_code == 200
-        assert draft_response.json()["status"] == "COMPLETED"
+        assert draft_response.json()["status"] == "COMMITTED"
 
 
 def test_redo_run_requires_failed_status_returns_400(

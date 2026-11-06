@@ -198,7 +198,7 @@ admin/
     * set_id (FK, uuidv7)
     * prompt (required, string/text)
     * model_prompt_hash (generated on creation, defined as sha256(sets[set_id].model::prompt))
-    * status (PENDING, IN_PROGRESS, FAILED, COMPLETED)
+    * status (PENDING, IN_PROGRESS, FAILED, COMPLETED, COMMITTED)
     * created_at (generated on creation, UTC timestamp)
 
 ### HTTP calls
@@ -225,6 +225,7 @@ admin/
     * PENDING -> FAILED (external job created, but failed to start)
     * IN_PROGRESS -> COMPLETED | FAILED (external job finished, with success or error)
     * FAILED -> COMPLETED (a re-run of the external job finished successfully)
+    * COMPLETED -> COMMITTED (when the draft is committed, see below)
     * implement any X -> X state transition (same state as current) as a no-op success
 * drafts are the way to evaluate options before committing a set; drafts associated with a set are the "drafting" phase. Holding "commit" at the draft level lets the user pick the draft that works best, and "commit" the set with that draft's prompt, model_prompt_hash, and the commit "post_date".
 * There is no "direct" way to update a draft status, the system will do this as described elsewhere
@@ -248,6 +249,7 @@ admin/
         * set[set_id].post_date <- current date in YYYY-MM-DD format for Los Angeles/Pacific TZ
         * set[set_id].committed_at <- current UTC timestamp
         * set[set_id].status <- COMMITTED
+        * draft[draft_id].status <- COMMITTED
         * runs an external job
             * we create a run for this set/draft storing:
                 * the set_id/draft_id FK's
