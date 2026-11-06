@@ -1,6 +1,6 @@
 import argparse
 
-from .. import og_tiles, web_posters
+from .. import og_tiles, web_posters, full_posters
 from ..similarity import review
 
 
@@ -93,7 +93,7 @@ def run_poster(
             --source "${SITE_IMG_ASSETS}" \
             --output ${OUTPUT_NAME}
     """
-    parser = og_tiles.command(argparse.ArgumentParser())
+    parser = full_posters.command(argparse.ArgumentParser())
     args = parser.parse_args(
         [
             "--poster",

@@ -95,7 +95,7 @@ class PublishSettings(BaseSettings):
     @property
     def POST_NAME(self) -> str:
         return f"{self.POST_DATE}-{self.SET_NAME}"
-    
+
     @property
     def SET_SPEC(self) -> dict:
         return {

@@ -20,6 +20,7 @@ from .progress import AdminAPI, Status
 
 
 def generate_images(pipe, prompts, img_size, steps, outdir):
+
     images = []
 
     print(f"Generating {len(prompts)} images...")

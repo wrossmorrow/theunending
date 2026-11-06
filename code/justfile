@@ -13,24 +13,25 @@ default:
     just --list
 
 # Install dependencies
-install:
-    uv sync
+install group:
+    uv sync --group {{group}}
 
 # Format code
-format:
-    uv run ruff format src/imagen
+format group:
+    uv run ruff format src/{{group}}
 
 # Format-fix code
-fix:
-    uv run ruff check src/imagen --fix
+fix group:
+    uv run ruff check src/{{group}} --fix
 
 # Lint code
-lint:
-    uv run ruff check src/imagen
+lint group:
+    uv run ruff check src/{{group}}
 
 # Containerize the application
-containerize tag=`git rev-parse --short HEAD`:
-    docker build . -t {{registry}}/{{namespace}}/{{image_name}}:{{tag}}
+containerize group tag=`git rev-parse --short HEAD`:
+    docker build --build-arg UV_GROUP={{group}} \
+        . -t {{registry}}/{{namespace}}/{{image_name}}:{{tag}}
 
 # publish container
 publish tag=`git rev-parse --short HEAD`: (containerize tag)

@@ -593,22 +593,14 @@ name = "imagen"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "accelerate" },
     { name = "boto3" },
-    { name = "diffusers" },
     { name = "httpx" },
-    { name = "modal" },
     { name = "numpy" },
-    { name = "open-clip-torch" },
     { name = "pillow" },
     { name = "protobuf" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "sentencepiece" },
     { name = "tenacity" },
-    { name = "torch" },
-    { name = "torchvision" },
-    { name = "transformers" },
 ]
 
 [package.dev-dependencies]
@@ -618,25 +610,27 @@ dev = [
     { name = "mypy" },
     { name = "ruff" },
 ]
+imagen = [
+    { name = "accelerate" },
+    { name = "diffusers" },
+    { name = "modal" },
+    { name = "open-clip-torch" },
+    { name = "sentencepiece" },
+    { name = "torch" },
+    { name = "torchvision" },
+    { name = "transformers" },
+]
 
 [package.metadata]
 requires-dist = [
-    { name = "accelerate", specifier = ">=1.15.0" },
     { name = "boto3", specifier = ">=1.43.92" },
-    { name = "diffusers", specifier = ">=0.40.0" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "modal", specifier = ">=1.6.3" },
     { name = "numpy", specifier = ">=1.26" },
-    { name = "open-clip-torch", specifier = ">=2.32" },
     { name = "pillow", specifier = ">=12.3.0" },
     { name = "protobuf", specifier = ">=7.36.1" },
     { name = "pydantic", specifier = ">=2.14.2" },
     { name = "pydantic-settings", specifier = ">=2.16.2" },
-    { name = "sentencepiece", specifier = ">=0.2.2" },
     { name = "tenacity", specifier = ">=9.2.1" },
-    { name = "torch", specifier = ">=2.14.0" },
-    { name = "torchvision", specifier = ">=0.29.0" },
-    { name = "transformers", specifier = ">=5.17.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -646,6 +640,17 @@ dev = [
     { name = "mypy", specifier = ">=2.4.1" },
     { name = "ruff", specifier = ">=0.17.3" },
 ]
+imagen = [
+    { name = "accelerate", specifier = ">=1.15.0" },
+    { name = "diffusers", specifier = ">=0.40.0" },
+    { name = "modal", specifier = ">=1.6.3" },
+    { name = "open-clip-torch", specifier = ">=2.32" },
+    { name = "sentencepiece", specifier = ">=0.2.2" },
+    { name = "torch", specifier = ">=2.14.0" },
+    { name = "torchvision", specifier = ">=0.29.0" },
+    { name = "transformers", specifier = ">=5.17.0" },
+]
+publish = []
 
 [[package]]
 name = "importlib-metadata"

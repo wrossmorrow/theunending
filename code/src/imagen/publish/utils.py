@@ -69,7 +69,6 @@ def do_uploads(
             f"{settings.SITE_IMG_ASSETS_PREFIX}/{fn}",
             "image/png",
         )
-        "application/json",
 
     # images/*.json -> SITE_BUCKET, assets/img/POST_NAME/
     for path in glob("similar/*.json"):
@@ -102,7 +101,7 @@ def do_uploads(
             "image/png",
         )
 
-    # posters/{previews,thumbs}/*.webp -> SITE_BUCKET, assets/img/posters/{previews,thumbs}/POST_NAME/*
+    # posters/spreviews/*.webp -> SITE_BUCKET, assets/img/posters/previews/POST_NAME/*
 
     for path in glob("posters/previews/*.webp"):
         fn = path.split("/")[-1]
@@ -113,6 +112,8 @@ def do_uploads(
             f"{settings.SITE_POSTER_PREVIEW_PREFIX}/{fn}",
             "image/webp",
         )
+
+    # posters/thumbs/*.webp -> SITE_BUCKET, assets/img/posters/thumbs/POST_NAME/*
 
     for path in glob("posters/thumbs/*.webp"):
         fn = path.split("/")[-1]

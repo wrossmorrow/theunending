@@ -15,9 +15,10 @@ ENV UV_NO_DEV=1 \
 
 COPY pyproject.toml uv.lock README.md ./
 
+ARG UV_GROUP=publish
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project --no-dev
+    uv sync --frozen --no-install-project --no-dev --group ${UV_GROUP}
 
-COPY src src
+COPY src/publish src/publish
 
 ENTRYPOINT ["uv", "run"]
