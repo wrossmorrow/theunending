@@ -44,6 +44,8 @@ class PublishSettings(BaseSettings):
     RAW_BUCKET: str = "wrossmorrow-genai-repetitions-use1"
     SITE_BUCKET: str = "theunending-ai-site-content-use1"
 
+    MAX_S3_THREADS: int = 32
+
     # derived (including from API call responses)
 
     @property

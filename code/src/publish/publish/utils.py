@@ -17,6 +17,7 @@ def mkdirs(*dirs: str) -> None:
 
 
 def get_source_content(
+    settings: PublishSettings,
     s3: S3Client,
     bucket: str,
     prefix: str,
@@ -25,7 +26,7 @@ def get_source_content(
     emb_file: str = "embeddings.npy",
 ) -> None:
     """get content locally; everything stems from images and embeddings"""
-    cp_from_s3(s3, bucket, prefix + "/", image_dir, ext=image_ext)
+    cp_from_s3(s3, bucket, prefix + "/", image_dir, ext=image_ext, workers=settings.MAX_S3_THREADS)
     cp_from_s3(s3, bucket, f"{prefix}/{emb_file}", emb_file)
     cp_from_s3(s3, bucket, f"{prefix}/{emb_file}.json", f"{emb_file}.json")
 

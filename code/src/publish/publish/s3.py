@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -33,7 +34,12 @@ def ls_s3(
 
 
 def cp_from_s3(
-    s3: S3Client, bucket: str, prefix: str, local: Path, ext: str | None = None
+    s3: S3Client,
+    bucket: str,
+    prefix: str,
+    local: Path,
+    ext: str | None = None,
+    workers: int = 32,
 ) -> None:
 
     if isinstance(local, str):
@@ -47,17 +53,22 @@ def cp_from_s3(
 
     paginator = s3.get_paginator("list_objects_v2")
 
-    for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
-        for obj in page.get("Contents", []):
-            key = obj["Key"]
+    def _fetch(key: str, target: str) -> None:
+        s3.download_file(bucket, key, target)
 
-            if ext is not None and not key.endswith(ext):
-                continue
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+            for obj in page.get("Contents", []):
+                key = obj["Key"]
 
-            rel_path = key[len(prefix) :]
-            if not rel_path:
-                continue
+                if ext is not None and not key.endswith(ext):
+                    continue
 
-            target = local / rel_path
-            target.parent.mkdir(parents=True, exist_ok=True)
-            s3.download_file(bucket, key, str(target))
+                rel_path = key[len(prefix) :]
+                if not rel_path:
+                    continue
+
+                target = local / rel_path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                pool.submit(_fetch, key, str(target))
+                # s3.download_file(bucket, key, str(target))

@@ -5,6 +5,7 @@ from json import dumps
 from random import choice
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 from pydantic import ValidationError
 
@@ -26,7 +27,7 @@ def handle(args: argparse.Namespace) -> None:
         admin_run_id=settings.RUN_ID,
     )
 
-    s3 = boto3.client("s3")
+    s3 = boto3.client("s3", Config=Config(max_pool_connections=settings.MAX_S3_THREADS))
 
     # first signal, job actually launched and nothing else; enforce idempotency via
     # cached property retrievals first, which need to be validated at launch
@@ -44,6 +45,7 @@ def handle(args: argparse.Namespace) -> None:
 
     try:
         get_source_content(
+            settings=settings,
             s3=s3,
             bucket=settings.RAW_BUCKET,
             prefix=settings.RAW_PREFIX,
