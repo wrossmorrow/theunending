@@ -202,47 +202,71 @@ class ExternalJobClient:
         status: RunStatus,
     ) -> None:
         """Record a worker-driven run status update for an enqueued job."""
-        async with self._session_factory() as session:
-            runs_table = database.Run.metadata.tables[database.Run.__tablename__]
-            run = (
-                (
-                    await session.execute(
-                        select(database.Run)
-                        .where(runs_table.c.run_id == request.run_id)
-                        .with_for_update()
-                    )
+        await finalize_run_status(
+            session_factory=self._session_factory,
+            run_id=request.run_id,
+            status=status,
+            response=response,
+        )
+
+
+async def finalize_run_status(
+    session_factory: async_sessionmaker[AsyncSession],
+    run_id: UUID,
+    status: RunStatus,
+    response: JobAPIResponse | None = None,
+) -> None:
+    """Record a terminal run status and propagate it to the linked draft/set."""
+    async with session_factory() as session:
+        runs_table = database.Run.metadata.tables[database.Run.__tablename__]
+        run = (
+            (
+                await session.execute(
+                    select(database.Run)
+                    .where(runs_table.c.run_id == run_id)
+                    .with_for_update()
                 )
-                .scalars()
-                .first()
             )
-            if run is None:
-                return
-            run.status = status
-            if response is not None:
-                run.external_run_id = response.external_run_id
-                run.submitted_at = datetime.now(UTC)
-            run.updated_at = datetime.now(UTC)
-            if status in (RunStatus.COMPLETED, RunStatus.FAILED):
-                run.finished_at = datetime.now(UTC)
-            session.add(run)
-            if status in (RunStatus.COMPLETED, RunStatus.FAILED):
-                # Worker-driven terminal status updates follow the same draft/set
-                # propagation rules as status updates from the external job system.
-                if run.type == database.RunType.BATCH:
-                    committed_set = await session.get(database.Set, run.set_id)
-                    if committed_set is not None:
-                        committed_set.status = (
-                            SetStatus.COMPLETED
-                            if status == database.RunStatus.COMPLETED
-                            else SetStatus.FAILED
-                        )
-                        session.add(committed_set)
-                elif run.type == database.RunType.EVALUATION:
-                    draft = await session.get(database.Draft, run.draft_id)
-                    if draft is not None:
-                        draft.status = DraftStatus(status.value)
-                        session.add(draft)
-            await session.commit()
+            .scalars()
+            .first()
+        )
+        if run is None:
+            return
+        run.status = status
+        if response is not None:
+            run.external_run_id = response.external_run_id
+            run.submitted_at = datetime.now(UTC)
+        run.updated_at = datetime.now(UTC)
+        if status in (RunStatus.COMPLETED, RunStatus.FAILED):
+            run.finished_at = datetime.now(UTC)
+        session.add(run)
+        if status in (RunStatus.COMPLETED, RunStatus.FAILED):
+            # Worker-driven terminal status updates follow the same draft/set
+            # propagation rules as status updates from the external job system.
+            if run.type == database.RunType.BATCH:
+                committed_set = await session.get(database.Set, run.set_id)
+                if committed_set is not None:
+                    committed_set.status = (
+                        SetStatus.COMPLETED
+                        if status == database.RunStatus.COMPLETED
+                        else SetStatus.FAILED
+                    )
+                    session.add(committed_set)
+            elif run.type == database.RunType.EVALUATION:
+                draft = await session.get(database.Draft, run.draft_id)
+                if draft is not None:
+                    draft.status = DraftStatus(status.value)
+                    session.add(draft)
+            elif run.type == database.RunType.PUBLISH:
+                committed_set = await session.get(database.Set, run.set_id)
+                if committed_set is not None:
+                    committed_set.status = (
+                        SetStatus.PUBLISHED
+                        if status == database.RunStatus.COMPLETED
+                        else SetStatus.FAILED
+                    )
+                    session.add(committed_set)
+        await session.commit()
 
 
 def get_job_client(request: Request) -> ExternalJobClient:

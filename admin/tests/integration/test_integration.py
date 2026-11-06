@@ -106,6 +106,15 @@ def _get_draft(client: httpx.Client, set_id: str, draft_id: str) -> dict[str, An
     return response.json()
 
 
+def _get_run_id_by_type(client: httpx.Client, set_id: str, run_type: str) -> str:
+    """Get the run id of the run of a given type for a set."""
+    response = client.get("/api/v0/runs", params={"set_id": set_id})
+    assert response.status_code == 200, response.text
+    runs = [run for run in response.json()["runs"] if run["type"] == run_type]
+    assert len(runs) == 1
+    return runs[0]["run_id"]
+
+
 def _get_run_by_draft(client: httpx.Client, draft_id: str) -> dict[str, Any]:
     """Get the run created for a draft and return its body."""
     response = client.get("/api/v0/runs", params={"draft_id": draft_id})
@@ -313,6 +322,68 @@ def test_full_flow_draft_to_committed_batch_to_completed(
     ] == ("COMPLETED")
     completed_set = http_client.get(f"/api/v0/sets/{set_id}").json()
     assert completed_set["status"] == "COMPLETED"
+
+
+def test_full_flow_draft_to_committed_batch_to_completed_to_published(
+    http_client: httpx.Client,
+) -> None:
+    """Full flow: create set, draft, drive evaluation run, commit, drive batch run, publish."""
+    set_body = _create_set(http_client, slug=_unique_slug(), name="It Flow Publish Set")
+    set_id = set_body["set_id"]
+    prompt = _unique_prompt()
+    draft = _create_draft(http_client, set_id, prompt=prompt)
+    draft_id = draft["draft_id"]
+    run = _get_run_by_draft(http_client, draft_id)
+    run_id = run["run_id"]
+
+    assert (
+        _update_run_status(http_client, run_id, "IN_PROGRESS")["status"]
+        == "IN_PROGRESS"
+    )
+    assert _get_draft(http_client, set_id, draft_id)["status"] == "IN_PROGRESS"
+    assert _update_run_status(http_client, run_id, "COMPLETED")["status"] == "COMPLETED"
+    assert _get_draft(http_client, set_id, draft_id)["status"] == "COMPLETED"
+
+    committed = _commit_draft(http_client, set_id, draft_id)
+    assert committed["status"] == "COMMITTED"
+    committed_set = http_client.get(f"/api/v0/sets/{set_id}").json()
+    assert committed_set["status"] == "COMMITTED"
+    assert committed_set["prompt"] == prompt
+    assert committed_set["post_date"]
+    assert committed_set["committed_at"]
+
+    runs_response = http_client.get("/api/v0/runs", params={"set_id": set_id})
+    assert runs_response.status_code == 200
+    batch_runs = [run for run in runs_response.json()["runs"] if run["type"] == "BATCH"]
+    assert len(batch_runs) == 1
+    batch_run = batch_runs[0]
+    batch_run = _wait_for_run_status(http_client, batch_run["run_id"], "SUBMITTED")
+
+    assert _update_run_status(http_client, batch_run["run_id"], "IN_PROGRESS")[
+        "status"
+    ] == ("IN_PROGRESS")
+    assert _update_run_status(http_client, batch_run["run_id"], "COMPLETED")[
+        "status"
+    ] == ("COMPLETED")
+    completed_set = http_client.get(f"/api/v0/sets/{set_id}").json()
+    assert completed_set["status"] == "COMPLETED"
+
+    publish_response = http_client.post(f"/api/v0/sets/{set_id}/publish")
+    assert publish_response.status_code == 200, publish_response.text
+    assert publish_response.json()["status"] == "PUBLISHING"
+
+    publish_run_id = _get_run_id_by_type(http_client, set_id, "PUBLISH")
+    assert (
+        _update_run_status(http_client, publish_run_id, "IN_PROGRESS")["status"]
+        == "IN_PROGRESS"
+    )
+    assert (
+        _update_run_status(http_client, publish_run_id, "COMPLETED")["status"]
+        == "COMPLETED"
+    )
+    published_set = http_client.get(f"/api/v0/sets/{set_id}").json()
+    assert published_set["status"] == "PUBLISHED"
+    assert published_set["published_at"]
 
 
 def test_commit_draft_with_draft_not_completed_returns_400(

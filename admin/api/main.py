@@ -32,6 +32,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.publisher = Publisher(
         queue_timeout_seconds=settings.queue_timeout_seconds,
         max_attempts=settings.max_attempts,
+        session_factory=app.state.session_factory,
     )
     await app.state.job_client.start()
     await app.state.publisher.start()
