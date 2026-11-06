@@ -11,6 +11,7 @@ from sqlmodel import select
 from api.database import models as database
 from api.settings import settings
 from api.utils.jobs import ExternalJobClient, JobParameters, JobRequest
+from api.utils.publish import Publisher, PublishRequest
 from api.v0.schema import models
 
 
@@ -84,6 +85,7 @@ async def redo_run(
     run_id: UUID,
     session_factory: async_sessionmaker[AsyncSession],
     job_client: ExternalJobClient,
+    publisher: Publisher,
 ) -> database.Run:
     """Redo a run (requires FAILED status; creates a distinct run)."""
     async with session_factory() as session:
@@ -134,6 +136,24 @@ async def redo_run(
         session.add(new_run)
         await session.flush()
         await session.refresh(new_run)
+
+        if run.type == database.RunType.PUBLISH:
+            # PUBLISH runs launch an ECS Fargate task via the publisher worker rather
+            # than through the external job system queue, so redo re-enqueues the publish
+            # task for the new run instead of submitting an external job.
+            await publisher.put(
+                PublishRequest(
+                    set_id=run.set_id,
+                    draft_id=run.draft_id,
+                    run_id=new_run.run_id,
+                )
+            )
+            set_.updated_at = datetime.now(UTC)
+            set_.status = database.SetStatus.PUBLISHING
+            session.add(set_)
+            await session.commit()
+            await session.refresh(new_run)
+            return new_run
 
         job_request = JobRequest(
             run_id=new_run.run_id,
