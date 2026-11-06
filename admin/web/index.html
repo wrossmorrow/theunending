@@ -44,6 +44,8 @@
           <option value="COMMITTED">Committed</option>
           <option value="COMPLETED">Completed</option>
           <option value="FAILED">Failed</option>
+          <option value="PUBLISHING">Publishing</option>
+          <option value="PUBLISHED">Published</option>
           <option value="ABANDONED">Abandoned</option>
         </select>
         <button type="button" id="refresh-sets" class="link-button" title="Refresh">&#8635;</button>
@@ -88,7 +90,10 @@
         <div class="kicker" data-field="model"></div>
         <h2><span data-field="title"></span> <span class="slug" data-field="slug" hidden></span></h2>
       </div>
-      <span class="badge" data-field="status"></span>
+      <div class="set-head-actions">
+        <span class="badge" data-field="status"></span>
+        <button type="button" class="primary small" data-action="publish" hidden>Publish</button>
+      </div>
     </div>
 
     <dl class="meta-grid">
@@ -97,6 +102,7 @@
       <dt>Updated</dt><dd data-field="updated_at"></dd>
       <dt data-show="committed">Committed</dt><dd data-show="committed" data-field="committed_at"></dd>
       <dt data-show="committed">Post date</dt><dd data-show="committed" data-field="post_date"></dd>
+      <dt data-show="published">Published</dt><dd data-show="published" data-field="published_at"></dd>
       <dt data-show="abandoned">Abandoned</dt><dd data-show="abandoned" data-field="abandoned_at"></dd>
       <dt data-show="committed">Prompt</dt><dd data-show="committed" class="prompt" data-field="prompt"></dd>
     </dl>
@@ -121,7 +127,7 @@
     </form>
 
     <section class="batch" data-section="batch" hidden>
-      <h3>Batch</h3>
+      <h3>Batch &amp; publish</h3>
       <div data-field="batch-runs"></div>
     </section>
 
