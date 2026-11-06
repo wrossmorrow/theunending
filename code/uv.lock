@@ -1409,6 +1409,7 @@ source = { editable = "." }
 dependencies = [
     { name = "boto3" },
     { name = "httpx" },
+    { name = "modal" },
     { name = "numpy" },
     { name = "pillow" },
     { name = "protobuf" },
@@ -1427,7 +1428,6 @@ dev = [
 imagen = [
     { name = "accelerate" },
     { name = "diffusers" },
-    { name = "modal" },
     { name = "open-clip-torch" },
     { name = "sentencepiece" },
     { name = "torch" },
@@ -1439,6 +1439,7 @@ imagen = [
 requires-dist = [
     { name = "boto3", specifier = ">=1.43.92" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "modal", specifier = ">=1.6.3" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "pillow", specifier = ">=12.3.0" },
     { name = "protobuf", specifier = ">=7.36.1" },
@@ -1457,7 +1458,6 @@ dev = [
 imagen = [
     { name = "accelerate", specifier = ">=1.15.0" },
     { name = "diffusers", specifier = ">=0.40.0" },
-    { name = "modal", specifier = ">=1.6.3" },
     { name = "open-clip-torch", specifier = ">=2.32" },
     { name = "sentencepiece", specifier = ">=0.2.2" },
     { name = "torch", specifier = ">=2.14.0" },

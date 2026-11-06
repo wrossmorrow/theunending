@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     img = (
         modal.Image.debian_slim(python_version="3.12")
-        .uv_sync()
+        .uv_sync(groups=["imagen"])
         .env({"HF_HOME": "/cache"})
     )
 
