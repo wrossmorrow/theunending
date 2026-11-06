@@ -314,6 +314,9 @@ def lambda_handler(event, context):
 
 
 def handle(args: argparse.Namespace) -> None:
+
+    print(f"Running full posters; {args}")
+
     res = build_poster(
         args.source,
         args.output,

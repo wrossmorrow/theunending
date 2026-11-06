@@ -166,6 +166,8 @@ def gather(source, bucket, prefix, name, n, seed):
 
 def handle(args: argparse.Namespace) -> None:
 
+    print(f"Running og tiles; {args}")
+
     pairs = {}
     if args.map:
         text = open(args.map).read()  # noqa: SIM115

@@ -58,6 +58,8 @@ def fit_budget(src, long_px, max_bytes, fmt, q_lo=55, q_hi=90):
 
 def handle(args: argparse.Namespace) -> None:
 
+    print(f"Running web posters; {args}")
+
     fmt = "WEBP" if args.format == "webp" else "JPEG"
     index = []
     for size in sorted(os.listdir(args.source)):

@@ -10,6 +10,8 @@ def _clean_path(p: str) -> str:
 
 def handle(args: argparse.Namespace) -> None:
 
+    print(f"Running similarity; {args}")
+
     E = np.load(args.input)
     with open(f"{args.input}.json", "r") as f:
         meta = json.load(f)
@@ -19,8 +21,6 @@ def handle(args: argparse.Namespace) -> None:
     S = E @ E.T  # 5000×5000, ~100MB float32
     np.fill_diagonal(S, -1)  # never recommend the image itself
     idx = np.argpartition(-S, 4, axis=1)[:, :4]  # then sort those 4 by score
-
-    print(idx.shape, idx)
 
     for i, p in enumerate(paths):
         indices = idx[i]
@@ -33,7 +33,7 @@ def handle(args: argparse.Namespace) -> None:
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--input", default="embeddings.npy", help="input path")
-    parser.add_argument("--output", default="results", help="output path")
+    parser.add_argument("--output", default="similar", help="output path")
     parser.set_defaults(func=handle)
     return parser
 
