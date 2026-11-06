@@ -112,7 +112,7 @@ class PublishSettings(BaseSettings):
 
     @property
     def RAW_PREFIX(self) -> str:
-        return f"runs/{self.PROMPT_HASH}"
+        return f"runs/{self.MODEL_PROMPT_HASH}"
 
     @property
     def RAW_IMG_ASSETS(self) -> str:
