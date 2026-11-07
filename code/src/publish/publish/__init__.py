@@ -29,15 +29,6 @@ def handle(args: argparse.Namespace) -> None:
         admin_run_id=settings.RUN_ID,
     )
 
-    github_publisher = GithubPublisher(
-        app_id=settings.GITHUB_APP_ID,
-        client_id=settings.GITHUB_APP_CLIENT_ID,
-        installation_id=settings.GITHUB_APP_INSTALLATION_ID,
-        private_key=settings.GITHUB_APP_PRIVATE_KEY,
-        owner=settings.GITHUB_REPO_OWNER,
-        repo=settings.GITHUB_REPO_NAME,
-    )
-
     s3 = boto3.client("s3", config=Config(max_pool_connections=settings.MAX_S3_THREADS))
 
     # first signal, job actually launched and nothing else; enforce idempotency via
@@ -317,6 +308,14 @@ def handle(args: argparse.Namespace) -> None:
         raise
 
     try:
+        github_publisher = GithubPublisher(
+            app_id=settings.GITHUB_APP_ID,
+            client_id=settings.GITHUB_APP_CLIENT_ID,
+            installation_id=settings.GITHUB_APP_INSTALLATION_ID,
+            private_key=settings.GITHUB_APP_PRIVATE_KEY,
+            owner=settings.GITHUB_REPO_OWNER,
+            repo=settings.GITHUB_REPO_NAME,
+        )
         draft_pr_url = github_publisher.create_draft_pr(
             files=draft_files(settings, draft_manifest),
             title=f"Publish draft: {settings.POST_NAME}",
@@ -326,7 +325,6 @@ def handle(args: argparse.Namespace) -> None:
             ),
             branch=f"draft/{settings.POST_NAME}",
         )
-
         admin.update_progress(
             Status.IN_PROGRESS,
             "created draft pull request",
@@ -334,13 +332,11 @@ def handle(args: argparse.Namespace) -> None:
         )
     except Exception as e:  # noqa: BLE001
         admin.update_progress(
-            Status.FAILED,
+            Status.IN_PROGRESS,
             "failed to create draft pull request",
             details={"error": str(e), "error_class": e.__class__.__name__},
         )
         print(f"Failed to create draft PR: {e.__class__.__name__} {e}")
-
-    # TODO: submit a PR with this data organized if we can clone main branch?
 
     admin.update_progress(
         Status.COMPLETED,
