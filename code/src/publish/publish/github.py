@@ -149,7 +149,7 @@ def draft_files(
 
     post_draft = draft_manifest.get("post_draft")
     if post_draft:
-        files[f"site/_drafts/{settings.POST_NAME}.md"] = post_draft.encode("utf-8")
+        files[f"site/_posts/{settings.POST_NAME}.md"] = post_draft.encode("utf-8")
 
     image_manifest = draft_manifest.get("image_manifest")
     if image_manifest:
