@@ -91,21 +91,6 @@ class SnsNotifier:
         await asyncio.to_thread(self.publish, notification)
 
 
-async def notify_run_terminal_status(
-    notifier: SnsNotifier | None,
-    run: database.Run,
-    status: database.RunStatus,
-    message: str | None = None,
-    details: dict[str, Any] | None = None,
-) -> None:
-    """Send the admin notification for a terminal run status, if one is applicable."""
-    if notifier is None or not should_notify(run.type, status):
-        return
-    await notifier.notify(
-        build_run_notification(run, status, message=message, details=details)
-    )
-
-
 def get_notifier(request: Request) -> SnsNotifier:
     """Return the SNS notifier from app state."""
     return request.app.state.notifier

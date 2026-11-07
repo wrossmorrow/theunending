@@ -11,7 +11,12 @@ from sqlmodel import select
 from api.database import models as database
 from api.settings import settings
 from api.utils.jobs import ExternalJobClient, JobParameters, JobRequest
-from api.utils.notifications import SnsNotifier, notify_run_terminal_status
+from api.utils.notifications import (
+    RunNotification,
+    SnsNotifier,
+    build_run_notification,
+    should_notify,
+)
 from api.utils.publish import Publisher, PublishRequest
 from api.v0.schema import models
 
@@ -332,13 +337,18 @@ async def update_run_status(
 
         await session.refresh(run)
 
-    # Send the terminal status notification only after the status transaction commits.
-    await notify_run_terminal_status(
-        notifier=notifier,
-        run=run,
-        status=update.status,
-        message=update.message,
-        details=update.details,
-    )
+        notification: RunNotification | None = None
+        if should_notify(run.type, update.status):
+            notification = build_run_notification(
+                run,
+                update.status,
+                message=update.message,
+                details=update.details,
+            )
+
+    # Send the notification after the status transaction commits; a failed email
+    # push never fails or rolls back the status update.
+    if notification is not None and notifier is not None:
+        await notifier.notify(notification)
 
     return run
