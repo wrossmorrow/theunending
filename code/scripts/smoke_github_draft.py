@@ -1,22 +1,18 @@
 """Ad-hoc smoke test for GithubPublisher.create_draft_pr."""
 
 import json
+import os
 
 import boto3
 
 from publish.publish.github import GithubPublisher, draft_files
 from publish.publish.settings import PublishSettings
 
-settings = PublishSettings(
-    RUN_ID="12345678-1234-1234-1234-123456789012",
-    ADMIN_API_TOKEN="dummy-admin-token",
-    GITHUB_APP_ID="dummy-app-id",
-    GITHUB_APP_CLIENT_ID="dummy-client-id",
-    GITHUB_APP_INSTALLATION_ID="123456",
-    GITHUB_APP_PRIVATE_KEY="dummy-private-key",
-    GITHUB_REPO_OWNER="wrossmorrow",
-    GITHUB_REPO_NAME="theunending",
-)
+with open(os.environ["GITHUB_APP_PRIVATE_KEY_FILE"], "r") as f:
+    settings = PublishSettings(
+        GITHUB_APP_PRIVATE_KEY=f.read(),
+        REQUIRE_PENDING=False,
+    )
 
 s3 = boto3.client("s3")
 
@@ -26,23 +22,38 @@ spec = s3.get_object(
 )
 draft_manifest = json.loads(spec["Body"].read())
 
-publisher = GithubPublisher(
-    app_id="dummy-app-id",
-    client_id="dummy-client-id",
-    installation_id="123456",
-    private_key="dummy-private-key",
-    owner=settings.GITHUB_REPO_OWNER,
-    repo=settings.GITHUB_REPO_NAME,
+og_filename = f"og/{settings.SET_NAME}.jpg"
+os.makedirs("og", exist_ok=True)
+s3.download_file(
+    Bucket=settings.SITE_BUCKET,
+    Key=f"assets/og/{settings.SET_NAME}.jpg",
+    Filename=og_filename,
 )
 
-pr_url = publisher.create_draft_pr(
-    files=draft_files(settings, draft_manifest),
-    title=f"Publish draft: {settings.POST_NAME}",
-    body=(
-        f"Publish draft for set {settings.SET_NAME} (post {settings.POST_NAME}). "
-        f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json"
-    ),
-    branch=f"draft/{settings.POST_NAME}",
-)
+try:
+    publisher = GithubPublisher(
+        app_id=settings.GITHUB_APP_ID,
+        client_id=settings.GITHUB_APP_CLIENT_ID,
+        installation_id=settings.GITHUB_APP_INSTALLATION_ID,
+        private_key=settings.GITHUB_APP_PRIVATE_KEY,
+        owner=settings.GITHUB_REPO_OWNER,
+        repo=settings.GITHUB_REPO_NAME,
+    )
 
-print(f"Created draft PR: {pr_url}")
+    pr_url = publisher.create_draft_pr(
+        files=draft_files(settings, draft_manifest),
+        title=f"Publish draft: {settings.POST_NAME}",
+        body=(
+            f"Publish draft for set {settings.SET_NAME} (post {settings.POST_NAME}). "
+            f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json"
+        ),
+        branch=f"draft/{settings.POST_NAME}",
+    )
+
+    print(f"Created draft PR: {pr_url}")
+
+except Exception as e:
+    print(f"Failed to create PR: {e.__class__.__name__} {e}")
+
+finally:
+    os.remove(og_filename)
