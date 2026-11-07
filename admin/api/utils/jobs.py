@@ -13,6 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from api.database import models as database
 from api.database.models import DraftStatus, RunStatus, RunType, SetStatus
 from api.settings import settings
+from api.utils.notifications import (
+    RunNotification,
+    SnsNotifier,
+    build_run_notification,
+    should_notify,
+)
 
 
 class JobParameters(BaseModel):
@@ -51,6 +57,7 @@ class ExternalJobClient:
         queue_timeout_seconds: float = 30.0,
         submit_timeout_seconds: float = 60.0,
         max_attempts: int = 3,
+        notifier: SnsNotifier | None = None,
     ) -> None:
         """Create a client with the given base URL and timeout."""
         headers = (
@@ -65,6 +72,7 @@ class ExternalJobClient:
         self._qtimeout_seconds = queue_timeout_seconds
         self._session_factory = session_factory
         self._max_attempts = max_attempts
+        self._notifier = notifier
 
         self._worker_task: asyncio.Task | None = None
 
@@ -207,6 +215,7 @@ class ExternalJobClient:
             run_id=request.run_id,
             status=status,
             response=response,
+            notifier=self._notifier,
         )
 
 
@@ -215,8 +224,10 @@ async def finalize_run_status(
     run_id: UUID,
     status: RunStatus,
     response: JobAPIResponse | None = None,
+    notifier: SnsNotifier | None = None,
 ) -> None:
     """Record a terminal run status and propagate it to the linked draft/set."""
+    notification: RunNotification | None = None
     async with session_factory() as session:
         runs_table = database.Run.metadata.tables[database.Run.__tablename__]
         run = (
@@ -273,7 +284,15 @@ async def finalize_run_status(
                         else SetStatus.FAILED
                     )
                     session.add(committed_set)
+
+        if should_notify(run.type, status):
+            notification = build_run_notification(run, status)
         await session.commit()
+
+    # Send the notification after the status transaction commits; a failed email
+    # push never fails or rolls back the status update.
+    if notification is not None and notifier is not None:
+        await notifier.notify(notification)
 
 
 def get_job_client(request: Request) -> ExternalJobClient:

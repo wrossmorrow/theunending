@@ -11,6 +11,12 @@ from sqlmodel import select
 from api.database import models as database
 from api.settings import settings
 from api.utils.jobs import ExternalJobClient, JobParameters, JobRequest
+from api.utils.notifications import (
+    RunNotification,
+    SnsNotifier,
+    build_run_notification,
+    should_notify,
+)
 from api.utils.publish import Publisher, PublishRequest
 from api.v0.schema import models
 
@@ -216,8 +222,10 @@ async def update_run_status(
     run_id: UUID,
     update: models.RunStatusUpdate,
     session_factory: async_sessionmaker[AsyncSession],
+    notifier: SnsNotifier,
 ) -> database.Run:
     """Update a run status (system call)."""
+    notification: RunNotification | None = None
     async with session_factory() as session:
         runs_table = database.Run.metadata.tables[database.Run.__tablename__]
         run = (
@@ -329,4 +337,18 @@ async def update_run_status(
                 )
 
         await session.refresh(run)
-        return run
+
+        if should_notify(run.type, update.status):
+            notification = build_run_notification(
+                run,
+                update.status,
+                message=update.message,
+                details=update.details,
+            )
+
+    # Send the notification after the status transaction commits; a failed email
+    # push never fails or rolls back the status update.
+    if notification is not None and notifier is not None:
+        await notifier.notify(notification)
+
+    return run

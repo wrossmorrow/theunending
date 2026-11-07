@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     s3_batch_prefix: str = "runs"
     s3_presign_expires_seconds: int = 300
     aws_region_name: str = "us-east-1"
+    sns_topic_arn: str = ""
 
     queue_timeout_seconds: float = 30
     submit_timeout_seconds: float = 60

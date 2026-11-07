@@ -59,3 +59,8 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "admin_email_address" {
+  description = "Email address subscribed to the admin run status SNS topic for notifications."
+  type        = string
+}

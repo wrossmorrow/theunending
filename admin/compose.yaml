@@ -31,6 +31,7 @@ services:
       S3_BUCKET_NAME: ${S3_BUCKET_NAME:-unending-local}
       S3_EVALUATE_PREFIX: ${S3_EVALUATE_PREFIX:-drafts}
       S3_BATCH_PREFIX: ${S3_BATCH_PREFIX:-runs}
+      SNS_TOPIC_ARN: ${SNS_TOPIC_ARN:-}
     volumes:
       - ${HOME}/data:/data
     restart: unless-stopped
