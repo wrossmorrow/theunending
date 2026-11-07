@@ -134,8 +134,9 @@ class PublishSettings(BaseSettings):
     @property
     def SET_SPEC(self) -> dict:
         return {
+            "set": self.SET_NAME,
             "base": f"https://theunending.ai/assets/img/{self.POST_NAME}/",
-            "manifest": f"assets/streams/{self.SET_NAME}.json",
+            "manifest": f"/assets/streams/{self.SET_NAME}.json",
             "meta": f"/assets/img/{self.POST_NAME}/{{id}}.json",
         }
 
@@ -233,7 +234,7 @@ class PublishSettings(BaseSettings):
 
     @property
     def POSTERS_SPEC(self) -> dict:
-        return ({size: self._poster_spec(size) for size in self.POSTER_SIZES},)
+        return {size: self._poster_spec(size) for size in self.POSTER_SIZES}
 
     def _poster_spec(self, size: str) -> dict:
         return {

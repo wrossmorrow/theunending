@@ -159,7 +159,7 @@ def draft_files(
 
     set_spec = draft_manifest.get("set_spec") or {}
     if set_spec:
-        files[f"site/_data/streams/{settings.POST_NAME}.json"] = dumps(set_spec).encode(
+        files[f"site/_data/set_streams/{settings.POST_NAME}.json"] = dumps(set_spec).encode(
             "utf-8"
         )
 
