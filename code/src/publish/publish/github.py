@@ -165,7 +165,7 @@ def draft_files(
 
     posters_spec = draft_manifest.get("posters_spec")
     if posters_spec:
-        files[f"site/_data/posters/{settings.POST_NAME}.json"] = dumps(
+        files[f"site/_data/set_posters/{settings.POST_NAME}.json"] = dumps(
             posters_spec
         ).encode("utf-8")
 
