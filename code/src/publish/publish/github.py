@@ -36,6 +36,7 @@ class GithubPublisher:
         self.repo = repo
         self.base_branch = base_branch
         self.github_api_base_url = github_api_base_url
+        self.token = self._installation_token()
 
     def _installation_token(self) -> str:
         now = int(time.time())
@@ -132,7 +133,7 @@ class GithubPublisher:
         branch: str,
         base: str = "main",
     ) -> str:
-        token = self._installation_token()
+        token = self.token
         sha = self._default_branch_sha(token, base)
         self.create_branch(branch, token, sha)
         self.add_files(files, branch, token)
