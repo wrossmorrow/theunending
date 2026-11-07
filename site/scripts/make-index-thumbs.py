@@ -3,8 +3,9 @@
 # dependencies = ["pillow", "pyyaml", "boto3"]
 # ///
 """
-Make one small WebP per set for the index: the `thumb:` id of each set in
-_data/streams.yml, downscaled to assets/img/index-thumbs/<id>.webp.
+Make one small WebP per set for the index: the `thumb:` id of each set
+(_data/set_streams/*.json, plus any legacy `sets` left in _data/streams.yml),
+downscaled to assets/img/index-thumbs/<id>.webp.
 
 Files are named by image id, so changing a set's `thumb:` makes a new file
 on the next run instead of silently reusing the old one. Existing outputs
@@ -26,6 +27,8 @@ import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
+import json
+
 import yaml
 from PIL import Image
 
@@ -35,6 +38,8 @@ BUCKET = "theunending-ai-site-content-use1"
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", default="_data/streams.yml")
+    ap.add_argument("--set-dir", type=Path, default=Path("_data/set_streams"),
+                    help="per-set stream files, merged as in _plugins/set_data.rb")
     ap.add_argument("--out", default="assets/img/index-thumbs")
     ap.add_argument("--size", type=int, default=640, help="longest edge in px (default 640: 2x a ~320px tile)")
     ap.add_argument("--quality", type=int, default=80)
@@ -45,8 +50,18 @@ def main() -> int:
     args = ap.parse_args()
 
     data = yaml.safe_load(Path(args.data).read_text()) or {}
-    sets = data.get("sets") or {}
+    sets = dict(data.get("sets") or {})
     defaults = data.get("defaults") or {}
+    for f in sorted(args.set_dir.glob("*.json")):
+        cfg = json.loads(f.read_text())
+        key = cfg.pop("set", None)
+        if not key:
+            print(f"{f}: missing \"set\"", file=sys.stderr)
+            return 1
+        if key in sets:
+            print(f"{f}: set {key} is already defined", file=sys.stderr)
+            return 1
+        sets[key] = cfg
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
 

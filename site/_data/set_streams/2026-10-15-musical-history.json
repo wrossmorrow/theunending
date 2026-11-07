@@ -1,0 +1,7 @@
+{
+  "set": "musical-history",
+  "base": "https://theunending.ai/assets/img/2026-10-15-musical-history/",
+  "manifest": "/assets/streams/musical-history.json",
+  "meta": "/assets/img/2026-10-15-musical-history/{id}.json",
+  "thumb": "00abdb65-e755-4f17-a63c-cbdaac7542f3"
+}

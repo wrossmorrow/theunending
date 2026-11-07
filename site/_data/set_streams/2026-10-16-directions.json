@@ -1,0 +1,7 @@
+{
+  "set": "directions",
+  "base": "https://theunending.ai/assets/img/2026-10-16-directions/",
+  "manifest": "/assets/streams/directions.json",
+  "meta": "/assets/img/2026-10-16-directions/{id}.json",
+  "thumb": "0013da3b-8ff1-4939-befd-a3c22a02d160"
+}

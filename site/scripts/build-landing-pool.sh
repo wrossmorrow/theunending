@@ -15,6 +15,7 @@
 set -euo pipefail
 
 DATAFILE="${DATAFILE:-_data/streams.yml}"
+SETDIR="${SETDIR:-_data/set_streams}"   # one <post-name>.json per set, see _plugins/set_data.rb
 STREAMDIR="${STREAMDIR:-assets/streams}"
 OUT="${OUT:-assets/landing-pool.json}"
 PER_SET="${PER_SET:-40}"          # ids sampled per set
@@ -26,12 +27,13 @@ SEED="${SEED:-}"                  # set for a reproducible pool
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
 
-# yq gives us streams.yml as JSON so python needs no YAML dependency
-yq -c '.sets' "$DATAFILE" | python3 -c '
-import json, os, random, sys
+# yq gives us any legacy streams.yml sets as JSON so python needs no YAML
+# dependency; the per-set files are JSON already.
+yq -c '.sets // {}' "$DATAFILE" | python3 -c '
+import glob, json, os, random, sys
 
 try:
-    sets = json.load(sys.stdin)
+    sets = json.load(sys.stdin) or {}
 except json.JSONDecodeError:
     # yq already printed its parse error; do not bury it under a traceback
     print("could not read sets from the data file", file=sys.stderr)
@@ -39,6 +41,19 @@ except json.JSONDecodeError:
 streamdir = sys.argv[1]
 per = int(sys.argv[2])
 seed = sys.argv[3]
+setdir = sys.argv[4]
+
+# Same merge as _plugins/set_data.rb: the stream key is "set" inside each file.
+for f in sorted(glob.glob(os.path.join(setdir, "*.json"))):
+    cfg = json.load(open(f))
+    key = cfg.pop("set", None)
+    if not key:
+        print(f"{f}: missing \"set\"", file=sys.stderr)
+        sys.exit(1)
+    if key in sets:
+        print(f"{f}: set {key} is already defined", file=sys.stderr)
+        sys.exit(1)
+    sets[key] = cfg
 rng = random.Random(seed) if seed else random.Random()
 
 out, skipped = {}, []
@@ -59,7 +74,7 @@ for name, cfg in (sets or {}).items():
     cfg = cfg or {}
     base = cfg.get("base")
     if not base:
-        skipped.append(f"{name} (no base in streams.yml)")
+        skipped.append(f"{name} (no base)")
         continue
 
     # Carry the whole set entry through, not just base/ext: the stream
@@ -84,7 +99,7 @@ for s in skipped:
     print("skip   " + s, file=sys.stderr)
 total = sum(len(v["ids"]) for v in out.values())
 print(f"pooled {total} ids from {len(out)} sets", file=sys.stderr)
-' "$STREAMDIR" "$PER_SET" "$SEED" > "$TMP"
+' "$STREAMDIR" "$PER_SET" "$SEED" "$SETDIR" > "$TMP"
 
 [ -s "$TMP" ] || { echo "empty result -- $OUT untouched" >&2; exit 1; }
 python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d["sets"]' "$TMP" \

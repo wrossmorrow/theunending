@@ -1,0 +1,7 @@
+{
+  "set": "health-food",
+  "base": "https://theunending.ai/assets/img/2026-10-02-health-food/",
+  "manifest": "/assets/streams/health-food.json",
+  "meta": "/assets/img/2026-10-02-health-food/{id}.json",
+  "thumb": "00033160-b897-42b9-aa75-badc1f2bd9a8"
+}

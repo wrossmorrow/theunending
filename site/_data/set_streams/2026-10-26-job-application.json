@@ -1,0 +1,7 @@
+{
+  "set": "job-application",
+  "base": "https://theunending.ai/assets/img/2026-10-26-job-application/",
+  "manifest": "/assets/streams/job-application.json",
+  "meta": "/assets/img/2026-10-26-job-application/{id}.json",
+  "thumb": "04254c21-859c-42ed-95d1-e5d4d88ee2dd"
+}

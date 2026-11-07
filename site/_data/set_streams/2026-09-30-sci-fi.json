@@ -1,0 +1,7 @@
+{
+  "set": "sci-fi",
+  "base": "https://theunending.ai/assets/img/2026-09-30-sci-fi/",
+  "manifest": "/assets/streams/sci-fi.json",
+  "meta": "/assets/img/2026-09-30-sci-fi/{id}.json",
+  "thumb": "0005aeaf-07f2-4b3a-b87a-da495c3c7cef"
+}

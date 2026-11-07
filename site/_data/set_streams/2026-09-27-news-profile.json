@@ -1,0 +1,7 @@
+{
+  "set": "news-profile",
+  "base": "https://theunending.ai/assets/img/2026-09-27-news-profile/",
+  "manifest": "/assets/streams/news-profile.json",
+  "meta": "/assets/img/2026-09-27-news-profile/{id}.json",
+  "thumb": "0006fed4-2abd-4c48-b596-18afc7ceb6ad"
+}

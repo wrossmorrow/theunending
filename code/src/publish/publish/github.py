@@ -159,13 +159,13 @@ def draft_files(
 
     set_spec = draft_manifest.get("set_spec") or {}
     if set_spec:
-        files[f"site/_data/streams/{settings.POST_NAME}.json"] = dumps(set_spec).encode(
+        files[f"site/_data/set_streams/{settings.POST_NAME}.json"] = dumps(set_spec).encode(
             "utf-8"
         )
 
     posters_spec = draft_manifest.get("posters_spec")
     if posters_spec:
-        files[f"site/_data/posters/{settings.POST_NAME}.json"] = dumps(
+        files[f"site/_data/set_posters/{settings.POST_NAME}.json"] = dumps(
             posters_spec
         ).encode("utf-8")
 

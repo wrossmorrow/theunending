@@ -1,0 +1,7 @@
+{
+  "set": "tv-iv",
+  "base": "https://theunending.ai/assets/img/2026-10-12-tv-iv/",
+  "manifest": "/assets/streams/tv-iv.json",
+  "meta": "/assets/img/2026-10-12-tv-iv/{id}.json",
+  "thumb": "0000e1fb-c239-41ed-badf-e501a34f74db"
+}

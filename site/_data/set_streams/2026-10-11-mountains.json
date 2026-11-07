@@ -1,0 +1,7 @@
+{
+  "set": "mountains",
+  "base": "https://theunending.ai/assets/img/2026-10-11-mountains/",
+  "manifest": "/assets/streams/mountains.json",
+  "meta": "/assets/img/2026-10-11-mountains/{id}.json",
+  "thumb": "000215e0-d8a7-4837-8e7a-da4c1c7aaaac"
+}

@@ -1,0 +1,7 @@
+{
+  "set": "detritus",
+  "base": "https://theunending.ai/assets/img/2026-10-16-detritus/",
+  "manifest": "/assets/streams/detritus.json",
+  "meta": "/assets/img/2026-10-16-detritus/{id}.json",
+  "thumb": "008de9bb-1634-429d-861a-29a9ab5959af"
+}

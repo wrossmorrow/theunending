@@ -1,0 +1,7 @@
+{
+  "set": "invisible-tanks",
+  "base": "https://theunending.ai/assets/img/2026-10-03-invisible-tanks/",
+  "manifest": "/assets/streams/invisible-tanks.json",
+  "meta": "/assets/img/2026-10-03-invisible-tanks/{id}.json",
+  "thumb": "00034296-221a-4c55-896e-7da0af5726a3"
+}

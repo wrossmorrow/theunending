@@ -1,0 +1,7 @@
+{
+  "set": "audiobooks",
+  "base": "https://theunending.ai/assets/img/2026-10-28-audiobooks/",
+  "manifest": "/assets/streams/audiobooks.json",
+  "meta": "/assets/img/2026-10-28-audiobooks/{id}.json",
+  "thumb": "06cf6300-d448-4995-bcbf-01fb7d192092"
+}
