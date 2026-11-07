@@ -11,6 +11,7 @@ from botocore.exceptions import ClientError
 from pydantic import ValidationError
 
 from .commands import run_og_tiles, run_posters, run_similar, run_web_posters
+from .github import GithubPublisher, draft_files
 from .post import post_draft
 from .settings import PublishSettings
 from .utils import do_uploads, get_source_content, list_image_ids, mkdirs
@@ -306,7 +307,36 @@ def handle(args: argparse.Namespace) -> None:
         )
         raise
 
-    # TODO: submit a PR with this data organized if we can clone main branch?
+    try:
+        github_publisher = GithubPublisher(
+            app_id=settings.GITHUB_APP_ID,
+            client_id=settings.GITHUB_APP_CLIENT_ID,
+            installation_id=settings.GITHUB_APP_INSTALLATION_ID,
+            private_key=settings.GITHUB_APP_PRIVATE_KEY,
+            owner=settings.GITHUB_REPO_OWNER,
+            repo=settings.GITHUB_REPO_NAME,
+        )
+        draft_pr_url = github_publisher.create_draft_pr(
+            files=draft_files(settings, draft_manifest),
+            title=f"Publish draft: {settings.POST_NAME}",
+            body=(
+                f"Publish draft for set {settings.SET_NAME} (post {settings.POST_NAME}). "
+                f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json"
+            ),
+            branch=f"draft/{settings.POST_NAME}",
+        )
+        admin.update_progress(
+            Status.IN_PROGRESS,
+            "created draft pull request",
+            details={"draft_pr_url": draft_pr_url},
+        )
+    except Exception as e:  # noqa: BLE001
+        admin.update_progress(
+            Status.IN_PROGRESS,
+            "failed to create draft pull request",
+            details={"error": str(e), "error_class": e.__class__.__name__},
+        )
+        print(f"Failed to create draft PR: {e.__class__.__name__} {e}")
 
     admin.update_progress(
         Status.COMPLETED,

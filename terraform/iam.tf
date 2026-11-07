@@ -128,11 +128,6 @@ resource "aws_iam_role_policy" "app_permissions" {
   policy = data.aws_iam_policy_document.app_permissions.json
 }
 
-import {
-  to = aws_iam_role.theunending_admin
-  id = "theunending-admin"
-}
-
 # Modal
 
 data "aws_iam_policy_document" "modal_oidc" {
@@ -214,16 +209,6 @@ resource "aws_iam_role_policy" "modal_apps" {
   policy = data.aws_iam_policy_document.modal_apps.json
 }
 
-import {
-  to = aws_iam_role.modal_oidc
-  id = "modal-oidc-access"
-}
-
-# import {
-#   to = aws_iam_role_policy.modal_apps
-#   id = "modal-oidc-access:modal-oidc-access"
-# }
-
 # 
 # publish task
 # 
@@ -270,7 +255,9 @@ data "aws_iam_policy_document" "execution_secret" {
       "secretsmanager:GetSecretValue"
     ]
     resources = [
-      data.aws_secretsmanager_secret.admin_api_auth.arn
+      data.aws_secretsmanager_secret.admin_api_auth.arn,
+      data.aws_secretsmanager_secret.theunending_publish_github_app.arn,
+      data.aws_secretsmanager_secret.theunending_publish_github_app_key.arn,
     ]
   }
 }
