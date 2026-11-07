@@ -5,11 +5,22 @@ from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from botocore.exceptions import ClientError
+
 from .s3 import cp_from_s3
 from .settings import PublishSettings
 
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
+
+
+class PreconditionFailedError(Exception):
+    """Raised when an S3 conditional write (IfNoneMatch) is rejected as conflicting."""
+
+    def __init__(self, bucket: str, key: str) -> None:
+        super().__init__(f"Object already exists at s3://{bucket}/{key}")
+        self.bucket = bucket
+        self.key = key
 
 
 def mkdirs(*dirs: str) -> None:
@@ -42,14 +53,19 @@ def put_file_no_overwrite(
     key: str,
     content_type: str,
 ) -> None:
-    with open(filename, "rb") as f:
-        s3.put_object(
-            Bucket=bucket,
-            Key=key,
-            Body=f,
-            ContentType=content_type,
-            IfNoneMatch="*",
-        )
+    try:
+        with open(filename, "rb") as f:
+            s3.put_object(
+                Bucket=bucket,
+                Key=key,
+                Body=f,
+                ContentType=content_type,
+                IfNoneMatch="*",
+            )
+    except ClientError as e:
+        if e.response["Error"]["Code"] in ("PreconditionFailed", "412"):
+            raise PreconditionFailedError(bucket=bucket, key=key) from e
+        raise
 
 
 def batch_put_file_no_overwrite(
