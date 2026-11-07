@@ -14,7 +14,7 @@ image: assets/og/thursday-nov-5-heatmap.jpg
 
 <small>
 Created with [black-forest-labs/FLUX.2-klein-4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-4B). Similarities in modals 
-define by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). 
+defined by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). 
 All computed on an A100 instance in modal.
 </small>
 

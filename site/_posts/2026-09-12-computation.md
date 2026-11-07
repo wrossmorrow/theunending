@@ -13,4 +13,4 @@ teaser: assets/img/2026-09-12-computation/000c9cde-21d8-40d1-81e2-24ae4383d60f.p
 
 ---
 
-<small>Created with [black-forest-labs/FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell). Similarities in modals define by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). All computed on an AWS `g6e.xlarge`.</small>
+<small>Created with [black-forest-labs/FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell). Similarities in modals defined by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). All computed on an AWS `g6e.xlarge`.</small>

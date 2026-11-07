@@ -12,4 +12,4 @@ image: assets/og/pearl-earring.jpg
 
 ---
 
-<small>Created with [black-forest-labs/FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell). Similarities in modals define by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). All computed on an AWS `g6e.xlarge`. </small>
+<small>Created with [black-forest-labs/FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell). Similarities in modals defined by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). All computed on an AWS `g6e.xlarge`. </small>
