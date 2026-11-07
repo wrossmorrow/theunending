@@ -27,7 +27,7 @@ def post_draft(
 
     <small>
     Created with [{model}](https://huggingface.co/{model}). Similarities in modals 
-    define by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). 
+    defined by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). 
     All computed on an A100 instance in modal.
     </small>
     """).lstrip()
