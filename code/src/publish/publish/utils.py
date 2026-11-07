@@ -85,10 +85,20 @@ def batch_put_file_no_overwrite(
 def do_uploads(
     settings: PublishSettings,
     s3: S3Client,
-) -> None:
+) -> dict:
+    """
+    Upload all publishable content to the site bucket, collecting counts of
+    files uploaded from each source to each bucket/prefix along the way.
+
+    Raises a ValueError if any file failed to upload.
+    """
+
+    failed: list[tuple[str, Exception]] = []
+
+    report: dict = {}
 
     # images/*.png -> SITE_BUCKET, assets/img/POST_NAME/
-    failed = batch_put_file_no_overwrite(
+    failed_files = batch_put_file_no_overwrite(
         s3=s3,
         pattern=f"{settings.IMAGES_DIR}/*.png",
         bucket=settings.SITE_BUCKET,
@@ -96,9 +106,15 @@ def do_uploads(
         content_type="image/png",
         max_workers=settings.MAX_S3_THREADS,
     )
+    failed.extend(failed_files)
+    report[f"{settings.IMAGES_DIR}/*.png"] = {
+        "bucket": settings.SITE_BUCKET,
+        "prefix": settings.SITE_IMG_ASSETS_PREFIX,
+        "uploaded": len(glob(f"{settings.IMAGES_DIR}/*.png")) - len(failed_files),
+    }
 
     # images/*.json -> SITE_BUCKET, assets/img/POST_NAME/
-    failed = batch_put_file_no_overwrite(
+    failed_files = batch_put_file_no_overwrite(
         s3=s3,
         pattern=f"{settings.SIMILAR_DIR}/*.json",
         bucket=settings.SITE_BUCKET,
@@ -106,6 +122,12 @@ def do_uploads(
         content_type="application/json",
         max_workers=settings.MAX_S3_THREADS,
     )
+    failed.extend(failed_files)
+    report[f"{settings.SIMILAR_DIR}/*.json"] = {
+        "bucket": settings.SITE_BUCKET,
+        "prefix": settings.SITE_IMG_ASSETS_PREFIX,
+        "uploaded": len(glob(f"{settings.SIMILAR_DIR}/*.json")) - len(failed_files),
+    }
 
     # og/SET_NAME.jpg -> SITE_BUCKET, assets/og/SET_NAME.jpg
     put_file_no_overwrite(
@@ -115,9 +137,15 @@ def do_uploads(
         key=f"{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg",
         content_type="image/jpeg",
     )
+    report[f"og/{settings.SET_NAME}.jpg"] = {
+        "bucket": settings.SITE_BUCKET,
+        "prefix": settings.SITE_OG_IMAGE_PREFIX,
+        "uploaded": 1,
+    }
 
     # posters/*.png -> SITE_BUCKET, assets/img/posters/raw/POST_NAME/* (TODO: block public access?)
-    for path in glob(f"{settings.POSTERS_DIR}/*.png"):
+    poster_files = glob(f"{settings.POSTERS_DIR}/*.png")
+    for path in poster_files:
         put_file_no_overwrite(
             s3=s3,
             filename=path,
@@ -125,10 +153,16 @@ def do_uploads(
             key=f"{settings.SITE_POSTER_RAW_PREFIX}/{Path(path).name}",
             content_type="image/png",
         )
+    report[f"{settings.POSTERS_DIR}/*.png"] = {
+        "bucket": settings.SITE_BUCKET,
+        "prefix": settings.SITE_POSTER_RAW_PREFIX,
+        "uploaded": len(poster_files),
+    }
 
     # posters/previews/*.webp -> SITE_BUCKET, assets/img/posters/previews/POST_NAME/*
 
-    for path in glob(f"{settings.POSTERS_DIR}/previews/*.webp"):
+    preview_files = glob(f"{settings.POSTERS_DIR}/previews/*.webp")
+    for path in preview_files:
         put_file_no_overwrite(
             s3=s3,
             filename=path,
@@ -136,10 +170,16 @@ def do_uploads(
             key=f"{settings.SITE_POSTER_PREVIEW_PREFIX}/{Path(path).name}",
             content_type="image/webp",
         )
+    report[f"{settings.POSTERS_DIR}/previews/*.webp"] = {
+        "bucket": settings.SITE_BUCKET,
+        "prefix": settings.SITE_POSTER_PREVIEW_PREFIX,
+        "uploaded": len(preview_files),
+    }
 
     # posters/thumbs/*.webp -> SITE_BUCKET, assets/img/posters/thumbs/POST_NAME/*
 
-    for path in glob(f"{settings.POSTERS_DIR}/thumbs/*.webp"):
+    thumb_files = glob(f"{settings.POSTERS_DIR}/thumbs/*.webp")
+    for path in thumb_files:
         put_file_no_overwrite(
             s3=s3,
             filename=path,
@@ -147,3 +187,15 @@ def do_uploads(
             key=f"{settings.SITE_POSTER_THUMBS_PREFIX}/{Path(path).name}",
             content_type="image/webp",
         )
+    report[f"{settings.POSTERS_DIR}/thumbs/*.webp"] = {
+        "bucket": settings.SITE_BUCKET,
+        "prefix": settings.SITE_POSTER_THUMBS_PREFIX,
+        "uploaded": len(thumb_files),
+    }
+
+    if failed:
+        for path, error in failed:
+            print(f"Failed to upload {path}: {error.__class__.__name__} {error}")
+        raise ValueError(f"Failed to upload publishable content: {len(failed)} file(s)")
+
+    return report
