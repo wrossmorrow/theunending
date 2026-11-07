@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from uuid import UUID, uuid4
 
+import boto3  # type: ignore[import-untyped]
 import httpx
 import pytest
 from fastapi.testclient import TestClient
@@ -21,6 +22,7 @@ from api.utils.jobs import (
     JobRequest,
     get_job_client,
 )
+from api.utils.notifications import RunNotification, SnsNotifier, get_notifier
 from api.utils.prompt import compute_model_prompt_hash
 from api.utils.publish import Publisher, PublishRequest, get_publisher
 
@@ -1456,3 +1458,193 @@ def test_update_run_status_publish_invalid_transition_returns_400(
         assert response.status_code == 400
         assert "Invalid run status transition" in response.json()["detail"]
         assert client.get(f"/api/v0/sets/{set_id}").json()["status"] == "PUBLISHING"
+
+
+class MockSnsNotifier(SnsNotifier):
+    """Mock SNS notifier that records published run notifications."""
+
+    def __init__(
+        self,
+        topic_arn: str = "arn:aws:sns:us-east-1:123456789012:theunending-admin-notifications",
+    ) -> None:
+        """Create a mock notifier that records notifications instead of publishing."""
+        super().__init__(topic_arn=topic_arn)
+        self.notifications: list[RunNotification] = []
+
+    def publish(self, notification: RunNotification) -> str | None:
+        """Record the notification without publishing it."""
+        self.notifications.append(notification)
+        return "mock-message-id"
+
+
+@contextmanager
+def mock_sns_notifier() -> Iterator[MockSnsNotifier]:
+    """Override the SNS notifier dependency with a mock that records notifications."""
+    notifier = MockSnsNotifier()
+    api.dependency_overrides[get_notifier] = lambda: notifier
+    try:
+        yield notifier
+    finally:
+        api.dependency_overrides.pop(get_notifier, None)
+
+
+def test_update_run_status_in_progress_does_not_send_sns_notification(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Updating a run to a non-terminal status does not send an SNS notification."""
+    with TestClient(api) as client, mock_sns_notifier() as notifier:
+        _set_id, _draft_id, run_id = _create_set_with_draft(client, session_factory)
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+        )
+        assert response.status_code == 200
+        assert notifier.notifications == []
+
+
+def test_update_run_status_evaluation_completed_does_not_send_sns_notification(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Terminal EVALUATION run statuses do not send SNS notifications."""
+    with TestClient(api) as client, mock_sns_notifier() as notifier:
+        _set_id, _draft_id, run_id = _create_set_with_draft(client, session_factory)
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+            ).status_code
+            == 200
+        )
+        response = client.put(
+            f"/api/v0/runs/{run_id}/status", json={"status": "COMPLETED"}
+        )
+        assert response.status_code == 200
+        assert notifier.notifications == []
+
+
+def test_update_run_status_batch_completed_sends_sns_notification(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A completed BATCH run sends an SNS notification for the admin email."""
+    with TestClient(api) as client, mock_sns_notifier() as notifier:
+        set_id, _draft_id, batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        assert len(notifier.notifications) == 1
+        notification = notifier.notifications[0]
+        assert notification.status == database.RunStatus.COMPLETED
+        assert notification.run_type == database.RunType.BATCH
+        assert notification.run_id == UUID(batch_run_id)
+        assert notification.set_id == UUID(set_id)
+        assert notification.draft_id is not None
+
+
+def test_update_run_status_batch_failed_sends_sns_notification(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """A failed BATCH run sends an SNS notification for the admin email."""
+    with TestClient(api) as client, mock_sns_notifier() as notifier:
+        set_id, draft_id, run_id = _create_set_with_draft(client, session_factory)
+        client.patch(
+            f"/api/v0/sets/{set_id}",
+            json={"slug": "sns-failed-set", "name": "SNS Failed Set"},
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "SUBMITTED"}
+            ).status_code
+            == 200
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "IN_PROGRESS"}
+            ).status_code
+            == 200
+        )
+        assert (
+            client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "COMPLETED"}
+            ).status_code
+            == 200
+        )
+        with mock_job_client(session_factory):
+            commit_response = client.post(
+                f"/api/v0/sets/{set_id}/drafts/{draft_id}/commit"
+            )
+        assert commit_response.status_code == 200
+        batch_run_id = _get_run_id_by_type(client, set_id, "BATCH")
+        response = client.put(
+            f"/api/v0/runs/{batch_run_id}/status", json={"status": "FAILED"}
+        )
+        assert response.status_code == 200
+        assert len(notifier.notifications) == 1
+        notification = notifier.notifications[0]
+        assert notification.status == database.RunStatus.FAILED
+        assert notification.run_type == database.RunType.BATCH
+        assert notification.run_id == UUID(batch_run_id)
+        assert notification.set_id == UUID(set_id)
+        assert client.get(f"/api/v0/sets/{set_id}").json()["status"] == "FAILED"
+
+
+def test_update_run_status_publish_completed_sends_sns_notification(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A completed PUBLISH run sends an SNS notification for the admin email."""
+    with TestClient(api) as client, mock_sns_notifier() as notifier:
+        set_id, _draft_id, _batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        with mock_publisher(session_factory):
+            response = client.post(f"/api/v0/sets/{set_id}/publish")
+            assert response.status_code == 200, response.text
+            publish_run_id = _get_run_id_by_type(client, set_id, "PUBLISH")
+            assert (
+                client.put(
+                    f"/api/v0/runs/{publish_run_id}/status",
+                    json={"status": "IN_PROGRESS"},
+                ).status_code
+                == 200
+            )
+            response = client.put(
+                f"/api/v0/runs/{publish_run_id}/status", json={"status": "COMPLETED"}
+            )
+        assert response.status_code == 200
+        # _create_completed_set already sent one BATCH completed notification.
+        assert len(notifier.notifications) == 2
+        notification = notifier.notifications[-1]
+        assert notification.status == database.RunStatus.COMPLETED
+        assert notification.run_type == database.RunType.PUBLISH
+        assert notification.run_id == UUID(publish_run_id)
+        assert notification.set_id == UUID(set_id)
+
+
+def test_failed_sns_publish_does_not_fail_status_update(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failed SNS email push never fails or rolls back the status update."""
+
+    class FailingSnsClient:
+        """Mock SNS client that always fails to publish."""
+
+        def publish(self, **kwargs: dict) -> dict:
+            """Raise a publish failure."""
+            raise RuntimeError("mock sns publish failure")
+
+    monkeypatch.setattr(boto3, "client", lambda *args, **kwargs: FailingSnsClient())
+    notifier = SnsNotifier(
+        topic_arn="arn:aws:sns:us-east-1:123456789012:theunending-admin-notifications"
+    )
+    api.dependency_overrides[get_notifier] = lambda: notifier
+    try:
+        with TestClient(api) as client:
+            _set_id, _draft_id, run_id = _create_set_with_draft(client, session_factory)
+            response = client.put(
+                f"/api/v0/runs/{run_id}/status", json={"status": "FAILED"}
+            )
+        assert response.status_code == 200
+        status_response = client.get(f"/api/v0/runs/{run_id}")
+        assert status_response.status_code == 200
+        assert status_response.json()["status"] == "FAILED"
+    finally:
+        api.dependency_overrides.pop(get_notifier, None)

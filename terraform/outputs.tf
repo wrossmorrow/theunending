@@ -69,6 +69,11 @@ output "launcher_policy_arn" {
   value       = aws_iam_policy.launcher.arn
 }
 
+output "sns_topic_arn" {
+  description = "SNS topic for admin run status notifications."
+  value       = aws_sns_topic.admin_notifications.arn
+}
+
 output "api_env" {
   description = "Drop-in env for the admin API."
   value = {
@@ -77,5 +82,6 @@ output "api_env" {
     PUBLISH_CONTAINER      = "publish"
     PUBLISH_SUBNETS        = join(",", local.private_subnet_ids)
     PUBLISH_SECURITY_GROUP = aws_security_group.publish.id
+    SNS_TOPIC_ARN          = aws_sns_topic.admin_notifications.arn
   }
 }

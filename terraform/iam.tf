@@ -121,6 +121,17 @@ data "aws_iam_policy_document" "app_permissions" {
       "arn:aws:s3:::theunending-ai-site-content-use1/*",
     ]
   }
+
+  statement {
+    sid    = "PublishAdminNotifications"
+    effect = "Allow"
+    actions = [
+      "sns:Publish",
+    ]
+    resources = [
+      aws_sns_topic.admin_notifications.arn,
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "app_permissions" {

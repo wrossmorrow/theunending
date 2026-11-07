@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from api.database import models as database
 from api.database.db import get_session_factory
 from api.utils.jobs import ExternalJobClient, get_job_client
+from api.utils.notifications import SnsNotifier, get_notifier
 from api.utils.publish import Publisher, get_publisher
 from api.v0.handlers import runs as runs_handlers
 from api.v0.schema import models
@@ -90,6 +91,9 @@ async def update_run_status(
     session_factory: Annotated[
         async_sessionmaker[AsyncSession], Depends(get_session_factory)
     ],
+    notifier: Annotated[SnsNotifier, Depends(get_notifier)],
 ) -> database.Run:
     """Update a run status (system call)."""
-    return await runs_handlers.update_run_status(run_id, update, session_factory)
+    return await runs_handlers.update_run_status(
+        run_id, update, session_factory, notifier
+    )

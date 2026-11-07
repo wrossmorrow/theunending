@@ -13,6 +13,7 @@ from api.database.db import create_session_factory, selectone
 from api.health import health_router
 from api.settings import settings
 from api.utils.jobs import ExternalJobClient
+from api.utils.notifications import SnsNotifier
 from api.utils.publish import Publisher
 from api.v0.router import api_v0_router
 
@@ -34,6 +35,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         max_attempts=settings.max_attempts,
         session_factory=app.state.session_factory,
     )
+    app.state.notifier = SnsNotifier(topic_arn=settings.sns_topic_arn)
     await app.state.job_client.start()
     await app.state.publisher.start()
     await selectone(app.state.session_factory)

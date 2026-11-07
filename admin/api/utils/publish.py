@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from api.database import models as database
 from api.settings import settings
 from api.utils.jobs import finalize_run_status
+from api.utils.notifications import SnsNotifier
 
 
 class PublishLaunchFailed(Exception): ...
@@ -27,12 +28,14 @@ class Publisher:
         queue_timeout_seconds: float = 30.0,
         max_attempts: int = 3,
         session_factory: async_sessionmaker[AsyncSession] | None = None,
+        notifier: SnsNotifier | None = None,
     ) -> None:
         self._ecs = boto3.client("ecs", region_name=settings.aws_region_name)
         self._queue: asyncio.Queue[PublishRequest] = asyncio.Queue()
         self._qtimeout_seconds = queue_timeout_seconds
         self._max_attempts = max_attempts
         self._session_factory = session_factory
+        self._notifier = notifier
         self._worker_task: asyncio.Task | None = None
         self._closed = False
 
@@ -92,6 +95,7 @@ class Publisher:
                             session_factory=self._session_factory,
                             run_id=request.run_id,
                             status=database.RunStatus.FAILED,
+                            notifier=self._notifier,
                         )
                     print(
                         "Permanently failed to submit enqueued publish run for "

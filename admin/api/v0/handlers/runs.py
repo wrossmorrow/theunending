@@ -11,6 +11,7 @@ from sqlmodel import select
 from api.database import models as database
 from api.settings import settings
 from api.utils.jobs import ExternalJobClient, JobParameters, JobRequest
+from api.utils.notifications import SnsNotifier, notify_run_terminal_status
 from api.utils.publish import Publisher, PublishRequest
 from api.v0.schema import models
 
@@ -216,6 +217,7 @@ async def update_run_status(
     run_id: UUID,
     update: models.RunStatusUpdate,
     session_factory: async_sessionmaker[AsyncSession],
+    notifier: SnsNotifier,
 ) -> database.Run:
     """Update a run status (system call)."""
     async with session_factory() as session:
@@ -329,4 +331,14 @@ async def update_run_status(
                 )
 
         await session.refresh(run)
-        return run
+
+    # Send the terminal status notification only after the status transaction commits.
+    await notify_run_terminal_status(
+        notifier=notifier,
+        run=run,
+        status=update.status,
+        message=update.message,
+        details=update.details,
+    )
+
+    return run
