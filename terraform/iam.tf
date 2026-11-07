@@ -117,7 +117,8 @@ data "aws_iam_policy_document" "app_permissions" {
       "s3:ListMultipartUploadParts",
     ]
     resources = [
-      "arn:aws:s3:::theunending-ai-site-content-use1/*"
+      "arn:aws:s3:::theunending-ai-raw-content-use1/*",
+      "arn:aws:s3:::theunending-ai-site-content-use1/*",
     ]
   }
 }

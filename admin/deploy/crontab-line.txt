@@ -1,0 +1,1 @@
+0 2 * * * cd /home/ubuntu/deploy && /bin/bash -c "set -a && . ./.env && set +a && ./backup.sh" >> /home/ubuntu/deploy/logs/backup.log 2>&1
