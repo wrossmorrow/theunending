@@ -16,7 +16,7 @@ class Run(BaseModel):
     run_id: UUID
     set_id: UUID
     type: Literal["PUBLISH"]  # also BATCH, EVALUATION; but require PUBLISH
-    status: Literal["PENDING"]  # others, but require PENDING
+    status: Literal["PENDING", "COMPLETED"]  # others, but require PENDING
 
 
 class Set(BaseModel):
@@ -26,7 +26,7 @@ class Set(BaseModel):
     model_prompt_hash: str
     slug: str
     name: str
-    status: Literal["PUBLISHING"]  # others, but require PUBLISHING
+    status: Literal["PUBLISHING", "PUBLISHED"]  # others, but require PUBLISHING
 
 
 class PublishSettings(BaseSettings):
@@ -39,6 +39,8 @@ class PublishSettings(BaseSettings):
 
     # needed, but defaultable
 
+    REQUIRE_PENDING: bool = True
+
     ADMIN_API_HOST: str = "https://admin.theunending.ai"
     POST_DATE: str = datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d")
     RAW_BUCKET: str = "wrossmorrow-genai-repetitions-use1"
@@ -50,6 +52,16 @@ class PublishSettings(BaseSettings):
     SIMILAR_DIR: str = "similar"
     OG_TILE_DIR: str = "og"
     POSTERS_DIR: str = "posters"
+
+    # github app (for draft pull requests)
+
+    GITHUB_API_BASE_URL: str = "https://api.github.com"
+    GITHUB_APP_ID: str
+    GITHUB_APP_CLIENT_ID: str
+    GITHUB_APP_INSTALLATION_ID: str
+    GITHUB_APP_PRIVATE_KEY: str
+    GITHUB_REPO_OWNER: str
+    GITHUB_REPO_NAME: str
 
     # derived (including from API call responses)
 
@@ -66,7 +78,13 @@ class PublishSettings(BaseSettings):
             },
         )
         response.raise_for_status()
-        return Run.model_validate(response.json())
+        run = Run.model_validate(response.json())
+        if self.REQUIRE_PENDING and run.status != "PENDING":
+            raise ValueError(
+                f"The named run must be pending but is {run.status}"
+            )
+        
+        return run
 
     @property
     def SET_ID(self) -> UUID:
@@ -81,7 +99,13 @@ class PublishSettings(BaseSettings):
             },
         )
         response.raise_for_status()
-        return Set.model_validate(response.json())
+        set_ = Set.model_validate(response.json())
+        if self.REQUIRE_PENDING and set_.status != "PUBLISHING":
+            raise ValueError(
+                f"The implied set must be pending but is {set_.status}"
+            )
+        
+        return set_
 
     @property
     def MODEL_ID(self) -> str:
