@@ -117,7 +117,7 @@ def handle(args: argparse.Namespace) -> None:
     try:
         s3.put_object(
             Bucket=settings.SITE_BUCKET,
-            Key=f"drafts/{settings.POST_NAME}.json",
+            Key=f"drafts/{settings.POST_NAME}/spec.json",
             Body=dumps(draft_manifest, default=str).encode("utf-8"),
             ContentType="application/json",
             IfNoneMatch="*",
@@ -129,14 +129,14 @@ def handle(args: argparse.Namespace) -> None:
             "posted draft manifest to S3",
             details={
                 "bucket": settings.SITE_BUCKET,
-                "key": f"drafts/{settings.POST_NAME}.json",
+                "key": f"drafts/{settings.POST_NAME}/spec.json",
             },
         )
     except ClientError as e:
         if e.response["Error"]["Code"] in ("PreconditionFailed", "412"):
             print(
                 "A manifest file for this post draft already exists at "
-                f"s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}.json "
+                f"s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json "
                 "which must be reviewed before clobbering with a new draft"
             )
             admin.update_progress(
@@ -256,7 +256,7 @@ def handle(args: argparse.Namespace) -> None:
 
     # Upload additional content to S3, actual site source
     try:
-        do_uploads(settings, s3)
+        report = do_uploads(settings, s3)
     except Exception as e:
         admin.update_progress(
             Status.FAILED,
@@ -271,13 +271,50 @@ def handle(args: argparse.Namespace) -> None:
     admin.update_progress(
         Status.IN_PROGRESS,
         "uploaded publishable content",
+        details={
+            "report_key": f"drafts/{settings.POST_NAME}/report.json",
+        },
     )
+
+    # Upload the report of upload counts collected during the publish uploads
+
+    try:
+        s3.put_object(
+            Bucket=settings.SITE_BUCKET,
+            Key=f"drafts/{settings.POST_NAME}/report.json",
+            Body=dumps(report, default=str).encode("utf-8"),
+            ContentType="application/json",
+            IfNoneMatch="*",
+        )
+    except ClientError as e:
+        admin.update_progress(
+            Status.FAILED,
+            "s3 client error",
+            details={
+                "error_code": e.response["Error"]["Code"],
+            },
+        )
+        raise
+    except Exception as e:
+        admin.update_progress(
+            Status.FAILED,
+            "an unexpected error occurred posting report",
+            details={
+                "error": str(e),
+                "error_class": e.__class__.__name__,
+            },
+        )
+        raise
 
     # TODO: submit a PR with this data organized if we can clone main branch?
 
     admin.update_progress(
         Status.COMPLETED,
         "all content prepared and uploaded to S3",
+        details={
+            "spec_s3_location": f"s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json",
+            "report_s3_location": f"s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/report.json",
+        },
     )
 
 
