@@ -82,7 +82,7 @@ resource "aws_ecs_task_definition" "publish" {
         },
         {
           name = "GITHUB_APP_PRIVATE_KEY",
-          valueFrom = "${data.aws_secretsmanager_secret.theunending_publish_github_app_key.arn}:GITHUB_APP_PRIVATE_KEY::",
+          valueFrom = data.aws_secretsmanager_secret.theunending_publish_github_app_key.arn,
         },
       ]
 
