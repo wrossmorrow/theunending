@@ -49,5 +49,6 @@ imagen = [
     "open_clip_torch>=2.32",
 ]
 publish = [
+    "cryptography>=50.0.2",
     "pyjwt>=2.15.1",
 ]
