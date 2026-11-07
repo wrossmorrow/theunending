@@ -316,15 +316,29 @@ def handle(args: argparse.Namespace) -> None:
         )
         raise
 
-    github_publisher.create_draft_pr(
-        files=draft_files(settings, draft_manifest),
-        title=f"Publish draft: {settings.POST_NAME}",
-        body=(
-            f"Publish draft for set {settings.SET_NAME} (post {settings.POST_NAME}). "
-            f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json"
-        ),
-        branch=f"draft/{settings.POST_NAME}",
-    )
+    try:
+        draft_pr_url = github_publisher.create_draft_pr(
+            files=draft_files(settings, draft_manifest),
+            title=f"Publish draft: {settings.POST_NAME}",
+            body=(
+                f"Publish draft for set {settings.SET_NAME} (post {settings.POST_NAME}). "
+                f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json"
+            ),
+            branch=f"draft/{settings.POST_NAME}",
+        )
+
+        admin.update_progress(
+            Status.IN_PROGRESS,
+            "created draft pull request",
+            details={"draft_pr_url": draft_pr_url},
+        )
+    except Exception as e:  # noqa: BLE001
+        admin.update_progress(
+            Status.FAILED,
+            "failed to create draft pull request",
+            details={"error": str(e), "error_class": e.__class__.__name__},
+        )
+        print(f"Failed to create draft PR: {e.__class__.__name__} {e}")
 
     # TODO: submit a PR with this data organized if we can clone main branch?
 
