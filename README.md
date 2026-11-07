@@ -1,7 +1,7 @@
 
 # The Unending
 
-![unending](assets/og/site.jpg)
+![unending](site/assets/og/site.jpg)
 
 Stuff for [https://theunending.ai/](https://theunending.ai/). 
 
