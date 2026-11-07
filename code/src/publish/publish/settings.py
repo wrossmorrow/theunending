@@ -51,6 +51,15 @@ class PublishSettings(BaseSettings):
     OG_TILE_DIR: str = "og"
     POSTERS_DIR: str = "posters"
 
+    # github app (for draft pull requests)
+
+    GITHUB_APP_ID: str = ""
+    GITHUB_APP_CLIENT_ID: str = ""
+    GITHUB_APP_INSTALLATION_ID: str = ""
+    GITHUB_APP_PRIVATE_KEY: str = ""
+    GITHUB_REPO_OWNER: str = ""
+    GITHUB_REPO_NAME: str = ""
+
     # derived (including from API call responses)
 
     @property

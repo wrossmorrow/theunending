@@ -48,4 +48,6 @@ imagen = [
     "transformers>=5.17.0",
     "open_clip_torch>=2.32",
 ]
-publish = []
+publish = [
+    "pyjwt>=2.15.1",
+]
