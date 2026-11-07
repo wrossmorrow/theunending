@@ -26,6 +26,7 @@ class GithubPublisher:
         owner: str,
         repo: str,
         base_branch: str = "main",
+        github_api_base_url: str = GITHUB_API_BASE_URL,
     ) -> None:
         self.app_id = app_id
         self.client_id = client_id
@@ -34,6 +35,7 @@ class GithubPublisher:
         self.owner = owner
         self.repo = repo
         self.base_branch = base_branch
+        self.github_api_base_url = github_api_base_url
 
     def _installation_token(self) -> str:
         now = int(time.time())
@@ -50,7 +52,7 @@ class GithubPublisher:
             algorithm="RS256",
         )
         response = httpx.post(
-            url=f"{GITHUB_API_BASE_URL}/app/installations/{self.installation_id}/access_tokens",
+            url=f"{self.github_api_base_url}/app/installations/{self.installation_id}/access_tokens",
             headers={
                 "accept": "application/vnd.github+json",
                 "user-agent": "theunending-publish",
@@ -70,7 +72,7 @@ class GithubPublisher:
 
     def create_branch(self, branch: str, token: str, sha: str) -> None:
         response = httpx.post(
-            url=f"{GITHUB_API_BASE_URL}/repos/{self.owner}/{self.repo}/git/refs",
+            url=f"{self.github_api_base_url}/repos/{self.owner}/{self.repo}/git/refs",
             headers=self._headers(token),
             json={"ref": f"refs/heads/{branch}", "sha": sha},
         )
@@ -82,7 +84,7 @@ class GithubPublisher:
     def add_files(self, files: dict[str, bytes], branch: str, token: str) -> None:
         for path, content in files.items():
             response = httpx.put(
-                url=f"{GITHUB_API_BASE_URL}/repos/{self.owner}/{self.repo}/contents/{path.lstrip('/')}",
+                url=f"{self.github_api_base_url}/repos/{self.owner}/{self.repo}/contents/{path.lstrip('/')}",
                 headers=self._headers(token),
                 json={
                     "message": f"publish draft {self.repo}",
@@ -101,7 +103,7 @@ class GithubPublisher:
         base: str = "main",
     ) -> str:
         response = httpx.post(
-            url=f"{GITHUB_API_BASE_URL}/repos/{self.owner}/{self.repo}/pulls",
+            url=f"{self.github_api_base_url}/repos/{self.owner}/{self.repo}/pulls",
             headers=self._headers(token),
             json={
                 "title": title,
@@ -115,7 +117,7 @@ class GithubPublisher:
 
     def _default_branch_sha(self, token: str, branch: str) -> str:
         response = httpx.get(
-            url=f"{GITHUB_API_BASE_URL}/repos/{self.owner}/{self.repo}/git/ref/heads/{branch}",
+            url=f"{self.github_api_base_url}/repos/{self.owner}/{self.repo}/git/ref/heads/{branch}",
             headers=self._headers(token),
         )
         response.raise_for_status()
