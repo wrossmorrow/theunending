@@ -271,6 +271,8 @@ data "aws_iam_policy_document" "execution_secret" {
     ]
     resources = [
       data.aws_secretsmanager_secret.admin_api_auth.arn
+      data.aws_secretsmanager_secret.theunending_publish_github_app.arn
+      data.aws_secretsmanager_secret.theunending_publish_github_app_key.arn
     ]
   }
 }

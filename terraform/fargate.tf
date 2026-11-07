@@ -48,17 +48,33 @@ resource "aws_ecs_task_definition" "publish" {
         "--help",
       ]
 
-      # environment = [
-      #   {
-      #     name  = "SITE_BUCKET",
-      #     value = "theunending-ai-raw-content-use1",
-      #   }
-      # ]
+      environment = [
+        {
+          name  = "GITHUB_API_BASE_URL",
+          value = "https://api.github.com",
+        },
+        {
+          name  = "GITHUB_REPO_OWNER",
+          value = "wrossmorrow",
+        },
+        {
+          name  = "GITHUB_REPO_NAME",
+          value = "theunending",
+        },
+      ]
 
       secrets = [
         {
           name = "ADMIN_API_TOKEN", 
           valueFrom = "${data.aws_secretsmanager_secret.admin_api_auth.arn}:ADMIN_API_TOKEN::",
+        },
+        {
+          name = "theunending-publish-github-app",
+          valueFrom = "${data.aws_secretsmanager_secret.theunending_publish_github_app.arn}:GITHUB_APP_ID::",
+        },
+        {
+          name = "theunending-publish-github-app-key",
+          valueFrom = "${data.aws_secretsmanager_secret.theunending_publish_github_app_key.arn}:GITHUB_APP_PRIVATE_KEY::",
         },
       ]
 

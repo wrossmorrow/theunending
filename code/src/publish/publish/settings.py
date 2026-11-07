@@ -53,12 +53,13 @@ class PublishSettings(BaseSettings):
 
     # github app (for draft pull requests)
 
-    GITHUB_APP_ID: str = ""
-    GITHUB_APP_CLIENT_ID: str = ""
-    GITHUB_APP_INSTALLATION_ID: str = ""
-    GITHUB_APP_PRIVATE_KEY: str = ""
-    GITHUB_REPO_OWNER: str = ""
-    GITHUB_REPO_NAME: str = ""
+    GITHUB_API_BASE_URL: str = "https://api.github.com"
+    GITHUB_APP_ID: str
+    GITHUB_APP_CLIENT_ID: str
+    GITHUB_APP_INSTALLATION_ID: str
+    GITHUB_APP_PRIVATE_KEY: str
+    GITHUB_REPO_OWNER: str
+    GITHUB_REPO_NAME: str
 
     # derived (including from API call responses)
 
