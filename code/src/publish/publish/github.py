@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import base64
 import time
+from json import dumps
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -77,16 +79,14 @@ class GithubPublisher:
             return
         response.raise_for_status()
 
-    def add_files(self, files: dict[str, str], branch: str, token: str) -> None:
+    def add_files(self, files: dict[str, bytes], branch: str, token: str) -> None:
         for path, content in files.items():
             response = httpx.put(
                 url=f"{GITHUB_API_BASE_URL}/repos/{self.owner}/{self.repo}/contents/{path.lstrip('/')}",
                 headers=self._headers(token),
                 json={
                     "message": f"publish draft {self.repo}",
-                    "content": base64.b64encode(content.encode("utf-8")).decode(
-                        "ascii"
-                    ),
+                    "content": base64.b64encode(content).decode("ascii"),
                     "branch": branch,
                 },
             )
@@ -123,7 +123,7 @@ class GithubPublisher:
 
     def create_draft_pr(
         self,
-        files: dict[str, str],
+        files: dict[str, bytes],
         *,
         title: str,
         body: str,
@@ -139,13 +139,34 @@ class GithubPublisher:
 
 def draft_files(
     settings: PublishSettings, draft_manifest: dict[str, Any]
-) -> dict[str, str]:
+) -> dict[str, bytes]:
     """Map draft manifest contents to files to add to the draft branch."""
 
-    files: dict[str, str] = {}
+    files: dict[str, bytes] = {}
 
     post_draft = draft_manifest.get("post_draft")
     if post_draft:
-        files[f"_drafts/{settings.POST_NAME}.md"] = post_draft
+        files[f"site/_drafts/{settings.POST_NAME}.md"] = post_draft.encode("utf-8")
+
+    image_manifest = draft_manifest.get("image_manifest")
+    if image_manifest:
+        files[f"site/assets/streams/{settings.SET_NAME}.json"] = dumps(
+            image_manifest
+        ).encode("utf-8")
+
+    set_spec = draft_manifest.get("set_spec") or {}
+    if set_spec:
+        files[f"site/_data/streams/{settings.POST_NAME}.json"] = dumps(set_spec).encode(
+            "utf-8"
+        )
+
+    posters_spec = draft_manifest.get("posters_spec")
+    if posters_spec:
+        files[f"site/_data/posters/{settings.POST_NAME}.json"] = dumps(
+            posters_spec
+        ).encode("utf-8")
+
+    og_tile = Path(f"og/{settings.SET_NAME}.jpg").read_bytes()
+    files[f"site/assets/og/{settings.SET_NAME}.jpg"] = og_tile
 
     return files
