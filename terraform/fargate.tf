@@ -69,19 +69,19 @@ resource "aws_ecs_task_definition" "publish" {
           valueFrom = "${data.aws_secretsmanager_secret.admin_api_auth.arn}:ADMIN_API_TOKEN::",
         },
         {
-          name = "theunending-publish-github-app",
+          name = "GITHUB_APP_ID",
           valueFrom = "${data.aws_secretsmanager_secret.theunending_publish_github_app.arn}:GITHUB_APP_ID::",
         },
         {
-          name = "theunending-publish-github-app",
+          name = "GITHUB_APP_CLIENT_ID",
           valueFrom = "${data.aws_secretsmanager_secret.theunending_publish_github_app.arn}:GITHUB_APP_CLIENT_ID::",
         },
         {
-          name = "theunending-publish-github-app",
+          name = "GITHUB_APP_INSTALLATION_ID",
           valueFrom = "${data.aws_secretsmanager_secret.theunending_publish_github_app.arn}:GITHUB_APP_INSTALLATION_ID::",
         },
         {
-          name = "theunending-publish-github-app-key",
+          name = "GITHUB_APP_PRIVATE_KEY",
           valueFrom = "${data.aws_secretsmanager_secret.theunending_publish_github_app_key.arn}:GITHUB_APP_PRIVATE_KEY::",
         },
       ]
