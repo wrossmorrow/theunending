@@ -1,0 +1,30 @@
+
+set shell := ["bash", "-uc"]
+set dotenv-load
+
+# List targets and exit
+default:
+    just --list
+
+# display service status
+status:
+    sudo systemctl status theunending-admin.service
+
+# restart service
+restart:
+    sudo systemctl restart theunending-admin.service
+    sudo systemctl status theunending-admin.service
+
+# refresh deploy uploaded to S3
+refresh:
+    aws s3 cp s3://theunending-ai-raw-content-use1/deploy/ ./ --recursive
+    chmod +x backup.sh
+    mkdir -p ./logs
+
+# connect to postgres
+psql:
+    PGPASSWORD="${POSTGRES_PASSWORD}" psql -h localhost -p 5432 -U "${POSTGRES_USER}"
+
+# backup postgres
+backup:
+    bash ./backup.sh
