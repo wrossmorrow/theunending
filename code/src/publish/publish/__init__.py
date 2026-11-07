@@ -20,16 +20,7 @@ from ..progress import AdminAPI, Status
 
 def handle(args: argparse.Namespace) -> None:
 
-    settings = PublishSettings(
-        RUN_ID=args.run_id,
-        ADMIN_API_TOKEN=os.environ["ADMIN_API_TOKEN"],
-        GITHUB_APP_ID=os.environ["GITHUB_APP_ID"],
-        GITHUB_APP_CLIENT_ID=os.environ["GITHUB_APP_CLIENT_ID"],
-        GITHUB_APP_INSTALLATION_ID=os.environ["GITHUB_APP_INSTALLATION_ID"],
-        GITHUB_APP_PRIVATE_KEY=os.environ["GITHUB_APP_PRIVATE_KEY"],
-        GITHUB_REPO_OWNER=os.environ["GITHUB_REPO_OWNER"],
-        GITHUB_REPO_NAME=os.environ["GITHUB_REPO_NAME"],
-    )
+    settings = PublishSettings(RUN_ID=args.run_id)
 
     admin = AdminAPI(
         url=settings.ADMIN_API_URL,
