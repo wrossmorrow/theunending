@@ -1,3 +1,4 @@
+from json import dumps
 from textwrap import dedent
 
 
@@ -12,8 +13,8 @@ def post_draft(
     return dedent(f"""
     ---
     layout: post
-    title: "{title}"
-    subtitle: "{subtitle}"
+    title: {dumps(title)}
+    subtitle: {dumps(subtitle)}
     date: {date}
     categories: [unending]
     set: {set}
