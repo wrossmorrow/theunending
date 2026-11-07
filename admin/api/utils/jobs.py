@@ -227,6 +227,7 @@ async def finalize_run_status(
     notifier: SnsNotifier | None = None,
 ) -> None:
     """Record a terminal run status and propagate it to the linked draft/set."""
+    notification: RunNotification | None = None
     async with session_factory() as session:
         runs_table = database.Run.metadata.tables[database.Run.__tablename__]
         run = (
@@ -283,14 +284,15 @@ async def finalize_run_status(
                         else SetStatus.FAILED
                     )
                     session.add(committed_set)
-        notification: RunNotification | None = None
+
         if should_notify(run.type, status):
             notification = build_run_notification(run, status)
         await session.commit()
-        # Send the notification after the status transaction commits; a failed email
-        # push never fails or rolls back the status update.
-        if notification is not None and notifier is not None:
-            await notifier.notify(notification)
+
+    # Send the notification after the status transaction commits; a failed email
+    # push never fails or rolls back the status update.
+    if notification is not None and notifier is not None:
+        await notifier.notify(notification)
 
 
 def get_job_client(request: Request) -> ExternalJobClient:

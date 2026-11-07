@@ -225,6 +225,7 @@ async def update_run_status(
     notifier: SnsNotifier,
 ) -> database.Run:
     """Update a run status (system call)."""
+    notification: RunNotification | None = None
     async with session_factory() as session:
         runs_table = database.Run.metadata.tables[database.Run.__tablename__]
         run = (
@@ -337,7 +338,6 @@ async def update_run_status(
 
         await session.refresh(run)
 
-        notification: RunNotification | None = None
         if should_notify(run.type, update.status):
             notification = build_run_notification(
                 run,
