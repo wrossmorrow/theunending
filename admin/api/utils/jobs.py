@@ -13,7 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from api.database import models as database
 from api.database.models import DraftStatus, RunStatus, RunType, SetStatus
 from api.settings import settings
-from api.utils.notifications import SnsNotifier, notify_run_terminal_status
+from api.utils.notifications import (
+    RunNotification,
+    SnsNotifier,
+    build_run_notification,
+    should_notify,
+)
 
 
 class JobParameters(BaseModel):
@@ -278,10 +283,14 @@ async def finalize_run_status(
                         else SetStatus.FAILED
                     )
                     session.add(committed_set)
+        notification: RunNotification | None = None
+        if should_notify(run.type, status):
+            notification = build_run_notification(run, status)
         await session.commit()
-
-    # Notify after the status transaction commits; a failed email push never fails the update.
-    await notify_run_terminal_status(notifier=notifier, run=run, status=status)
+        # Send the notification after the status transaction commits; a failed email
+        # push never fails or rolls back the status update.
+        if notification is not None and notifier is not None:
+            await notifier.notify(notification)
 
 
 def get_job_client(request: Request) -> ExternalJobClient:
