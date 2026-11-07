@@ -8,6 +8,7 @@ def post_draft(
     set: str,
     model: str,
 ) -> str:
+    # NOTE: make sure no leading space/newline jekyll will barf
     return dedent(f"""
     ---
     layout: post
@@ -28,4 +29,4 @@ def post_draft(
     define by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). 
     All computed on an A100 instance in modal.
     </small>
-    """)
+    """).lstrip()
