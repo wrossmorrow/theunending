@@ -160,53 +160,55 @@ def do_uploads(
     }
 
     # posters/*.png -> SITE_BUCKET, assets/img/posters/raw/POST_NAME/* (TODO: block public access?)
-    poster_files = glob(f"{settings.POSTERS_DIR}/*.png")
-    for path in poster_files:
-        put_file_no_overwrite(
-            s3=s3,
-            filename=path,
-            bucket=settings.SITE_BUCKET,
-            key=f"{settings.SITE_POSTER_RAW_PREFIX}/{Path(path).name}",
-            content_type="image/png",
-        )
+    failed_files = batch_put_file_no_overwrite(
+        s3=s3,
+        pattern=f"{settings.POSTERS_DIR}/*.png",
+        bucket=settings.SITE_BUCKET,
+        prefix=settings.SITE_POSTER_RAW_PREFIX,
+        content_type="image/png",
+        max_workers=settings.MAX_S3_THREADS,
+    )
+    failed.extend(failed_files)
     report[f"{settings.POSTERS_DIR}/*.png"] = {
         "bucket": settings.SITE_BUCKET,
         "prefix": settings.SITE_POSTER_RAW_PREFIX,
-        "uploaded": len(poster_files),
+        "uploaded": len(glob(f"{settings.POSTERS_DIR}/*.png")) - len(failed_files),
     }
 
     # posters/previews/*.webp -> SITE_BUCKET, assets/img/posters/previews/POST_NAME/*
 
     preview_files = glob(f"{settings.POSTERS_DIR}/previews/*.webp")
-    for path in preview_files:
-        put_file_no_overwrite(
-            s3=s3,
-            filename=path,
-            bucket=settings.SITE_BUCKET,
-            key=f"{settings.SITE_POSTER_PREVIEW_PREFIX}/{Path(path).name}",
-            content_type="image/webp",
-        )
+    failed_files = batch_put_file_no_overwrite(
+        s3=s3,
+        pattern=f"{settings.POSTERS_DIR}/previews/*.webp",
+        bucket=settings.SITE_BUCKET,
+        prefix=settings.SITE_POSTER_PREVIEW_PREFIX,
+        content_type="image/webp",
+        max_workers=settings.MAX_S3_THREADS,
+    )
+    failed.extend(failed_files)
     report[f"{settings.POSTERS_DIR}/previews/*.webp"] = {
         "bucket": settings.SITE_BUCKET,
         "prefix": settings.SITE_POSTER_PREVIEW_PREFIX,
-        "uploaded": len(preview_files),
+        "uploaded": len(preview_files) - len(failed_files),
     }
 
     # posters/thumbs/*.webp -> SITE_BUCKET, assets/img/posters/thumbs/POST_NAME/*
 
     thumb_files = glob(f"{settings.POSTERS_DIR}/thumbs/*.webp")
-    for path in thumb_files:
-        put_file_no_overwrite(
-            s3=s3,
-            filename=path,
-            bucket=settings.SITE_BUCKET,
-            key=f"{settings.SITE_POSTER_THUMBS_PREFIX}/{Path(path).name}",
-            content_type="image/webp",
-        )
+    failed_files = batch_put_file_no_overwrite(
+        s3=s3,
+        pattern=f"{settings.POSTERS_DIR}/thumbs/*.webp",
+        bucket=settings.SITE_BUCKET,
+        prefix=settings.SITE_POSTER_THUMBS_PREFIX,
+        content_type="image/webp",
+        max_workers=settings.MAX_S3_THREADS,
+    )
+    failed.extend(failed_files)
     report[f"{settings.POSTERS_DIR}/thumbs/*.webp"] = {
         "bucket": settings.SITE_BUCKET,
         "prefix": settings.SITE_POSTER_THUMBS_PREFIX,
-        "uploaded": len(thumb_files),
+        "uploaded": len(thumb_files) - len(failed_files),
     }
 
     if failed:
