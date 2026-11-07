@@ -1,0 +1,7 @@
+{
+  "set": "reading",
+  "base": "https://theunending.ai/assets/img/2026-10-12-reading/",
+  "manifest": "/assets/streams/reading.json",
+  "meta": "/assets/img/2026-10-12-reading/{id}.json",
+  "thumb": "00080427-e310-4b57-ad0e-248e0cbf88b6"
+}

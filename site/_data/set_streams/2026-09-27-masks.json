@@ -1,0 +1,7 @@
+{
+  "set": "masks",
+  "base": "https://theunending.ai/assets/img/2026-09-27-masks/",
+  "manifest": "/assets/streams/masks.json",
+  "meta": "/assets/img/2026-09-27-masks/{id}.json",
+  "thumb": "0005b737-33b7-4b43-8cfc-807fd58a3399"
+}

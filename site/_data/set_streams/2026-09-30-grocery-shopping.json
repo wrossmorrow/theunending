@@ -1,0 +1,7 @@
+{
+  "set": "grocery-shopping",
+  "base": "https://theunending.ai/assets/img/2026-09-30-grocery-shopping/",
+  "manifest": "/assets/streams/grocery-shopping.json",
+  "meta": "/assets/img/2026-09-30-grocery-shopping/{id}.json",
+  "thumb": "00105aad-da72-4b83-af92-681e2ec8b02e"
+}

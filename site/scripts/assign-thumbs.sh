@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 #
-# Populate `thumb` for each set in _data/streams.yml from the first id in
-# assets/streams/<set>.json.
+# Populate `thumb` in each _data/set_streams/<post-name>.json from the first id
+# in assets/streams/<set>.json, where <set> is the file's "set" key.
+#
+# (Sets used to live in _data/streams.yml; see _plugins/set_data.rb. The
+# lessons below came from that version and still apply per file.)
 #
 # Four things the previous version tripped on, all verified:
 #
@@ -27,72 +30,42 @@
 
 set -euo pipefail
 
-DATAFILE="${DATAFILE:-_data/streams.yml}"
+SETDIR="${SETDIR:-_data/set_streams}"
 STREAMDIR="${STREAMDIR:-assets/streams}"
 FORCE="${1:-}"
 
-[ -f "$DATAFILE" ] || { echo "no $DATAFILE" >&2; exit 1; }
+[ -d "$SETDIR" ] || { echo "no $SETDIR" >&2; exit 1; }
 
-TMP="$(mktemp)"
-trap 'rm -f "$TMP"' EXIT
+# Each file is validated and fully serialized before it is written, and
+# written in place (no temp-file mv), so a failure leaves it untouched.
+python3 - "$SETDIR" "$STREAMDIR" "$FORCE" <<'PY'
+import json, sys
+from pathlib import Path
 
-# Collect set -> first id as one JSON object, so streams.yml is rewritten once
-# instead of once per set.
-MAP="$(
-  for f in "$STREAMDIR"/*.json; do
-    [ -e "$f" ] || continue
-    s="$(basename "$f" .json)"
-    id="$(jq -r '.[0] // empty' "$f" 2>/dev/null || true)"
-    if [ -z "$id" ]; then
-      echo "skip   $s (no ids)" >&2
-      continue
-    fi
-    jq -n --arg s "$s" --arg i "$id" '{($s): $i}'
-  done | jq -s 'add // {}'
-)"
-
-if [ "$(jq 'length' <<<"$MAP")" -eq 0 ]; then
-  echo "nothing to do" >&2
-  exit 0
-fi
-
-# with_entries walks only the sets that already exist, so a stray json file
-# cannot invent one. //= leaves an existing thumb alone; = takes it over.
-if [ "$FORCE" = "--force" ]; then
-  ASSIGN='.value.thumb = $M[.key]'
-else
-  ASSIGN='.value.thumb //= $M[.key]'
-fi
-
-yq -y --argjson M "$MAP" "
-  .sets |= with_entries(if \$M[.key] then $ASSIGN else . end)
-" "$DATAFILE" > "$TMP"
-
-# Guards before anything touches the real file: yq can exit 0 and still write
-# nothing, and a truncated write would still be valid-looking on disk.
-[ -s "$TMP" ] || { echo "yq produced an empty file -- $DATAFILE untouched" >&2; exit 1; }
-yq -e '.sets | length > 0' "$TMP" >/dev/null \
-  || { echo "result has no sets -- $DATAFILE untouched" >&2; exit 1; }
-
-cp "$TMP" "$DATAFILE"
-
-jq -r 'to_entries[] | "set    \(.key)  \(.value)"' <<<"$MAP"
-echo "wrote $DATAFILE"
-
-# ---------------------------------------------------------------------------
-# Preserving comments
-#
-# python-yq (the one with --arg) parses to JSON and re-emits, so comments and
-# key order style do not survive. If streams.yml carries comments you want,
-# either switch to mikefarah's yq, which edits YAML in place:
-#
-#     yq -i '.sets.venture-capital.thumb = "aaa-111"' _data/streams.yml
-#
-# or do it in Python with ruamel.yaml, whose round-trip loader keeps comments:
-#
-#     from ruamel.yaml import YAML
-#     y = YAML(); y.preserve_quotes = True
-#     d = y.load(open(path))
-#     d["sets"][name].setdefault("thumb", first_id)
-#     y.dump(d, open(path, "w"))
-# ---------------------------------------------------------------------------
+setdir, streamdir, force = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3] == "--force"
+changed = 0
+for f in sorted(setdir.glob("*.json")):
+    cfg = json.loads(f.read_text())
+    key = cfg.get("set")
+    if not key:
+        sys.exit(f"{f}: missing \"set\"")
+    if cfg.get("thumb") and not force:
+        continue                      # curated or already set: leave it
+    manifest = streamdir / f"{key}.json"
+    if not manifest.exists():
+        print(f"skip   {key} (no {manifest})", file=sys.stderr)
+        continue
+    ids = [i for i in json.loads(manifest.read_text()) if isinstance(i, str) and i]
+    if not ids:
+        print(f"skip   {key} (no ids)", file=sys.stderr)
+        continue
+    if cfg.get("thumb") == ids[0]:
+        continue
+    cfg["thumb"] = ids[0]
+    text = json.dumps(cfg, indent=2, ensure_ascii=False) + "\n"
+    json.loads(text)                  # parses before it touches the file
+    f.write_text(text)
+    print(f"set    {key}  {ids[0]}")
+    changed += 1
+print(f"updated {changed} file(s)")
+PY

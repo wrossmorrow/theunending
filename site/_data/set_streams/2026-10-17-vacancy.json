@@ -1,0 +1,7 @@
+{
+  "set": "vacancy",
+  "base": "https://theunending.ai/assets/img/2026-10-17-vacancy/",
+  "manifest": "/assets/streams/vacancy.json",
+  "meta": "/assets/img/2026-10-17-vacancy/{id}.json",
+  "thumb": "680fedce-362e-40a8-ab20-7a80776bef32"
+}

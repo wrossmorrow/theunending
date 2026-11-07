@@ -1,0 +1,7 @@
+{
+  "set": "modern-painting-flux2",
+  "base": "https://theunending.ai/assets/img/2026-10-05-modern-painting/",
+  "manifest": "/assets/streams/modern-painting-flux2.json",
+  "meta": "/assets/img/2026-10-05-modern-painting/{id}.json",
+  "thumb": "001fbe83-d5db-424f-b6f7-d1ce9368fb54"
+}

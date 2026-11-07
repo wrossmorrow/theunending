@@ -1,0 +1,7 @@
+{
+  "set": "securities",
+  "base": "https://theunending.ai/assets/img/2026-10-11-securities/",
+  "manifest": "/assets/streams/securities.json",
+  "meta": "/assets/img/2026-10-11-securities/{id}.json",
+  "thumb": "002545f7-d7a8-423c-b79b-06af133703b3"
+}
