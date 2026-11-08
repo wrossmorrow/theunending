@@ -405,3 +405,171 @@ resource "aws_iam_role_policy_attachment" "launcher" {
   role       = aws_iam_role.theunending_admin.name
   policy_arn = aws_iam_policy.launcher.arn
 }
+
+#
+# github actions
+# 
+
+data "aws_iam_policy_document" "github_actions_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [
+        aws_iam_openid_connect_provider.github.arn,
+      ]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = [
+        "sts.amazonaws.com",
+      ]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = [
+        "${local.gh_repo_sub}:ref:refs/heads/main",
+      ]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "github_actions" {
+
+  statement {
+    sid    = "ListBucketAndUploads"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation",
+      "s3:ListBucketMultipartUploads",
+    ]
+    resources = [
+      "arn:aws:s3:::theunending-ai-site-content-use1"
+    ]
+  }
+
+  statement {
+    sid    = "ReadWriteBucketObjects"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:PutObject",
+      "s3:AbortMultipartUpload",
+      "s3:ListMultipartUploadParts",
+    ]
+    resources = [
+      "arn:aws:s3:::theunending-ai-site-content-use1/*"
+    ]
+  }
+
+  statement {
+    sid    = "AllowCacheInvalidation"
+    effect = "Allow"
+    actions = [
+      "cloudfront:CreateInvalidation",
+    ]
+    resources = [
+      "arn:aws:cloudfront::396610714890:distribution/E134F26KPOO8Q5",
+    ]
+  }
+}
+
+resource "aws_iam_policy" "github_actions" {
+  name   = "theunending-github-actions-access"
+  policy = data.aws_iam_policy_document.github_actions.json
+}
+
+resource "aws_iam_role" "github_actions" {
+  name               = "theunending-github-actions-deploy"
+  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.github_actions.arn
+}
+
+# 
+# Pull requests
+# 
+
+data "aws_iam_policy_document" "github_actions_assume_role_pr" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [
+        aws_iam_openid_connect_provider.github.arn,
+      ]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = [
+        "sts.amazonaws.com",
+      ]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = [
+        "${local.gh_repo_sub}:pull_request",
+      ]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "github_actions_pr" {
+
+  statement {
+    sid    = "ListBucketAndUploads"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation",
+    ]
+    resources = [
+      "arn:aws:s3:::theunending-ai-site-content-use1"
+    ]
+  }
+
+  statement {
+    sid    = "ReadBucketObjects"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:ListMultipartUploadParts",
+    ]
+    resources = [
+      "arn:aws:s3:::theunending-ai-site-content-use1/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "github_actions_pr" {
+  name   = "theunending-github-actions-access-pr"
+  policy = data.aws_iam_policy_document.github_actions_pr.json
+}
+
+resource "aws_iam_role" "github_actions_pr" {
+  name               = "theunending-github-actions-pr"
+  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role_pr.json
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_pr" {
+  role       = aws_iam_role.github_actions_pr.name
+  policy_arn = aws_iam_policy.github_actions_pr.arn
+}
