@@ -29,18 +29,20 @@ jobs:
       with:
         working-directory: site
         bundler-cache: true
+    
+    - name: Build landing pool
+      working-directory: site
+      run: bash scripts/build-landing-pool.sh
 
     - name: Build Jekyll Site
       working-directory: site
       env:
         JEKYLL_ENV: production
-      run: |
-        bundle exec jekyll build
+      run: bundle exec jekyll build
 
     - name: Deploy to S3
       working-directory: site
       env:
         BUCKET: ${{ vars.SITE_S3_BUCKET }}
         DIST: ${{ vars.CLOUDFRONT_DIST_ID }}
-      run: |
-        bash scripts/deploy.sh --dryrun
+      run: bash scripts/deploy.sh --dryrun
