@@ -1,8 +1,8 @@
 import argparse
 
+from ..full_posters import command as full_posters_command
 from ..og_tiles import command as og_tiles_command
 from ..similarity import command as similarity_command
-from ..full_posters import command as full_posters_command
 from ..web_posters import command as web_posters_command
 
 

@@ -80,10 +80,8 @@ class PublishSettings(BaseSettings):
         response.raise_for_status()
         run = Run.model_validate(response.json())
         if self.REQUIRE_PENDING and run.status != "PENDING":
-            raise ValueError(
-                f"The named run must be pending but is {run.status}"
-            )
-        
+            raise ValueError(f"The named run must be pending but is {run.status}")
+
         return run
 
     @property
@@ -101,10 +99,8 @@ class PublishSettings(BaseSettings):
         response.raise_for_status()
         set_ = Set.model_validate(response.json())
         if self.REQUIRE_PENDING and set_.status != "PUBLISHING":
-            raise ValueError(
-                f"The implied set must be pending but is {set_.status}"
-            )
-        
+            raise ValueError(f"The implied set must be pending but is {set_.status}")
+
         return set_
 
     @property
