@@ -12,9 +12,10 @@ from .similarity.embed import command as embed_command
 
 DEFAULT_IGNORE_ARGS = {"func", "command"}
 
-EVAL_GPU = "L40S"
-BATCH_GPU = "L40S"
-EMBED_GPU = "L40S"  # overkill for PE, if not also flux
+# These are overkill, but A10's are pretty slow
+EVAL_GPUS = ["L40S", "A100", "A10"]
+BATCH_GPUS = ["L40S", "A100"]
+EMBED_GPUS = ["L40S", "A100", "A10"]
 
 EVAL_TIMEOUT_SEC = 600  # 10 minutes
 BATCH_TIMEOUT_SEC = 7200  # 2 hours: A10 runs ~1 h, A100 ~ 30min
@@ -88,7 +89,7 @@ def _parse_args(
 
 
 @app.function(
-    gpu=EVAL_GPU,
+    gpu=EVAL_GPUS,
     volumes={
         "/cache": vol,
     },
@@ -116,7 +117,7 @@ def handle_eval(args: argparse.Namespace) -> None:
 
 
 @app.function(
-    gpu=BATCH_GPU,
+    gpu=BATCH_GPUS,
     volumes={
         "/cache": vol,
     },
@@ -144,7 +145,7 @@ def handle_batch(args: argparse.Namespace) -> None:
 
 
 @app.function(
-    gpu=EMBED_GPU,
+    gpu=EMBED_GPUS,
     volumes={
         "/cache": vol,
     },
