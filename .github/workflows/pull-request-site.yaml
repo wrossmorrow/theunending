@@ -43,4 +43,4 @@ jobs:
         BUCKET: ${{ vars.SITE_S3_BUCKET }}
         DIST: ${{ vars.CLOUDFRONT_DIST_ID }}
       run: |
-        bash scripts/deploy.sh --dry-run
+        bash scripts/deploy.sh --dryrun
