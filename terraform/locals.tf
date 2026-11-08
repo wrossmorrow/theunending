@@ -31,4 +31,6 @@ locals {
   private_subnet_ids = aws_subnet.private[*].id
 
   image_ref = "${local.account}.dkr.ecr.${local.region}.amazonaws.com/theunending/publish:${var.publish_image_tag}"
+
+  gh_repo_sub = "repo:wrossmorrow@22221609/theunending@1407680181"
 }

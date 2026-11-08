@@ -434,7 +434,7 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values   = [
-        "repo:wrossmorrow/theunending:ref:refs/heads/main",
+        "${local.gh_repo_sub}:ref:refs/heads/main",
       ]
     }
   }
@@ -498,7 +498,7 @@ resource "aws_iam_role_policy_attachment" "github_actions" {
 }
 
 # 
-# Pull requets
+# Pull requests
 # 
 
 data "aws_iam_policy_document" "github_actions_assume_role_pr" {
@@ -525,7 +525,7 @@ data "aws_iam_policy_document" "github_actions_assume_role_pr" {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values   = [
-        "repo:wrossmorrow/theunending:pull_request",
+        "${local.gh_repo_sub}:pull_request",
       ]
     }
   }
