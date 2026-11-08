@@ -12,9 +12,9 @@ from .similarity.embed import command as embed_command
 
 DEFAULT_IGNORE_ARGS = {"func", "command"}
 
-EVAL_GPU = "A100"
-BATCH_GPU = "A100"
-EMBED_GPU = "A100"  # overkill for PE, if not also flux
+EVAL_GPU = "A10"
+BATCH_GPU = "A10"
+EMBED_GPU = "A10"  # overkill for PE, if not also flux
 
 EVAL_TIMEOUT_SEC = 600  # 10 minutes
 BATCH_TIMEOUT_SEC = 3600  # 1 hour
