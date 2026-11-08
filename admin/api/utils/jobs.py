@@ -286,7 +286,7 @@ async def finalize_run_status(
                     session.add(committed_set)
 
         if should_notify(run.type, status):
-            notification = build_run_notification(run, status)
+            notification = build_run_notification(run, status, set_=committed_set)
         await session.commit()
 
     # Send the notification after the status transaction commits; a failed email
