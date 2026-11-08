@@ -92,5 +92,10 @@ output "api_env" {
 
 output "github_actions_role_arn" {
   value       = aws_iam_role.github_actions.arn
-  description = "Copy this ARN to your GitHub Secrets/Variables"
+  description = "Copy this ARN to your GitHub Secrets/Variables AWS_ROLE_ARN"
+}
+
+output "github_actions_role_arn_pr" {
+  value       = aws_iam_role.github_actions_pr.arn
+  description = "Copy this ARN to your GitHub Secrets/Variables PR_AWS_ROLE_ARN"
 }
