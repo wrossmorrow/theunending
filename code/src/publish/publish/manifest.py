@@ -1,11 +1,13 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class SetSpec(BaseModel):
-    thumb: str
+    model_config = ConfigDict(extra="forbid")
     set: str
+    base: str
     manifest: str
     meta: str
+    thumb: str
 
 
 class DraftManifest(BaseModel):
