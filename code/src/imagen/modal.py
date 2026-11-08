@@ -12,9 +12,9 @@ from .similarity.embed import command as embed_command
 
 DEFAULT_IGNORE_ARGS = {"func", "command"}
 
-EVAL_GPU = "A10"
-BATCH_GPU = "A10"
-EMBED_GPU = "A10"  # overkill for PE, if not also flux
+EVAL_GPU = "L40S"
+BATCH_GPU = "L40S"
+EMBED_GPU = "L40S"  # overkill for PE, if not also flux
 
 EVAL_TIMEOUT_SEC = 600  # 10 minutes
 BATCH_TIMEOUT_SEC = 7200  # 2 hours: A10 runs ~1 h, A100 ~ 30min
