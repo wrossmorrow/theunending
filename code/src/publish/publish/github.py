@@ -4,11 +4,11 @@ import base64
 import time
 from json import dumps
 from pathlib import Path
-from typing import Any
 
 import httpx
 import jwt
 
+from .manifest import DraftManifest
 from .settings import PublishSettings
 
 GITHUB_API_BASE_URL = "https://api.github.com"
@@ -140,36 +140,34 @@ class GithubPublisher:
         return self.open_pr(branch, title, body, token, base)
 
 
-def draft_files(
-    settings: PublishSettings, draft_manifest: dict[str, Any]
-) -> dict[str, bytes]:
+def draft_files(settings: PublishSettings, manifest: DraftManifest) -> dict[str, bytes]:
     """Map draft manifest contents to files to add to the draft branch."""
 
     files: dict[str, bytes] = {}
 
-    post_draft = draft_manifest.get("post_draft")
-    if post_draft:
-        files[f"site/_posts/{settings.POST_NAME}.md"] = post_draft.encode("utf-8")
+    post_draft = manifest.post_draft
+    files[f"site/_posts/{settings.POST_NAME}.md"] = post_draft.encode("utf-8")
 
-    image_manifest = draft_manifest.get("image_manifest")
-    if image_manifest:
-        files[f"site/assets/streams/{settings.SET_NAME}.json"] = dumps(
-            image_manifest
-        ).encode("utf-8")
+    image_manifest = manifest.image_manifest
+    files[f"site/assets/streams/{settings.SET_NAME}.json"] = dumps(
+        image_manifest
+    ).encode("utf-8")
 
-    set_spec = draft_manifest.get("set_spec") or {}
-    if set_spec:
-        files[f"site/_data/set_streams/{settings.POST_NAME}.json"] = dumps(set_spec).encode(
-            "utf-8"
-        )
+    set_spec = manifest.set_spec
+    files[f"site/_data/set_streams/{settings.POST_NAME}.json"] = (
+        set_spec.model_dump_json().encode("utf-8")
+    )
 
-    posters_spec = draft_manifest.get("posters_spec")
-    if posters_spec:
-        files[f"site/_data/set_posters/{settings.POST_NAME}.json"] = dumps(
-            posters_spec
-        ).encode("utf-8")
+    posters_spec = manifest.posters_spec
+    files[f"site/_data/set_posters/{settings.POST_NAME}.json"] = dumps(
+        posters_spec
+    ).encode("utf-8")
 
     og_tile = Path(f"og/{settings.SET_NAME}.jpg").read_bytes()
     files[f"site/assets/og/{settings.SET_NAME}.jpg"] = og_tile
+
+    thumb_id = manifest.set_spec.thumb
+    index_thumb = Path(f"{thumb_id}.webp").read_bytes()
+    files[f"site/assets/img/index-thumbs/{thumb_id}.webp"] = index_thumb
 
     return files

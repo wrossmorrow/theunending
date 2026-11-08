@@ -1,7 +1,7 @@
 import base64
-from json import dumps, loads
 from collections.abc import Collection
 from enum import StrEnum
+from json import dumps, loads
 from typing import Any
 
 import httpx

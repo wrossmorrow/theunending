@@ -63,7 +63,6 @@ def handle_old_unstable_claude(args: argparse.Namespace) -> None:
     fmt = "WEBP" if args.format == "webp" else "JPEG"
     index = []
     for size in sorted(os.listdir(args.source)):
-
         sdir = os.path.join(args.source, size)
         if not (SIZE_DIR.match(size) and os.path.isdir(sdir)):
             continue  # skips thumbs/, previews/, stray files
@@ -98,9 +97,12 @@ def handle_old_unstable_claude(args: argparse.Namespace) -> None:
                 os.makedirs(os.path.dirname(out), exist_ok=True)
                 with open(out, "wb") as f:
                     f.write(data)
-                    
+
                 entry[kind[:-1]] = {"src": rel, "w": w, "h": h}
-                print(f"{rel}: {w}x{h} q{q} {len(data) / 1000:.0f} KB -> {out}", file=sys.stderr)
+                print(
+                    f"{rel}: {w}x{h} q{q} {len(data) / 1000:.0f} KB -> {out}",
+                    file=sys.stderr,
+                )
 
             index.append(entry)
 
@@ -124,7 +126,6 @@ def handle_old_unstable_claude(args: argparse.Namespace) -> None:
     )
 
 
-
 def handle(args: argparse.Namespace) -> None:
 
     print(f"Running web posters; {args}")
@@ -139,7 +140,10 @@ def handle(args: argparse.Namespace) -> None:
         os.makedirs(os.path.dirname(out), exist_ok=True)
         with open(out, "wb") as f:
             f.write(data)
-        print(f" web poster ({kind}): {w}x{h} q{q} {len(data) / 1000:.0f} KB -> {out}", file=sys.stderr)
+        print(
+            f" web poster ({kind}): {w}x{h} q{q} {len(data) / 1000:.0f} KB -> {out}",
+            file=sys.stderr,
+        )
 
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:

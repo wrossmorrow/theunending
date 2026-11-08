@@ -8,14 +8,16 @@ from random import choice
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
+from PIL import Image
 from pydantic import ValidationError
 
+from ..progress import AdminAPI, Status
 from .commands import run_og_tiles, run_posters, run_similar, run_web_posters
 from .github import GithubPublisher, draft_files
+from .manifest import DraftManifest, SetSpec
 from .post import post_draft
 from .settings import PublishSettings
-from .utils import do_uploads, get_source_content, list_image_ids, mkdirs
-from ..progress import AdminAPI, Status
+from .utils import do_uploads, get_source_content, list_image_ids
 
 
 def handle(args: argparse.Namespace) -> None:
@@ -77,7 +79,7 @@ def handle(args: argparse.Namespace) -> None:
             details={
                 "error": str(e),
                 "error_class": e.__class__.__name__,
-            }
+            },
         )
         raise
 
@@ -103,23 +105,23 @@ def handle(args: argparse.Namespace) -> None:
         set=settings.SET_NAME,
         model=settings.MODEL_ID,
     )
-    draft_manifest = {
-        "set": settings.SET_NAME,
-        "post_name": settings.POST_NAME,
-        "post_draft": post,
-        "image_manifest": image_ids,
-        "set_spec": {
-            "thumb": choice(image_ids),
+    draft_manifest = DraftManifest(
+        set=settings.SET_NAME,
+        post_name=settings.POST_NAME,
+        post_draft=post,
+        image_manifest=image_ids,
+        set_spec=SetSpec(
+            thumb=choice(image_ids),
             **settings.SET_SPEC,
-        },
-        "posters_spec": settings.POSTERS_SPEC,
-    }
+        ),
+        posters_spec=settings.POSTERS_SPEC,
+    )
 
     try:
         s3.put_object(
             Bucket=settings.SITE_BUCKET,
             Key=f"drafts/{settings.POST_NAME}/spec.json",
-            Body=dumps(draft_manifest, default=str).encode("utf-8"),
+            Body=draft_manifest.model_dump_json().encode("utf-8"),
             ContentType="application/json",
             IfNoneMatch="*",
         )
@@ -150,7 +152,7 @@ def handle(args: argparse.Namespace) -> None:
                 "s3 client error",
                 details={
                     "error_code": e.response["Error"]["Code"],
-                }
+                },
             )
         raise
     except Exception as e:
@@ -160,7 +162,7 @@ def handle(args: argparse.Namespace) -> None:
             details={
                 "error": str(e),
                 "error_class": e.__class__.__name__,
-            }
+            },
         )
         raise
 
@@ -179,7 +181,7 @@ def handle(args: argparse.Namespace) -> None:
             details={
                 "error": str(e),
                 "error_class": e.__class__.__name__,
-            }
+            },
         )
         raise
 
@@ -202,13 +204,37 @@ def handle(args: argparse.Namespace) -> None:
             details={
                 "error": str(e),
                 "error_class": e.__class__.__name__,
-            }
+            },
         )
         raise
 
     admin.update_progress(
         Status.IN_PROGRESS,
         "prepared og tile(s)",
+    )
+
+    try:
+        thumb_id = draft_manifest.set_spec.thumb
+        im = Image.open(f"{settings.IMAGES_DIR}/{thumb_id}.png")
+        im = im.convert("RGB")
+        im.thumbnail((640, 640), Image.LANCZOS)
+        with open(f"{thumb_id}.webp", "wb") as f:
+            im.save(f, "WEBP", quality=80, method=6)
+
+    except Exception as e:
+        admin.update_progress(
+            Status.FAILED,
+            "failed to create index thumb",
+            details={
+                "error": str(e),
+                "error_class": e.__class__.__name__,
+            },
+        )
+        raise
+
+    admin.update_progress(
+        Status.IN_PROGRESS,
+        "prepared index thumb",
     )
 
     try:
@@ -225,7 +251,7 @@ def handle(args: argparse.Namespace) -> None:
             details={
                 "error": str(e),
                 "error_class": e.__class__.__name__,
-            }
+            },
         )
         raise
 
@@ -246,7 +272,7 @@ def handle(args: argparse.Namespace) -> None:
             details={
                 "error": str(e),
                 "error_class": e.__class__.__name__,
-            }
+            },
         )
         raise
 
@@ -257,7 +283,7 @@ def handle(args: argparse.Namespace) -> None:
 
     # Upload additional content to S3, actual site source
     try:
-        report = do_uploads(settings, s3)
+        report = do_uploads(settings, s3, draft_manifest.set_spec.thumb)
     except Exception as e:
         admin.update_progress(
             Status.FAILED,
@@ -265,7 +291,7 @@ def handle(args: argparse.Namespace) -> None:
             details={
                 "error": str(e),
                 "error_class": e.__class__.__name__,
-            }
+            },
         )
         raise
 

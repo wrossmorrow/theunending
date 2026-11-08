@@ -37,7 +37,14 @@ def get_source_content(
     emb_file: str = "embeddings.npy",
 ) -> None:
     """get content locally; everything stems from images and embeddings"""
-    cp_from_s3(s3, bucket, prefix + "/", settings.IMAGES_DIR, ext=image_ext, workers=settings.MAX_S3_THREADS)
+    cp_from_s3(
+        s3,
+        bucket,
+        prefix + "/",
+        settings.IMAGES_DIR,
+        ext=image_ext,
+        workers=settings.MAX_S3_THREADS,
+    )
     cp_from_s3(s3, bucket, f"{prefix}/{emb_file}", emb_file)
     cp_from_s3(s3, bucket, f"{prefix}/{emb_file}.json", f"{emb_file}.json")
 
@@ -92,7 +99,7 @@ def batch_put_file_no_overwrite(
         for f in as_completed(futures):
             try:
                 f.result()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 failed.append((futures[f], e))
 
     return failed
@@ -101,6 +108,7 @@ def batch_put_file_no_overwrite(
 def do_uploads(
     settings: PublishSettings,
     s3: S3Client,
+    thumb_id: str,
 ) -> dict:
     """
     Upload all publishable content to the site bucket, collecting counts of
@@ -156,6 +164,20 @@ def do_uploads(
     report[f"og/{settings.SET_NAME}.jpg"] = {
         "bucket": settings.SITE_BUCKET,
         "prefix": settings.SITE_OG_IMAGE_PREFIX,
+        "uploaded": 1,
+    }
+
+    # {thumb}.webp -> SITE_BUCKET, assets/img/index-thumbs/{thumb}.webp
+    put_file_no_overwrite(
+        s3=s3,
+        filename=f"{thumb_id}.webp",
+        bucket=settings.SITE_BUCKET,
+        key=f"{settings.SITE_INDEX_THUMBS_PREFIX}/{thumb_id}.webp",
+        content_type="image/webp",
+    )
+    report[f"{thumb_id}.webp"] = {
+        "bucket": settings.SITE_BUCKET,
+        "prefix": settings.SITE_INDEX_THUMBS_PREFIX,
         "uploaded": 1,
     }
 

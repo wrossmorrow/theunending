@@ -80,10 +80,8 @@ class PublishSettings(BaseSettings):
         response.raise_for_status()
         run = Run.model_validate(response.json())
         if self.REQUIRE_PENDING and run.status != "PENDING":
-            raise ValueError(
-                f"The named run must be pending but is {run.status}"
-            )
-        
+            raise ValueError(f"The named run must be pending but is {run.status}")
+
         return run
 
     @property
@@ -101,10 +99,8 @@ class PublishSettings(BaseSettings):
         response.raise_for_status()
         set_ = Set.model_validate(response.json())
         if self.REQUIRE_PENDING and set_.status != "PUBLISHING":
-            raise ValueError(
-                f"The implied set must be pending but is {set_.status}"
-            )
-        
+            raise ValueError(f"The implied set must be pending but is {set_.status}")
+
         return set_
 
     @property
@@ -157,6 +153,7 @@ class PublishSettings(BaseSettings):
         return f"assets/img/{self.POST_NAME}"
 
     SITE_OG_IMAGE_PREFIX: str = "assets/og"
+    SITE_INDEX_THUMBS_PREFIX: str = "assets/img/index-thumbs"
 
     @property
     def SITE_POSTER_RAW_PREFIX(self) -> str:

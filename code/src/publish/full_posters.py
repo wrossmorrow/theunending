@@ -54,6 +54,7 @@ FONTS_DIR = Path(__file__).resolve().parent / "fonts"
 DEFAULT_FONT_DIR = "texgyreheros"
 DEFAULT_FONT_NAME = "texgyreheros-regular.otf"
 
+
 def log(msg):
     print(msg, file=sys.stderr)
 
@@ -135,11 +136,11 @@ def caption_font(size: int) -> ImageFont.FreeTypeFont:
 
 def draw_caption(canvas, text, right, top, px, font_path=None):
     """Right-align text at x=right with the top of its visible ink at y=top."""
-    
+
     # font, used = load_font(px, font_path)
 
     font = caption_font(px)
-    
+
     draw = ImageDraw.Draw(canvas)
     _, t, _, b = draw.textbbox((right, top), text, font=font, anchor="ra")
     dy = (
