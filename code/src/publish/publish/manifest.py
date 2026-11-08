@@ -11,6 +11,7 @@ class SetSpec(BaseModel):
 
 
 class DraftManifest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     set: str
     post_name: str
     post_draft: str
