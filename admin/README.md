@@ -50,6 +50,7 @@ built.
   `POST /api/v0/sets/{set_id}/publish`
 - Drafts: `GET/POST /api/v0/sets/{set_id}/drafts...`, commit at
   `POST /api/v0/sets/{set_id}/drafts/{draft_id}/commit`
-- Runs: `GET/POST /api/v0/runs...`, status at `PUT /api/v0/runs/{run_id}/status`
+- Runs: `GET/POST /api/v0/runs...`, status at `PUT /api/v0/runs/{run_id}/status`, cancel at
+  `POST /api/v0/runs/{run_id}/cancel` (run must be `SUBMITTED`/`IN_PROGRESS` with an `external_run_id`)
 
 See `admin/DESIGN.md` for the design doc and status-code policy.

@@ -28,7 +28,7 @@ from api.utils.publish import Publisher, PublishRequest, get_publisher
 
 
 class MockExternalJobClient(ExternalJobClient):
-    """Mock external job client that records enqueued job requests."""
+    """Mock external job client that records enqueued job requests and cancels."""
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         """Create a mock client that records enqueued job requests."""
@@ -36,10 +36,15 @@ class MockExternalJobClient(ExternalJobClient):
             base_url=settings.job_base_url, session_factory=session_factory
         )
         self.enqueued_requests: list[JobRequest] = []
+        self.cancelled_external_run_ids: list[str] = []
 
     async def request_job(self, job_request: JobRequest) -> None:
         """Record an enqueued job request without submitting it."""
         self.enqueued_requests.append(job_request)
+
+    async def cancel_job(self, external_run_id: str) -> None:
+        """Record a cancel request without calling the external job system."""
+        self.cancelled_external_run_ids.append(external_run_id)
 
 
 class FailingExternalJobClient(MockExternalJobClient):
@@ -50,11 +55,19 @@ class FailingExternalJobClient(MockExternalJobClient):
         raise httpx.ConnectError("mock external job system failure")
 
 
+class FailingCancelExternalJobClient(MockExternalJobClient):
+    """Mock external job client that fails to cancel job requests."""
+
+    async def cancel_job(self, external_run_id: str) -> None:
+        """Raise an httpx error to simulate an external job cancel failure."""
+        raise httpx.ConnectError("mock external job system cancel failure")
+
+
 @contextmanager
 def mock_job_client(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> Iterator[MockExternalJobClient]:
-    """Override the job client dependency with a mock that records enqueues."""
+    """Override the job client dependency with a mock that records enqueues and cancels."""
     client = MockExternalJobClient(session_factory=session_factory)
     api.dependency_overrides[get_job_client] = lambda: client
     try:
@@ -1655,3 +1668,176 @@ def test_failed_sns_publish_does_not_fail_status_update(
         assert status_response.json()["status"] == "FAILED"
     finally:
         api.dependency_overrides.pop(get_notifier, None)
+
+
+async def _create_run(
+    session_factory: async_sessionmaker[AsyncSession],
+    status: database.RunStatus = database.RunStatus.IN_PROGRESS,
+    external_run_id: str | None = "external-run-123",
+) -> database.Run:
+    """Create a set, draft, and run with the given status and external run id."""
+    prompt = f"a cat {uuid4().hex}"
+    async with session_factory() as session:
+        set_ = database.Set(
+            model="black-forest-labs/FLUX.2-klein-4B", status=database.SetStatus.DRAFT
+        )
+        session.add(set_)
+        await session.flush()
+        draft = database.Draft(
+            set_id=set_.set_id,
+            prompt=prompt,
+            model_prompt_hash=compute_model_prompt_hash(set_.model, prompt),
+            status=database.DraftStatus.COMPLETED,
+        )
+        session.add(draft)
+        await session.flush()
+        run = database.Run(
+            external_run_id=external_run_id,
+            set_id=set_.set_id,
+            draft_id=draft.draft_id,
+            type=database.RunType.EVALUATION,
+            status=status,
+        )
+        session.add(run)
+        await session.commit()
+        await session.refresh(run)
+        return run
+
+
+def test_cancel_run_not_found_returns_404() -> None:
+    """Cancelling a run that does not exist returns 404."""
+    with TestClient(api) as client:
+        response = client.post(f"/api/v0/runs/{uuid4()}/cancel")
+        assert response.status_code == 404
+
+
+def test_cancel_run_without_external_run_id_returns_400(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Cancelling a run that has no external run id returns 400."""
+    run = asyncio.run(
+        _create_run(
+            session_factory, status=database.RunStatus.PENDING, external_run_id=None
+        )
+    )
+    with TestClient(api) as client:
+        response = client.post(f"/api/v0/runs/{run.run_id}/cancel")
+        assert response.status_code == 400
+        assert "external run id" in response.json()["detail"]
+
+
+def test_cancel_run_in_progress_returns_200_and_marks_cancelled(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Cancelling an in-progress run asks the job system and marks the run CANCELLED."""
+    with TestClient(api) as client, mock_job_client(session_factory) as job_client:
+        run = asyncio.run(
+            _create_run(session_factory, status=database.RunStatus.IN_PROGRESS)
+        )
+        run_id = str(run.run_id)
+
+        response = client.post(f"/api/v0/runs/{run_id}/cancel")
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["status"] == "CANCELLED"
+        assert body["external_run_id"] == "external-run-123"
+        assert body["finished_at"] is not None
+        assert body["message"] == "cancelled by admin"
+
+        status_response = client.get(f"/api/v0/runs/{run_id}")
+        assert status_response.status_code == 200
+        assert status_response.json()["status"] == "CANCELLED"
+
+        assert job_client.cancelled_external_run_ids == ["external-run-123"]
+
+        events_response = client.get(f"/api/v0/runs/{run_id}/events")
+        assert events_response.status_code == 200, events_response.text
+        events = events_response.json()["events"]
+        assert len(events) == 1
+        assert events[0]["status"] == "CANCELLED"
+        assert events[0]["source"] == "INTERNAL"
+        assert events[0]["message"] == "cancelled by admin"
+
+        draft_response = client.get(f"/api/v0/sets/{run.set_id}/drafts/{run.draft_id}")
+        assert draft_response.status_code == 200
+        assert draft_response.json()["status"] == "FAILED"
+
+
+def test_cancel_run_in_submitted_returns_200_and_marks_cancelled(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Cancelling a submitted run asks the job system and marks the run CANCELLED."""
+    with TestClient(api) as client, mock_job_client(session_factory) as job_client:
+        run = asyncio.run(
+            _create_run(session_factory, status=database.RunStatus.SUBMITTED)
+        )
+        run_id = str(run.run_id)
+
+        response = client.post(f"/api/v0/runs/{run_id}/cancel")
+        assert response.status_code == 200, response.text
+        assert response.json()["status"] == "CANCELLED"
+        assert job_client.cancelled_external_run_ids == ["external-run-123"]
+        assert client.get(f"/api/v0/runs/{run_id}").json()["status"] == "CANCELLED"
+
+
+def test_cancel_run_in_failed_status_returns_400(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Cancelling a run that is not SUBMITTED or IN_PROGRESS returns 400."""
+    with TestClient(api) as client, mock_job_client(session_factory) as job_client:
+        run = asyncio.run(
+            _create_run(session_factory, status=database.RunStatus.FAILED)
+        )
+        run_id = str(run.run_id)
+
+        response = client.post(f"/api/v0/runs/{run_id}/cancel")
+        assert response.status_code == 400
+        assert "Invalid run status transition" in response.json()["detail"]
+        assert job_client.cancelled_external_run_ids == []
+
+
+def test_cancel_run_job_failure_returns_502(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """A failing external job cancel returns 502 and leaves the run status alone."""
+    api.dependency_overrides[get_job_client] = lambda: FailingCancelExternalJobClient(
+        session_factory=session_factory
+    )
+    try:
+        with TestClient(api) as client:
+            run = asyncio.run(
+                _create_run(session_factory, status=database.RunStatus.IN_PROGRESS)
+            )
+            run_id = str(run.run_id)
+            response = client.post(f"/api/v0/runs/{run_id}/cancel")
+            assert response.status_code == 502
+            assert response.json()["detail"] == "Failed to cancel external job."
+            assert (
+                client.get(f"/api/v0/runs/{run_id}").json()["status"]
+                == database.RunStatus.IN_PROGRESS.value
+            )
+    finally:
+        api.dependency_overrides.pop(get_job_client, None)
+
+
+def test_redo_run_of_cancelled_run_returns_201_and_creates_new_run(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Redoing a CANCELLED run creates a distinct new run in PENDING status."""
+    with TestClient(api) as client, mock_job_client(session_factory) as job_client:
+        run = asyncio.run(
+            _create_run(session_factory, status=database.RunStatus.CANCELLED)
+        )
+        run_id = str(run.run_id)
+
+        response = client.post(f"/api/v0/runs/{run_id}")
+        assert response.status_code == 201, response.text
+        new_run_id = response.json()["run_id"]
+        new_run_response = client.get(f"/api/v0/runs/{new_run_id}")
+        assert new_run_response.status_code == 200
+        assert new_run_response.json()["status"] == "PENDING"
+        assert new_run_response.json()["external_run_id"] is None
+        assert new_run_response.json()["run_id"] != run_id
+
+        assert len(job_client.enqueued_requests) == 1
+        assert job_client.enqueued_requests[0].run_id == UUID(new_run_id)

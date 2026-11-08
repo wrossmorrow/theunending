@@ -2,10 +2,13 @@
 
 import asyncio
 import contextlib
+import json
 import time
+from typing import Any
 from uuid import UUID, uuid4
 
 import httpx
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -231,3 +234,36 @@ def test_worker_marks_run_failed_after_exhausting_submission_attempts(
                 await task
 
     asyncio.run(scenario())
+
+
+def test_cancel_job_posts_to_cancel_path(
+    monkeypatch: pytest.MonkeyPatch,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """The job client posts a cancel to the cancel path with the external run id."""
+
+    captured: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(request)
+        return httpx.Response(200, json={"status": "CANCELLED"})
+
+    real_async_client = httpx.AsyncClient
+
+    def mock_async_client(**kwargs: Any) -> httpx.AsyncClient:
+        return real_async_client(transport=httpx.MockTransport(handler), **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", mock_async_client)
+
+    async def scenario() -> None:
+        client = ExternalJobClient(
+            base_url="http://mock-jobs", session_factory=session_factory
+        )
+        await client.cancel_job("external-run-123")
+        await client.aclose()
+
+    asyncio.run(scenario())
+
+    assert len(captured) == 1
+    assert captured[0].url.path == "/cancel"
+    assert json.loads(captured[0].content) == {"external_run_id": "external-run-123"}

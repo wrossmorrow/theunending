@@ -203,6 +203,18 @@ class ExternalJobClient:
             print(f"Job response validation failed: {e}")
             raise
 
+    async def cancel_job(self, external_run_id: str) -> None:
+        """Ask the external job system to cancel the run with the given external run id."""
+        path = "/cancel"
+        try:
+            response = await self._client.post(
+                path, json={"external_run_id": external_run_id}
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            print(f"Failed job cancel: {e.response.status_code} {e.response.text}")
+            raise
+
     async def update_job(
         self,
         request: JobRequest,
