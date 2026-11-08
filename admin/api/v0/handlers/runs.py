@@ -287,6 +287,7 @@ async def update_run_status(
                 detail=f"Draft {run.draft_id} not found.",
             )
 
+        committed_set: database.Set | None = None
         match run_type:
             case database.RunType.EVALUATION:
                 if update.status != database.RunStatus.SUBMITTED:
@@ -344,6 +345,7 @@ async def update_run_status(
                 update.status,
                 message=update.message,
                 details=update.details,
+                set_=committed_set,
             )
 
     # Send the notification after the status transaction commits; a failed email

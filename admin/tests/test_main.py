@@ -1536,6 +1536,11 @@ def test_update_run_status_batch_completed_sends_sns_notification(
         assert notification.run_id == UUID(batch_run_id)
         assert notification.set_id == UUID(set_id)
         assert notification.draft_id is not None
+        assert notification.set_name == "Completed Set"
+        assert notification.set_slug == "completed-set"
+        assert notification.set_model == "black-forest-labs/FLUX.2-klein-4B"
+        assert notification.run_created_at is not None
+        assert notification.run_finished_at is not None
 
 
 def test_update_run_status_batch_failed_sends_sns_notification(
@@ -1616,6 +1621,8 @@ def test_update_run_status_publish_completed_sends_sns_notification(
         assert notification.run_type == database.RunType.PUBLISH
         assert notification.run_id == UUID(publish_run_id)
         assert notification.set_id == UUID(set_id)
+        assert notification.set_name == "Completed Set"
+        assert notification.set_slug == "completed-set"
 
 
 def test_failed_sns_publish_does_not_fail_status_update(
