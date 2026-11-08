@@ -1,11 +1,12 @@
 name: Build and Dry Run Site Deploy
 
 on:
-  pull-request:
+  pull_request:
     paths:
       - site/**
 
 permissions:
+  id-token: write
   contents: read
 
 jobs:
@@ -15,22 +16,28 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v7
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        role-to-assume: ${{ secrets.PR_AWS_ROLE_ARN }}
+        aws-region: ${{ vars.AWS_REGION }}
+        role-session-name: TheUnendingGASiteDeploy
 
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: '4.0.6'
         bundler-cache: true
 
     - name: Build Jekyll Site
-      working_directory: site
+      working-directory: site
       env:
         JEKYLL_ENV: production
       run: |
         bundle exec jekyll build
 
     - name: Deploy to S3
-      working_directory: site
+      working-directory: site
       env:
         BUCKET: ${{ vars.SITE_S3_BUCKET }}
         DIST: ${{ vars.CLOUDFRONT_DIST_ID }}
