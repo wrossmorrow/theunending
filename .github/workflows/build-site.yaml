@@ -29,6 +29,7 @@ jobs:
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
+        working-directory: site
         bundler-cache: true
     
     - name: Build landing pool
