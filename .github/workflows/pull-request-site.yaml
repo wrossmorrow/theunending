@@ -25,9 +25,9 @@ jobs:
         role-session-name: TheUnendingGASiteDryRun
 
     - name: Set up Ruby
-      working-directory: site
       uses: ruby/setup-ruby@v1
       with:
+        working-directory: site
         bundler-cache: true
 
     - name: Build Jekyll Site
