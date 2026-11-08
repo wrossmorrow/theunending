@@ -153,6 +153,7 @@ class PublishSettings(BaseSettings):
         return f"assets/img/{self.POST_NAME}"
 
     SITE_OG_IMAGE_PREFIX: str = "assets/og"
+    SITE_INDEX_THUMBS_PREFIX: str = "assets/img/index-thumbs"
 
     @property
     def SITE_POSTER_RAW_PREFIX(self) -> str:
