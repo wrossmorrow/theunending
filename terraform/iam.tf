@@ -405,3 +405,85 @@ resource "aws_iam_role_policy_attachment" "launcher" {
   role       = aws_iam_role.theunending_admin.name
   policy_arn = aws_iam_policy.launcher.arn
 }
+
+#
+# github actions
+# 
+
+data "aws_iam_policy_document" "github_actions_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [
+        aws_iam_openid_connect_provider.github.arn,
+      ]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = [
+        "sts.amazonaws.com",
+      ]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = [
+        "repo:wrossmorrow/theunending:ref:refs/heads/main",
+      ]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "github_actions" {
+
+  statement {
+    sid    = "ListBucketAndUploads"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation",
+      "s3:ListBucketMultipartUploads",
+    ]
+    resources = [
+      "arn:aws:s3:::theunending-ai-site-content-use1"
+    ]
+  }
+
+  statement {
+    sid    = "ReadWriteBucketObjects"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
+      "s3:AbortMultipartUpload",
+      "s3:ListMultipartUploadParts",
+    ]
+    resources = [
+      "arn:aws:s3:::theunending-ai-site-content-use1/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "github_actions" {
+  name   = "theunending-github-actions-access"
+  policy = data.aws_iam_policy_document.github_actions.json
+}
+
+resource "aws_iam_role" "github_actions" {
+  name               = "theunending-github-actions-deploy"
+  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.github_actions.arn
+}

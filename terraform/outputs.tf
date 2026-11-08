@@ -85,3 +85,12 @@ output "api_env" {
     SNS_TOPIC_ARN          = aws_sns_topic.admin_notifications.arn
   }
 }
+
+# 
+# For builds
+# 
+
+output "github_actions_role_arn" {
+  value       = aws_iam_role.github_actions.arn
+  description = "Copy this ARN to your GitHub Secrets/Variables"
+}

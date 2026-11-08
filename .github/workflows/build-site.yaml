@@ -1,0 +1,48 @@
+name: Build and Deploy Site
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - site/**
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v7
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ vars.AWS_REGION }}
+        role-session-name: TheUnendingGASiteDeploy
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '4.0.6'
+        bundler-cache: true
+
+    - name: Build Jekyll Site
+      working_directory: site
+      env:
+        JEKYLL_ENV: production
+      run: |
+        bundle exec jekyll build
+
+    - name: Deploy to S3
+      working_directory: site
+      env:
+        BUCKET: ${{ vars.SITE_S3_BUCKET }}
+        DIST: ${{ vars.CLOUDFRONT_DIST_ID }}
+      run: |
+        bash scripts/deploy.sh
