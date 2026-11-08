@@ -173,7 +173,7 @@ resource "aws_iam_role" "modal_oidc" {
   name               = "modal-oidc-access"
   assume_role_policy = data.aws_iam_policy_document.modal_oidc.json
 
-  max_session_duration = 7200
+  max_session_duration = 10800
 
   tags = {
     Name = "modal-oidc-access"
