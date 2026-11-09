@@ -31,6 +31,7 @@ const CONFIG = {
 const SLUG_RE = /^[a-z][a-z0-9-]{1,126}[a-z]$/;
 const PROMPT_MAX = 1023;
 const ACTIVE = new Set(["PENDING", "IN_PROGRESS"]);
+const CANCELABLE = new Set(["SUBMITTED", "IN_PROGRESS"]);
 
 function slugProblem(slug) {
   if (!slug) return null;
@@ -153,6 +154,7 @@ const API = {
   commitDraft: (setId, draftId) => api("POST", `/sets/${setId}/drafts/${draftId}/commit`),
   listRuns: (params) => api("GET", `/runs${query(params)}`),
   redoRun: (runId) => api("POST", `/runs/${runId}`),
+  cancelRun: (runId) => api("POST", `/runs/${runId}/cancel`),
   publishSet: (setId) => api("POST", `/sets/${setId}/publish`),
   draftPreview: (setId, draftId) => api("GET", `/sets/${setId}/drafts/${draftId}/preview`),
 };
@@ -278,6 +280,7 @@ const state = {
   loadSeq: 0,         // guards against out-of-order responses when switching sets
   redoing: false,     // guards against duplicate redo submissions while in flight
   publishing: false,  // guards against duplicate publish submissions while in flight
+  cancelling: false,  // guards against duplicate cancel submissions while in flight
 };
 
 /* One AbortController per rendered view; listeners on long-lived elements use its
@@ -595,6 +598,24 @@ function wireSetDetail(detail, setId) {
       } catch (err) { reportError(err); }
       finally { state.redoing = false; }
     }
+
+    if (action === "cancel") {
+      if (state.cancelling) return;
+      state.cancelling = true;
+      try {
+        const ok = await confirmDialog({
+          title: `Cancel this ${btn.dataset.runType ?? "run"}?`,
+          body: "The external job will be cancelled and this run marked CANCELLED. It can be redone afterwards via Retry.",
+          ok: "Cancel run",
+        });
+        if (!ok) return;
+        try {
+          await withBusy(btn, () => API.cancelRun(btn.dataset.runId));
+          toast("Run cancelled.");
+          await refreshCurrent(setId);
+        } catch (err) { reportError(err); }
+      } finally { state.cancelling = false; }
+    }
   }, { signal: viewSignal() });
 }
 
@@ -698,10 +719,19 @@ function renderRun(run, { latest }) {
   idEl.title = `run ${run.run_id}\nexternal ${run.external_run_id}`;
 
   const redo = node.querySelector('[data-action="redo"]');
-  // Only offer a retry on the most recent run for that draft/type, and only if it failed.
-  if (latest && run.status === "FAILED") {
+  // Only offer a retry on the most recent run for that draft/type, and only if it
+  // failed or was cancelled.
+  if (latest && (run.status === "FAILED" || run.status === "CANCELLED")) {
     redo.hidden = false;
     redo.dataset.runId = run.run_id;
+  }
+
+  const cancel = node.querySelector('[data-action="cancel"]');
+  // Only offer a cancel for the newest BATCH run while it is still in flight.
+  if (latest && run.type === "BATCH" && CANCELABLE.has(run.status)) {
+    cancel.hidden = false;
+    cancel.dataset.runId = run.run_id;
+    cancel.dataset.runType = run.type;
   }
   return node;
 }
