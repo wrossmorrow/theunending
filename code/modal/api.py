@@ -39,7 +39,7 @@ class JobParameters(BaseModel):
 class CancelParameters(BaseModel):
     """Parameters for an external job cancellation request."""
     external_run_id: str
-    job_type: Literal["evaluate", "batch", "embed"]
+    job_type: Literal["EVALUATE", "BATCH", "EMBED"]
 
 
 api = FastAPI()
@@ -124,13 +124,23 @@ def _cancel(payload: CancelParameters, request: Request, authed: bool = Depends(
     print(f"Received {request.method} {request.url} with params: {payload.model_dump_json()}")
 
     external_run_id = payload.external_run_id
-    fc: modal.functions.FunctionCall = modal.FunctionCall.from_id(external_run_id)
 
-    # reading the implementation in _FunctionCall suggests this returns nothing
-    fc.cancel()
-    return {
+    try:
+        fc: modal.functions.FunctionCall = modal.FunctionCall.from_id(external_run_id)
 
-    }
+        # reading the implementation in _FunctionCall suggests this returns nothing
+        # need more info though, not sure I understand; may need to get status
+        fc.cancel()
+        return {
+            "status": "CANCELLED",
+            "run_id": external_run_id,
+        }
+    except Exception as e:
+        print(f"Failed to cancel {external_run_id}: {e.__class__.__name__} {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.__class__.__name__} {e}",
+        )
 
 
 image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]")
