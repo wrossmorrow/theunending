@@ -13,7 +13,9 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import boto3
+import numpy as np
 import torch
+from PIL import Image
 
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
@@ -27,9 +29,22 @@ from .similarity.embed import handle as embed
 MAX_PENDING = int(os.environ.get("MAX_PENDING", "16"))
 UPLOAD_OS_THREADS = int(os.environ.get("UPLOAD_OS_THREADS", "8"))
 
+# Images that fail the generated-image checks are persisted apart from accepted
+# ones (under this subdirectory) so they can be inspected without ever entering
+# the generated set that gets embedded/published.
+REJECTED_DIRNAME = "rejected"
+
+# A pixel counts as "solid black" when its brightest channel is at/below this
+# value (0-255). Pure black letterbox bars land at/near zero; legitimately dark
+# imagery still registers above it, so whole-image darkness is not itself a
+# rejection reason.
+SOLID_BLACK_MAX_CHANNEL = 16
+
 
 _slots = threading.Semaphore(MAX_PENDING)
 _failures: list[Any] = []  # really Exception of BaseException
+_rejections: list[dict[str, Any]] = []
+_rejection_metrics: dict[str, int] = {}
 _lock = threading.Lock()
 
 
@@ -42,6 +57,7 @@ def count_s3_prefix_objects(
     bucket: str,
     prefix: str,
     suffix: str | Sequence[str] | None = ".png",
+    exclude_prefixes: Sequence[str] = (),
 ) -> int:
 
     # Ensure prefix ends with a slash if targeting a "folder"
@@ -63,9 +79,55 @@ def count_s3_prefix_objects(
             total_count += page.get("KeyCount", 0)
         else:
             contents = page.get("Contents", [])
-            total_count += sum(1 for obj in contents if obj["Key"].endswith(suffix))
+            total_count += sum(
+                1
+                for obj in contents
+                if obj["Key"].endswith(suffix)
+                and not any(obj["Key"].startswith(p) for p in exclude_prefixes)
+            )
 
     return total_count
+
+
+def check_image(image: Image.Image) -> str | None:
+    """Return why a generated image should be rejected, or None if it is acceptable.
+
+    Generated images can come back letterboxed, with solid black bars filling
+    the unused frame area. Those bars are indistinguishable from legitimately
+    dark imagery when judged by overall brightness, so bars are detected as rows
+    and columns that carry no content at all (fully solid black).
+    """
+    max_channel = np.asarray(image.convert("RGB"), dtype=np.float32).max(axis=2)
+    content = max_channel > SOLID_BLACK_MAX_CHANNEL
+
+    if not content.any():
+        # No content at all: an entirely black frame is not a usable image.
+        return "all-black"
+
+    if not content.any(axis=1).all() or not content.any(axis=0).all():
+        # Some row/column is entirely solid black: a letterbox bar (top/bottom
+        # or left/right), or a degenerate frame.
+        return "letterboxed"
+
+    return None
+
+
+def record_rejection(reason: str, seed: int, prompt: str, index: int) -> None:
+    with _lock:
+        _rejection_metrics[reason] = _rejection_metrics.get(reason, 0) + 1
+        _rejections.append(
+            {
+                "index": index,
+                "seed": seed,
+                "prompt": prompt,
+                "reason": reason,
+            }
+        )
+
+    print(
+        f"Rejected image {index}: reason={reason} seed={seed} prompt={prompt[:60]!r}",
+        flush=True,
+    )
 
 
 def save_image_and_upload(
@@ -76,6 +138,7 @@ def save_image_and_upload(
     s3_prefix: str,
     metadata: dict,
     s3: S3Client,
+    rejected_reason: str | None = None,
 ) -> None:
 
     ext = {"PNG": "png", "JPEG": "jpg", "WEBP": "webp"}[format.upper()]
@@ -85,19 +148,31 @@ def save_image_and_upload(
     raw_bytes = buf.getvalue()
 
     image_id = uuid4()
-    filename = Path(outdir) / f"{image_id}.{ext}"
-    s3_key = f"{s3_prefix}/{image_id}.{ext}"
+    if rejected_reason is None:
+        filename = Path(outdir) / f"{image_id}.{ext}"
+        s3_key = f"{s3_prefix}/{image_id}.{ext}"
+    else:
+        filename = Path(outdir) / REJECTED_DIRNAME / f"{image_id}.{ext}"
+        s3_key = f"{s3_prefix}/rejected/{image_id}.{ext}"
 
     tmp = filename.with_suffix(".tmp")
+    tmp.parent.mkdir(parents=True, exist_ok=True)
     tmp.write_bytes(raw_bytes)
     os.replace(tmp, filename)  # atomic on the same filesystem
+
+    full_metadata = dict(metadata)
+    if rejected_reason is not None:
+        full_metadata["rejected"] = "true"
+        full_metadata["reason"] = rejected_reason
 
     s3.put_object(
         Bucket=s3_bucket,
         Key=s3_key,
         Body=raw_bytes,
         ContentType=f"image/{format.lower()}",
-        Metadata={k: v.encode("ascii", "ignore").decode() for k, v in metadata.items()},
+        Metadata={
+            k: v.encode("ascii", "ignore").decode() for k, v in full_metadata.items()
+        },
     )
 
 
@@ -138,7 +213,12 @@ def handle(
 
         os.makedirs(args.outdir, exist_ok=True)
 
-        existing = count_s3_prefix_objects(s3, args.s3_bucket, args.s3_prefix)
+        existing = count_s3_prefix_objects(
+            s3,
+            args.s3_bucket,
+            args.s3_prefix,
+            exclude_prefixes=(f"{args.s3_prefix}rejected/",),
+        )
         total = args.max_images - existing
 
         print(f"Progress: {existing}/{args.max_images} already exist; work on {total}.")
@@ -164,18 +244,38 @@ def handle(
                 width=args.width,
             ).images[0]
 
-            submit_upload(
-                image,
-                args.format,
-                args.outdir,
-                args.s3_bucket,
-                args.s3_prefix,
-                {
-                    "seed": str(seed),
-                    "prompt": chopped_prompt,
-                },
-                s3,
-            )
+            reject_reason = check_image(image)
+
+            if reject_reason is None:
+                submit_upload(
+                    image,
+                    args.format,
+                    args.outdir,
+                    args.s3_bucket,
+                    args.s3_prefix,
+                    {
+                        "seed": str(seed),
+                        "prompt": chopped_prompt,
+                    },
+                    s3,
+                )
+            else:
+                record_rejection(reject_reason, seed, chopped_prompt, idx)
+                submit_upload(
+                    image,
+                    args.format,
+                    args.outdir,
+                    args.s3_bucket,
+                    args.s3_prefix,
+                    {
+                        "seed": str(seed),
+                        "prompt": chopped_prompt,
+                        "rejected": "true",
+                        "reason": reject_reason,
+                    },
+                    s3,
+                    rejected_reason=reject_reason,
+                )
 
             if (idx + 1) % 50 == 0 or (idx + 1) == total:
                 message = f"Progress: [{idx + 1}/{total}] generated and queued."
@@ -188,6 +288,16 @@ def handle(
 
         upload_pool.shutdown(wait=True)
         progress_pool.shutdown(wait=True)
+
+        with _lock:
+            rejection_metrics = dict(_rejection_metrics)
+            rejections = list(_rejections)
+
+        print(
+            f"Generated {total} image(s) for prompt {chopped_prompt!r}: "
+            f"accepted {total - len(rejections)}, rejected {len(rejections)} "
+            f"(reasons: {rejection_metrics or 'none'})"
+        )
 
         if _failures:
             message = f"FAILED: {len(_failures)} uploads did not complete"
@@ -203,6 +313,7 @@ def handle(
             admin_api.update_progress(
                 status=Status.COMPLETED,
                 message="work completed successfully",
+                details={"rejected": rejection_metrics},
             )
 
             return 0
@@ -223,6 +334,7 @@ def handle(
             args.s3_bucket,
             "--s3-prefix",
             args.s3_prefix,
+            "--no-recursive",
         ]
         embed_args = embed_parser.parse_args(embed_argv)
         embed(embed_args, s3)
@@ -231,6 +343,7 @@ def handle(
         admin_api.update_progress(
             status=Status.COMPLETED,
             message="image generation, s3 upload, and embeddings completed",
+            details={"rejected": rejection_metrics},
         )
 
     except Exception as e:  # noqa: BLE001
