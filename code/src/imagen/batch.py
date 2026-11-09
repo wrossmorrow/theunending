@@ -365,6 +365,13 @@ def handle(
             admin_api.update_progress(
                 status=Status.FAILED,
                 message=message,
+                details={
+                    "accepted": accepted,
+                    "needed": needed,
+                    "attempts": attempts,
+                    "rejected": attempts - accepted,
+                    "rejection_metrics": rejection_metrics,
+                },
             )
             return 1
 
