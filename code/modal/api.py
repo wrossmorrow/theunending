@@ -1,5 +1,6 @@
 import hashlib
 import os
+from typing import Literal
 
 from fastapi import FastAPI, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
@@ -33,6 +34,12 @@ class JobParameters(BaseModel):
 
     def hash(self) -> str:
         return _compute_model_prompt_hash(self.model, self.prompt)
+
+
+class CancelParameters(BaseModel):
+    """Parameters for an external job cancellation request."""
+    external_run_id: str
+    job_type: Literal["evaluate", "batch", "embed"]
 
 
 api = FastAPI()
@@ -109,6 +116,21 @@ def _batch(payload: JobParameters, request: Request, authed: bool = Depends(_che
 @api.post("/embed")
 def _embed(authed: bool = Depends(_check_auth)):
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+
+
+@api.post("/cancel")
+def _cancel(payload: CancelParameters, request: Request, authed: bool = Depends(_check_auth)):
+
+    print(f"Received {request.method} {request.url} with params: {payload.model_dump_json()}")
+
+    external_run_id = payload.external_run_id
+    fc: modal.functions.FunctionCall = modal.FunctionCall.from_id(external_run_id)
+
+    # reading the implementation in _FunctionCall suggests this returns nothing
+    fc.cancel()
+    return {
+
+    }
 
 
 image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]")
