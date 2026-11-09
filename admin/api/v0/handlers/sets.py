@@ -94,9 +94,9 @@ async def patch_set(
                 detail=f"Set {set_id} is not in DRAFT status.",
             )
 
-        set_.slug = update.slug
-        set_.name = update.name
-
+        # reset whichever is sent, or both
+        set_.slug = update.slug or set_.slug
+        set_.name = update.name or set_.name
         set_.updated_at = datetime.now(UTC)
         session.add(set_)
         await session.commit()
