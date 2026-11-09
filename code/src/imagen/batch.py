@@ -73,46 +73,84 @@ def count_s3_prefix_objects(
     paginator = s3.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=bucket, Prefix=prefix)
 
+    # Normalize excludes into "directory/" style prefixes
+    exclude_prefixes = tuple(f"{p.rstrip('/')}/" for p in exclude_prefixes if p)
+
     total_count = 0
     for page in pages:
+        contents = page.get("Contents") or []
+        keys = [
+            obj["Key"]
+            for obj in contents
+            if not any(obj["Key"].startswith(p) for p in exclude_prefixes)
+        ]
         if suffix is None:
-            total_count += page.get("KeyCount", 0)
+            total_count += len(keys)
         else:
-            contents = page.get("Contents", [])
-            total_count += sum(
-                1
-                for obj in contents
-                if obj["Key"].endswith(suffix)
-                and not any(obj["Key"].startswith(p) for p in exclude_prefixes)
-            )
+            total_count += sum(1 for k in keys if k.endswith(suffix))
 
     return total_count
 
 
-def check_image(image: Image.Image) -> str | None:
+def _content_mask(image: Image.Image) -> np.ndarray:
+    return (
+        np.asarray(image.convert("RGB"), dtype=np.float32).max(axis=2)
+        > SOLID_BLACK_MAX_CHANNEL
+    )
+
+
+def content_bars(image: Image.Image) -> tuple[int, int, int, int] | None:
+    """Return the solid-black margins around content as (top, bottom, left, right).
+
+    ``bottom`` and ``right`` are distances from the opposite edge, i.e. the
+    number of solid-black pixels between the content and that edge. Returns
+    None when the frame carries no content at all.
+    """
+    content = _content_mask(image)
+    if not content.any():
+        return None
+
+    ys, xs = np.nonzero(content)
+    height, width = content.shape
+    return (
+        int(ys[0]),
+        height - 1 - int(ys[-1]),
+        int(xs[0]),
+        width - 1 - int(xs[-1]),
+    )
+
+
+def check_image(image: Image.Image, min_frac: float = 0.015) -> str | None:
     """Return why a generated image should be rejected, or None if it is acceptable.
 
     Generated images can come back letterboxed, with solid black bars filling
     the unused frame area. Those bars are indistinguishable from legitimately
-    dark imagery when judged by overall brightness, so bars are detected as rows
-    and columns that carry no content at all (fully solid black).
+    dark imagery when judged by overall brightness, so bars are detected via the
+    content bounding box. Frames whose content does not reach a minimum
+    fraction of the frame on either side are considered letterboxed.
     """
-    max_channel = np.asarray(image.convert("RGB"), dtype=np.float32).max(axis=2)
-    content = max_channel > SOLID_BLACK_MAX_CHANNEL
-
-    if not content.any():
+    bars = content_bars(image)
+    if bars is None:
         # No content at all: an entirely black frame is not a usable image.
         return "all-black"
 
-    if not content.any(axis=1).all() or not content.any(axis=0).all():
-        # Some row/column is entirely solid black: a letterbox bar (top/bottom
-        # or left/right), or a degenerate frame.
+    top, bottom, left, right = bars
+    content = _content_mask(image)
+    height, width = content.shape
+
+    if min(top, bottom) >= min_frac * height or min(left, right) >= min_frac * width:
         return "letterboxed"
 
     return None
 
 
-def record_rejection(reason: str, seed: int, prompt: str, index: int) -> None:
+def record_rejection(
+    reason: str,
+    seed: int,
+    prompt: str,
+    index: int,
+    bars: tuple[int, int, int, int] | None = None,
+) -> None:
     with _lock:
         _rejection_metrics[reason] = _rejection_metrics.get(reason, 0) + 1
         _rejections.append(
@@ -121,11 +159,23 @@ def record_rejection(reason: str, seed: int, prompt: str, index: int) -> None:
                 "seed": seed,
                 "prompt": prompt,
                 "reason": reason,
+                **(
+                    {
+                        "bars": {
+                            "top": bars[0],
+                            "bottom": bars[1],
+                            "left": bars[2],
+                            "right": bars[3],
+                        }
+                    }
+                    if bars is not None
+                    else {}
+                ),
             }
         )
 
     print(
-        f"Rejected image {index}: reason={reason} seed={seed} prompt={prompt[:60]!r}",
+        f"Rejected image {index}: reason={reason} seed={seed} prompt={prompt[:60]!r} bars={bars}",
         flush=True,
     )
 
@@ -232,7 +282,13 @@ def handle(
 
         chopped_prompt = args.prompt[:120]
 
-        for idx in range(total):
+        needed = max(total, 0)
+        accepted = 0
+        attempts = 0
+        max_attempts = max(needed, 1)
+
+        while accepted < needed and attempts < max_attempts:
+            attempts += 1
             seed = random.randint(0, 2**32 - 1)
 
             gen = torch.Generator(device=DEVICE).manual_seed(seed)
@@ -245,6 +301,7 @@ def handle(
             ).images[0]
 
             reject_reason = check_image(image)
+            bars = content_bars(image) if reject_reason is not None else None
 
             if reject_reason is None:
                 submit_upload(
@@ -259,8 +316,9 @@ def handle(
                     },
                     s3,
                 )
+                accepted += 1
             else:
-                record_rejection(reject_reason, seed, chopped_prompt, idx)
+                record_rejection(reject_reason, seed, chopped_prompt, attempts, bars)
                 submit_upload(
                     image,
                     args.format,
@@ -277,8 +335,8 @@ def handle(
                     rejected_reason=reject_reason,
                 )
 
-            if (idx + 1) % 50 == 0 or (idx + 1) == total:
-                message = f"Progress: [{idx + 1}/{total}] generated and queued."
+            if attempts % 50 == 0 or accepted >= needed:
+                message = f"Progress: [{attempts}/{needed}] generated and queued."
                 print(message)
                 progress_pool.submit(
                     admin_api.update_progress,
@@ -291,11 +349,10 @@ def handle(
 
         with _lock:
             rejection_metrics = dict(_rejection_metrics)
-            rejections = list(_rejections)
 
         print(
-            f"Generated {total} image(s) for prompt {chopped_prompt!r}: "
-            f"accepted {total - len(rejections)}, rejected {len(rejections)} "
+            f"Generated {attempts} image(s) for prompt {chopped_prompt!r}: "
+            f"accepted {accepted}, rejected {attempts - accepted} "
             f"(reasons: {rejection_metrics or 'none'})"
         )
 
