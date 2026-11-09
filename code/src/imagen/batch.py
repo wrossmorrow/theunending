@@ -235,9 +235,9 @@ def _done(fut) -> None:
         print(f"  upload failed: {exc!r}", flush=True)
 
 
-def submit_upload(*a) -> None:
+def submit_upload(*a, **kwargs) -> None:
     _slots.acquire()
-    upload_pool.submit(save_image_and_upload, *a).add_done_callback(_done)
+    upload_pool.submit(save_image_and_upload, *a, **kwargs).add_done_callback(_done)
 
 
 def handle(
