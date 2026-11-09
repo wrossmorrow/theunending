@@ -8,6 +8,8 @@ import httpx
 from fastapi import FastAPI, status
 from pydantic import BaseModel
 
+from api.database import models as database
+
 
 class JobCreate(BaseModel):
     """Job creation request accepted from the admin API."""
@@ -29,6 +31,7 @@ class CancelRequest(BaseModel):
     """Job cancellation request accepted from the admin API."""
 
     external_run_id: str
+    job_type: database.RunType
 
 
 api = FastAPI(title="Unending Mock Job System")
@@ -117,4 +120,4 @@ async def create_batch_job(body: JobCreate) -> JobCreated:
 async def cancel_job(body: CancelRequest) -> dict[str, str]:
     """Mark an external run as cancelled in the mock job system."""
     CANCELLED_EXTERNAL_RUN_IDS.add(body.external_run_id)
-    return {"status": "CANCELLED"}
+    return {"status": "CANCELLED", "job_type": body.job_type.value}

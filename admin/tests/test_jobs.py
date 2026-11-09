@@ -259,11 +259,14 @@ def test_cancel_job_posts_to_cancel_path(
         client = ExternalJobClient(
             base_url="http://mock-jobs", session_factory=session_factory
         )
-        await client.cancel_job("external-run-123")
+        await client.cancel_job("external-run-123", database.RunType.EVALUATION)
         await client.aclose()
 
     asyncio.run(scenario())
 
     assert len(captured) == 1
     assert captured[0].url.path == "/cancel"
-    assert json.loads(captured[0].content) == {"external_run_id": "external-run-123"}
+    assert json.loads(captured[0].content) == {
+        "external_run_id": "external-run-123",
+        "job_type": "EVALUATION",
+    }

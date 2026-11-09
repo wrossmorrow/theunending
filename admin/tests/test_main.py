@@ -42,7 +42,9 @@ class MockExternalJobClient(ExternalJobClient):
         """Record an enqueued job request without submitting it."""
         self.enqueued_requests.append(job_request)
 
-    async def cancel_job(self, external_run_id: str) -> None:
+    async def cancel_job(
+        self, external_run_id: str, job_type: database.RunType
+    ) -> None:
         """Record a cancel request without calling the external job system."""
         self.cancelled_external_run_ids.append(external_run_id)
 
@@ -58,7 +60,9 @@ class FailingExternalJobClient(MockExternalJobClient):
 class FailingCancelExternalJobClient(MockExternalJobClient):
     """Mock external job client that fails to cancel job requests."""
 
-    async def cancel_job(self, external_run_id: str) -> None:
+    async def cancel_job(
+        self, external_run_id: str, job_type: database.RunType
+    ) -> None:
         """Raise an httpx error to simulate an external job cancel failure."""
         raise httpx.ConnectError("mock external job system cancel failure")
 

@@ -408,7 +408,7 @@ async def cancel_run(
                 ),
             )
         try:
-            await job_client.cancel_job(run.external_run_id)
+            await job_client.cancel_job(run.external_run_id, run.type)
         except Exception as e:
             raise HTTPException(
                 status_code=http_status.HTTP_502_BAD_GATEWAY,
