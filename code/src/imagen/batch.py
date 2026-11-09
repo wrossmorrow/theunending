@@ -267,7 +267,7 @@ def handle(
             s3,
             args.s3_bucket,
             args.s3_prefix,
-            exclude_prefixes=(f"{args.s3_prefix}rejected/",),
+            exclude_prefixes=(f"{args.s3_prefix}/rejected/",),
         )
         total = args.max_images - existing
 
@@ -285,7 +285,7 @@ def handle(
         needed = max(total, 0)
         accepted = 0
         attempts = 0
-        max_attempts = max(needed, 1)
+        max_attempts = int(needed * 1.5) + 10
 
         while accepted < needed and attempts < max_attempts:
             attempts += 1
@@ -355,6 +355,18 @@ def handle(
             f"accepted {accepted}, rejected {attempts - accepted} "
             f"(reasons: {rejection_metrics or 'none'})"
         )
+
+        if accepted < needed:
+            message = (
+                f"FAILED: only {accepted} of {needed} images were accepted "
+                f"after {attempts} attempts; not embedding"
+            )
+            print(message)
+            admin_api.update_progress(
+                status=Status.FAILED,
+                message=message,
+            )
+            return 1
 
         if _failures:
             message = f"FAILED: {len(_failures)} uploads did not complete"
