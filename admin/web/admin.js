@@ -303,7 +303,7 @@ async function loadSets() {
   if (state.filter !== "active" && state.filter !== "all") params.status = state.filter;
   const data = await API.listSets(params);
   let sets = data.sets ?? [];
-  if (state.filter === "active") sets = sets.filter((s) => s.status !== "ABANDONED");
+  if (state.filter === "active") sets = sets.filter((s) => (s.status !== "ABANDONED" && s.status !== "PUBLISHED"));
   sets.sort((a, b) => (parseUtc(b.created_at) ?? 0) - (parseUtc(a.created_at) ?? 0));
   state.sets = sets;
   renderSetList();
