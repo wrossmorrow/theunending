@@ -96,7 +96,7 @@ async def redo_run(
     job_client: ExternalJobClient,
     publisher: Publisher,
 ) -> database.Run:
-    """Redo a run (requires FAILED status; creates a distinct run)."""
+    """Redo a run (requires FAILED or CANCELLED status; creates a distinct run)."""
     async with session_factory() as session:
         runs_table = database.Run.metadata.tables[database.Run.__tablename__]
         run = (
@@ -115,10 +115,13 @@ async def redo_run(
                 status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Run {run_id} not found.",
             )
-        if run.status != database.RunStatus.FAILED:
+        if run.status not in (
+            database.RunStatus.FAILED,
+            database.RunStatus.CANCELLED,
+        ):
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail=f"Run {run_id} is not in FAILED status.",
+                detail=f"Run {run_id} is not in FAILED or CANCELLED status.",
             )
         draft = await session.get(database.Draft, run.draft_id)
         if draft is None:
@@ -209,13 +212,148 @@ def _run_transition_valid(
         database.RunStatus.SUBMITTED: (
             database.RunStatus.IN_PROGRESS,
             database.RunStatus.FAILED,
+            database.RunStatus.CANCELLED,
         ),
         database.RunStatus.IN_PROGRESS: (
             database.RunStatus.COMPLETED,
             database.RunStatus.FAILED,
+            database.RunStatus.CANCELLED,
         ),
     }
     return next_status in valid_transitions.get(current, ())
+
+
+async def _get_run_with_lock(session: AsyncSession, run_id: UUID) -> database.Run:
+    """Fetch a run by id with a row lock, or raise 404."""
+    runs_table = database.Run.metadata.tables[database.Run.__tablename__]
+    run = (
+        (
+            await session.execute(
+                select(database.Run)
+                .where(runs_table.c.run_id == run_id)
+                .with_for_update()
+            )
+        )
+        .scalars()
+        .first()
+    )
+    if run is None:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail=f"Run {run_id} not found.",
+        )
+    return run
+
+
+async def _apply_status_update(
+    session: AsyncSession,
+    run: database.Run,
+    update: models.RunStatusUpdate,
+    source: database.RunStatusEventSource = database.RunStatusEventSource.EXTERNAL,
+) -> database.Set | None:
+    """Apply a valid run status update to a run within the caller's session."""
+    if not _run_transition_valid(run.status, update.status):
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Invalid run status transition from {run.status} to {update.status}."
+            ),
+        )
+
+    session.add(
+        database.RunStatusEvent(
+            run_id=run.run_id,
+            status=update.status,
+            message=update.message,
+            details=update.details,
+            source=source,
+            received_at=datetime.now(UTC),
+        )
+    )
+
+    run.status = update.status
+    run.updated_at = datetime.now(UTC)
+    if update.status in (
+        database.RunStatus.COMPLETED,
+        database.RunStatus.FAILED,
+        database.RunStatus.CANCELLED,
+    ):
+        run.finished_at = datetime.now(UTC)
+    if update.message is not None:
+        run.message = update.message
+    if update.details is not None:
+        run.details = update.details
+    session.add(run)
+    await session.commit()
+    await session.refresh(run)
+
+    run_type = run.type
+    run_set_id = run.set_id
+    draft = await session.get(database.Draft, run.draft_id)
+    if draft is None:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail=f"Draft {run.draft_id} not found.",
+        )
+
+    committed_set: database.Set | None = None
+    match run_type:
+        case database.RunType.EVALUATION:
+            if update.status != database.RunStatus.SUBMITTED:
+                draft.status = (
+                    database.DraftStatus.FAILED
+                    if update.status == database.RunStatus.CANCELLED
+                    else database.DraftStatus(update.status.value)
+                )
+                draft.updated_at = datetime.now(UTC)
+                session.add(draft)
+                await session.commit()
+                await session.refresh(draft)
+
+        case database.RunType.BATCH:
+            if update.status in (
+                database.RunStatus.COMPLETED,
+                database.RunStatus.FAILED,
+                database.RunStatus.CANCELLED,
+            ):
+                committed_set = await session.get(database.Set, run_set_id)
+                if committed_set is not None:
+                    committed_set.status = (
+                        database.SetStatus.COMPLETED
+                        if update.status == database.RunStatus.COMPLETED
+                        else database.SetStatus.FAILED
+                    )
+                    session.add(committed_set)
+                    await session.commit()
+                    await session.refresh(committed_set)
+
+        case database.RunType.PUBLISH:
+            if update.status in (
+                database.RunStatus.COMPLETED,
+                database.RunStatus.FAILED,
+                database.RunStatus.CANCELLED,
+            ):
+                committed_set = await session.get(database.Set, run_set_id)
+                if committed_set is not None:
+                    committed_set.status = (
+                        database.SetStatus.PUBLISHED
+                        if update.status == database.RunStatus.COMPLETED
+                        else database.SetStatus.FAILED
+                    )
+                    if update.status == database.RunStatus.COMPLETED:
+                        committed_set.published_at = datetime.now(UTC)
+                    session.add(committed_set)
+                    await session.commit()
+                    await session.refresh(committed_set)
+
+        case _:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=f"Unsupported run type {run_type} for update.",
+            )
+
+    await session.refresh(run)
+    return committed_set
 
 
 async def update_run_status(
@@ -227,118 +365,8 @@ async def update_run_status(
     """Update a run status (system call)."""
     notification: RunNotification | None = None
     async with session_factory() as session:
-        runs_table = database.Run.metadata.tables[database.Run.__tablename__]
-        run = (
-            (
-                await session.execute(
-                    select(database.Run)
-                    .where(runs_table.c.run_id == run_id)
-                    .with_for_update()
-                )
-            )
-            .scalars()
-            .first()
-        )
-        if run is None:
-            raise HTTPException(
-                status_code=http_status.HTTP_404_NOT_FOUND,
-                detail=f"Run {run_id} not found.",
-            )
-        if not _run_transition_valid(run.status, update.status):
-            raise HTTPException(
-                status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    f"Invalid run status transition from {run.status} to {update.status}."
-                ),
-            )
-
-        session.add(
-            database.RunStatusEvent(
-                run_id=run_id,
-                status=update.status,
-                message=update.message,
-                details=update.details,
-                source=database.RunStatusEventSource.EXTERNAL,
-                received_at=datetime.now(UTC),
-            )
-        )
-
-        run.status = update.status
-        run.updated_at = datetime.now(UTC)
-        if update.status in (
-            database.RunStatus.COMPLETED,
-            database.RunStatus.FAILED,
-        ):
-            run.finished_at = datetime.now(UTC)
-        if update.message is not None:
-            run.message = update.message
-        if update.details is not None:
-            run.details = update.details
-        session.add(run)
-        await session.commit()
-        await session.refresh(run)
-
-        run_type = run.type
-        run_set_id = run.set_id
-        draft = await session.get(database.Draft, run.draft_id)
-        if draft is None:
-            raise HTTPException(
-                status_code=http_status.HTTP_404_NOT_FOUND,
-                detail=f"Draft {run.draft_id} not found.",
-            )
-
-        committed_set: database.Set | None = None
-        match run_type:
-            case database.RunType.EVALUATION:
-                if update.status != database.RunStatus.SUBMITTED:
-                    draft.status = database.DraftStatus(update.status.value)
-                    draft.updated_at = datetime.now(UTC)
-                    session.add(draft)
-                    await session.commit()
-                    await session.refresh(draft)
-
-            case database.RunType.BATCH:
-                if update.status in (
-                    database.RunStatus.COMPLETED,
-                    database.RunStatus.FAILED,
-                ):
-                    committed_set = await session.get(database.Set, run_set_id)
-                    if committed_set is not None:
-                        committed_set.status = (
-                            database.SetStatus.COMPLETED
-                            if update.status == database.RunStatus.COMPLETED
-                            else database.SetStatus.FAILED
-                        )
-                        session.add(committed_set)
-                        await session.commit()
-                        await session.refresh(committed_set)
-
-            case database.RunType.PUBLISH:
-                if update.status in (
-                    database.RunStatus.COMPLETED,
-                    database.RunStatus.FAILED,
-                ):
-                    committed_set = await session.get(database.Set, run_set_id)
-                    if committed_set is not None:
-                        committed_set.status = (
-                            database.SetStatus.PUBLISHED
-                            if update.status == database.RunStatus.COMPLETED
-                            else database.SetStatus.FAILED
-                        )
-                        if update.status == database.RunStatus.COMPLETED:
-                            committed_set.published_at = datetime.now(UTC)
-                        session.add(committed_set)
-                        await session.commit()
-                        await session.refresh(committed_set)
-
-            case _:
-                raise HTTPException(
-                    status_code=http_status.HTTP_400_BAD_REQUEST,
-                    detail=f"Unsupported run type {run_type} for update.",
-                )
-
-        await session.refresh(run)
-
+        run = await _get_run_with_lock(session, run_id)
+        committed_set = await _apply_status_update(session, run, update)
         if should_notify(run.type, update.status):
             notification = build_run_notification(
                 run,
@@ -350,6 +378,59 @@ async def update_run_status(
 
     # Send the notification after the status transaction commits; a failed email
     # push never fails or rolls back the status update.
+    if notification is not None and notifier is not None:
+        await notifier.notify(notification)
+
+    return run
+
+
+async def cancel_run(
+    run_id: UUID,
+    session_factory: async_sessionmaker[AsyncSession],
+    job_client: ExternalJobClient,
+    notifier: SnsNotifier,
+) -> database.Run:
+    """Cancel an external run (requires SUBMITTED or IN_PROGRESS status and an external run id)."""
+    notification: RunNotification | None = None
+    async with session_factory() as session:
+        run = await _get_run_with_lock(session, run_id)
+        if run.external_run_id is None:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=f"Run {run_id} has no external run id to cancel.",
+            )
+        if not _run_transition_valid(run.status, database.RunStatus.CANCELLED):
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Invalid run status transition from {run.status} to "
+                    f"{database.RunStatus.CANCELLED}."
+                ),
+            )
+        try:
+            await job_client.cancel_job(run.external_run_id, run.type)
+        except Exception as e:
+            raise HTTPException(
+                status_code=http_status.HTTP_502_BAD_GATEWAY,
+                detail="Failed to cancel external job.",
+            ) from e
+
+        update = models.RunStatusUpdate(
+            status=database.RunStatus.CANCELLED,
+            message="cancelled by admin",
+        )
+        committed_set = await _apply_status_update(
+            session, run, update, source=database.RunStatusEventSource.INTERNAL
+        )
+        if should_notify(run.type, update.status):
+            notification = build_run_notification(
+                run,
+                update.status,
+                message=update.message,
+                details=update.details,
+                set_=committed_set,
+            )
+
     if notification is not None and notifier is not None:
         await notifier.notify(notification)
 

@@ -25,9 +25,17 @@ class JobCreated(BaseModel):
     external_run_id: str
 
 
+class CancelRequest(BaseModel):
+    """Job cancellation request accepted from the admin API."""
+
+    external_run_id: str
+    job_type: str
+
+
 api = FastAPI(title="Unending Mock Job System")
 
 STATUS_UPDATE_DELAY_SECONDS = 2.0
+CANCELLED_EXTERNAL_RUN_IDS: set[str] = set()
 
 
 async def _send_status_update(
@@ -43,9 +51,13 @@ async def _send_status_update(
 
 
 async def _run_job(
-    status_update_url: str, status_update_admin_run_id: uuid.UUID
+    status_update_url: str,
+    external_run_id: str,
+    status_update_admin_run_id: uuid.UUID,
 ) -> None:
     """Simulate a job: IN_PROGRESS then COMPLETED via status updates."""
+    if external_run_id in CANCELLED_EXTERNAL_RUN_IDS:
+        return
     await asyncio.sleep(STATUS_UPDATE_DELAY_SECONDS)
     await _send_status_update(
         status_update_url,
@@ -80,7 +92,9 @@ async def create_evaluate_job(body: JobCreate) -> JobCreated:
     external_run_id = str(uuid.uuid4())
 
     async def _background() -> None:
-        await _run_job(body.status_update_url, body.status_update_admin_run_id)
+        await _run_job(
+            body.status_update_url, external_run_id, body.status_update_admin_run_id
+        )
 
     asyncio.create_task(_background())
     return JobCreated(external_run_id=external_run_id)
@@ -92,7 +106,16 @@ async def create_batch_job(body: JobCreate) -> JobCreated:
     external_run_id = str(uuid.uuid4())
 
     async def _background() -> None:
-        await _run_job(body.status_update_url, body.status_update_admin_run_id)
+        await _run_job(
+            body.status_update_url, external_run_id, body.status_update_admin_run_id
+        )
 
     asyncio.create_task(_background())
     return JobCreated(external_run_id=external_run_id)
+
+
+@api.post("/cancel", status_code=status.HTTP_200_OK)
+async def cancel_job(body: CancelRequest) -> dict[str, str]:
+    """Mark an external run as cancelled in the mock job system."""
+    CANCELLED_EXTERNAL_RUN_IDS.add(body.external_run_id)
+    return {"status": "CANCELLED", "job_type": body.job_type}

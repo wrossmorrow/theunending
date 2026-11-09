@@ -39,7 +39,11 @@ def should_notify(run_type: database.RunType, status: database.RunStatus) -> boo
     return run_type in (
         database.RunType.BATCH,
         database.RunType.PUBLISH,
-    ) and status in (database.RunStatus.COMPLETED, database.RunStatus.FAILED)
+    ) and status in (
+        database.RunStatus.COMPLETED,
+        database.RunStatus.FAILED,
+        database.RunStatus.CANCELLED,
+    )
 
 
 def build_run_notification(

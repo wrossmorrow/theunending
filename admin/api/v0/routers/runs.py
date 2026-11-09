@@ -80,6 +80,23 @@ async def list_run_status_events(
     return await runs_handlers.list_run_status_events(run_id, session_factory)
 
 
+@runs_router.post(
+    "/runs/{run_id}/cancel",
+    response_model=database.Run,
+    status_code=status.HTTP_200_OK,
+)
+async def cancel_run(
+    run_id: UUID,
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
+    job_client: Annotated[ExternalJobClient, Depends(get_job_client)],
+    notifier: Annotated[SnsNotifier, Depends(get_notifier)],
+) -> database.Run:
+    """Cancel a run (requires SUBMITTED or IN_PROGRESS status and an external run id)."""
+    return await runs_handlers.cancel_run(run_id, session_factory, job_client, notifier)
+
+
 @runs_router.put(
     "/runs/{run_id}/status",
     response_model=database.Run,

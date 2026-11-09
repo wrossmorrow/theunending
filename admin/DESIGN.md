@@ -224,6 +224,7 @@ admin/
     * PENDING -> IN_PROGRESS (external job started)
     * PENDING -> FAILED (external job created, but failed to start)
     * IN_PROGRESS -> COMPLETED | FAILED (external job finished, with success or error)
+    * IN_PROGRESS -> CANCELLED (an admin cancelled the external job; draft follows the FAILED flow)
     * FAILED -> COMPLETED (a re-run of the external job finished successfully)
     * COMPLETED -> COMMITTED (when the draft is committed, see below)
     * implement any X -> X state transition (same state as current) as a no-op success
@@ -268,7 +269,7 @@ admin/
     * set_id (FK, uuidv7)
     * draft_id (FK, uuidv7)
     * type (EVALUATION, BATCH, PUBLISH)
-    * status (PENDING, SUBMITTED, IN_PROGRESS, FAILED, COMPLETED)
+    * status (PENDING, SUBMITTED, IN_PROGRESS, FAILED, CANCELLED, COMPLETED)
     * message (optional, string/text, human-readable status message from the external job)
     * details (optional, JSON, structured details from the external job)
     * created_at (generated on creation, UTC timestamp)
@@ -292,6 +293,11 @@ admin/
     - return a specific run by it's id alone or 404
 * POST /api/v0/runs/{run_id:uuidv7}
     - create a new run by "redoing" an existing run (for it's set and draft)
+* POST /api/v0/runs/{run_id:uuidv7}/cancel
+    - cancel an external run (requires status: SUBMITTED or IN_PROGRESS and an external_run_id)
+    - asks the external job system to cancel via `POST {job_base_url}/cancel` with body
+      `{"external_run_id": ...}`
+    - then records the run status update to CANCELLED
 * PUT /api/v0/runs/{run_id:uuidv7}/status
     - update a run status (system call); may carry optional `message` and JSON `details`
     - the full received update payload is stored in `run_status_events` with `received_at` stamped at receipt, source: EXTERNAL
@@ -305,18 +311,20 @@ admin/
 * run objects should only be created by the code, from draft creation, set committing, and internally for "redos"
 * run types: EVALUATION (draft image eval), BATCH (committed set image creation), PUBLISH (committed set publishing to the site). PUBLISH runs are launched by the API publisher worker (ECS Fargate task) rather than through the external job system queue.
 * runs are immutable except timestamps and status; status updates may also carry optional `message` and JSON `details`
-* run statuses are linear: PENDING -> SUBMITTED -> IN_PROGRESS -> COMPLETED | FAILED are the valid changes
+* run statuses are linear: PENDING -> SUBMITTED -> IN_PROGRESS -> COMPLETED | FAILED | CANCELLED are the valid changes
     * PENDING -> SUBMITTED (the worker submitted the job to the external system and got an external run id)
     * SUBMITTED -> IN_PROGRESS (we are signalled an external job we submitted has started)
     * SUBMITTED -> FAILED (we are signalled an external job we submitted failed to start)
+    * SUBMITTED -> CANCELLED (an admin cancelled the external job we submitted)
     * IN_PROGRESS -> COMPLETED | FAILED (we are signalled an external job we submitted has finished)
+    * IN_PROGRESS -> CANCELLED (an admin cancelled the external job we submitted)
     * PENDING -> FAILED (submission failed after exhausting worker attempts)
-    * a redo of a FAILED run creates a distinct new run, which starts the flow again at PENDING
+    * a redo of a FAILED or CANCELLED run creates a distinct new run, which starts the flow again at PENDING
     * we will assume we do not "restart" external jobs, we can "resubmit them" under new records if failed
     * if that changes (external jobs restart) we can revisit this status flow
-* "redoing" a run requires the run referenced by id to be in a FAILED status
+* "redoing" a run requires the run referenced by id to be in a FAILED or CANCELLED status
 * "redoing" a run _creates a distinct run object_ linked to the same set and draft
-* a redo of a FAILED PUBLISH run enqueues a new publish run through the publisher queue (ECS Fargate task) and marks the linked set PUBLISHING, rather than through the external job system queue
+* a redo of a FAILED or CANCELLED PUBLISH run enqueues a new publish run through the publisher queue (ECS Fargate task) and marks the linked set PUBLISHING, rather than through the external job system queue
 * when updating a run status, we should match the status of the linked DRAFT
     * note that we can't redo a run for the same draft without a run having failed
     * run updates are job specific, and probably have little row-level concurrency concerns
@@ -408,7 +416,7 @@ Derived from the resolved design decisions in this document.
 
 ### Phase 3 — Runs and orchestration
 
-* Runs endpoints; redo (FAILED → new run); status updates (match draft status); `external_run_id` from job system response, set on worker submission.
+* Runs endpoints; redo (FAILED | CANCELLED → new run); status updates (match draft status); `external_run_id` from job system response, set on worker submission; cancel (`SUBMITTED`/`IN_PROGRESS` + external_run_id → CANCELLED via the external job system cancel path).
 
 ### Phase 4 — Tooling, errors, tests, deploy
 
