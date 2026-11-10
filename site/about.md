@@ -9,11 +9,13 @@ permalink: /about/
 
 ---
 
-I should probably explain what this is about. If you're looking it can obviously be about anything you like, not only my half-baked view. I have to admit I also believe explaining at all defeats the purpose. Or maybe put another way if I _have_ to explain I've failed in communicating whatever it is I'm trying to find already. 
+I should probably explain what this is about.
 
-I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit fraught. Maybe that alone is part of my goal, exploring that discomfort, and in a setting openly emphasizing its use.
+If you're looking it can obviously be about anything you like, not only my half-baked view. I have to admit I also believe explaining at all defeats the purpose. Or maybe put another way if I _have_ to explain I've failed in communicating whatever it is I'm trying to find already. Nonetheless, "[n]o artwork or exhibition is expected to stand on its own without being accompanied by arguably meaningless text." ([source](https://jaymollica.com/blog/ai-bullshit-and-art-speak/))
 
-You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything. The intent can be in the action alone more than an outcome, reclaiming process from the answer-me-now-make-no-mistakes mechanics of contemporary AI.
+I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's applicable here. I'm not sure what's happening, I'm not sure it's interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit fraught. Maybe that alone is part of my goal, exploring that discomfort, and in a setting openly emphasizing its use.
+
+You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything, or feel compelled to rationalize our response to it. The intent can be in the action and the engagement alone more than an outcome. We can reclaiming process from the answer-me-now-make-no-mistakes mechanics of contemporary AI.
 
 If you think discussion will poison your views of these pages, [get out]({{ site.baseurl }}/unending/). Go stare at them, as they're mostly intended to be experienced. For ideally uncomfortably long. Maybe come back later, after. <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">Tell me what you think.</a> No wrong answers.
 
@@ -113,7 +115,7 @@ As for "practice", almost none of these are "one-shots" as we might say; you mig
 
 ---
 
-<small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `css`/`js`/`jekyll` magic that much myself, so it was a good use case for letting something else handle it. Claude has also done much of the image pipelining and semantic embedding, but partially because I've done these workflows "in person" already. I did eventually have to optimize some of the logic it wrote for effective GPU utilization.</small>
+<small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `css`/`js`/`jekyll` magic that much myself, so it was a good use case for letting something else handle it. Claude has also done much of the image pipelining and semantic embedding, but partially because I've done these workflows "in person" already. I did eventually have to optimize some of the logic it wrote for effective GPU utilization, and refactor a bunch of hacky-but-functional scripts into a usable deployable package as part of a real functional system.</small>
 
 <small>With rare, specifically detailed exception, all prompts conceived of, written, evaluated, refined, and executed by a human author not any existing AI language tool or related agent, harness, or automated prompting and generation loop.</small>
 
