@@ -15,7 +15,7 @@ I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a li
 
 You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything. The intent can be in the action alone more than an outcome, reclaiming process from the answer-me-now-make-no-mistakes mechanics of contemporary AI.
 
-If you think discussion will poison your views of these pages, [get out]({{ site.baseurl }}/unending/). Go stare at them, as they're mostly intended to be experienced. For ideally unconfortably long. Maybe come back later, after. <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">Tell me what you think.</a> No wrong answers.
+If you think discussion will poison your views of these pages, [get out]({{ site.baseurl }}/unending/). Go stare at them, as they're mostly intended to be experienced. For ideally uncomfortably long. Maybe come back later, after. <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">Tell me what you think.</a> No wrong answers.
 
 ---
 
@@ -27,7 +27,7 @@ If this sounds weird, here's a `gif` of this running on my laptop:
 
 This site explores the use of these technologies, as a tool, potentially but not necessarily for "art", trying to find characteristics beyond any specific visually readable digitized imagery it literally produces while perhaps explicitly choosing content reflecting on the tool itself as applicable (or not) to art production.
 
-In particular I am exploring several aspects of generative images that, by definition, are interesting to me and thus worth reflection on in this respect: 
+In particular I am exploring several aspects of generative images that, by definition, are interesting to me and thus worth reflection on: 
 * Turning text into digital images is relatively cheap (thousands of images for a few dollars in an hour or less)
 * The themes chosen can be nearly arbitrary (though I find "quality" varies wildly with ideas and prompt construction)
 * Variations, minor or major, on a theme are easy to generate (automatic, automatable, abundant in an unusual way)
@@ -43,7 +43,7 @@ If you click on an image and see the "similar" results,
 
 you can evaluate uniqueness yourself. If the stream has an exact duplicate image, it is guaranteed to appear there. And it likely won't.
 
-An uncanny valley in the volume, as opposed to the acknowledged on in a given result, feels missing and unexpressed. 
+An uncanny valley in the volume, as opposed to an acknowledged one in any given result, feels missing and unexpressed. 
 
 I'm occasionally playing with arbitrary themes too. That's more "traditional" and worth less explanation being closer to how you yourself reflect on the specific content of a given image. If so, the content and the titles should work together to point out what I'm exploring. This all sounds objectively silly and I know that; in fact I hope you can find some humor hiding in some of the themes. I'm interested in art and art history, so there are unavoidable attempts at reflection there you can hopefully tease out. There are also reflections on the models and methods, theft, the mundane, social media, the industry I work in, and just uncorrelated ideas that came to me. 
 
