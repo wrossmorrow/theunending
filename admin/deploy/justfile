@@ -32,6 +32,7 @@ ssh ip ssh_key=ssh_key user=ssh_user *flags="":
 upload:
     aws s3 cp ../sql/init.sql s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp ../sql/migrations/ s3://theunending-ai-raw-content-use1/deploy/migrations/ --recursive
+    aws s3 cp ../sql/delete.sql s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp backup.sh s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp .env s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp compose.yaml s3://theunending-ai-raw-content-use1/deploy/
