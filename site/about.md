@@ -9,11 +9,13 @@ permalink: /about/
 
 ---
 
-I should probably explain what this is about. If you're looking it can obviously be about anything you like, not only my half-baked view. I have to admit I also believe explaining at all defeats the purpose. Or maybe put another way if I _have_ to explain I've failed in communicating whatever it is I'm trying to find already. 
+I should probably explain what this is about.
 
-I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's probably applicable here. I'm not sure what's happening, I'm not sure its interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit fraught. Maybe that alone is part of my goal, exploring that discomfort, and in a setting openly emphasizing its use.
+If you're looking it can obviously be about anything you like, not only my half-baked view. I have to admit I also believe explaining at all defeats the purpose. Or maybe put another way if I _have_ to explain I've failed in communicating whatever it is I'm trying to find already. Nonetheless, we do talk about what we do.[^1]
 
-You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything. The intent can be in the action alone more than an outcome, reclaiming process from the answer-me-now-make-no-mistakes mechanics of contemporary AI.
+I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's applicable here. I'm not sure what's happening, I'm not sure it's interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit fraught. Maybe that alone is part of my goal, exploring that discomfort, and in a setting openly emphasizing its use.
+
+You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything, or feel compelled to rationalize our response to it. The intent can be in the action and the engagement alone more than an outcome. We can reclaiming process from the answer-me-now-make-no-mistakes mechanics of contemporary AI.
 
 If you think discussion will poison your views of these pages, [get out]({{ site.baseurl }}/unending/). Go stare at them, as they're mostly intended to be experienced. For ideally uncomfortably long. Maybe come back later, after. <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">Tell me what you think.</a> No wrong answers.
 
@@ -111,9 +113,24 @@ These pages loop through a shuffled pre-computed array of images randomized on e
 
 As for "practice", almost none of these are "one-shots" as we might say; you might be able to guess the rare lucky ones. Any one case here probably takes 1/2 hour to an hour of futzing around with various prompts to use over time, reflecting on the results and iterating until it feels right-ish. I'd guess around 50% of prompt ideas tried make the cut with many dropped almost immediately.
 
+Work started with a collection of scripts and running one-off jobs on reserved instances in AWS or Lambda labs. As of early November all the work is being done through a system accessible (by authorized users) on laptop or mobile, and can be executed without touching code or terminals. 
+
+<img src="{{ 'assets/img/about/admin.png' | relative_url }}" alt="admin" style="width: 100%;display: block; outline: 1px solid #eee;" />
+
+The three stages of work are drafting, committing, and publishing. As of writing they can be visually conceptualized as drawn in the following charts drawn by Claude referencing the repository code:
+
+<img src="{{ 'assets/img/about/1-drafting.svg' | relative_url }}" alt="drafting" style="width: 100%;display: block; outline: 1px solid #eee;" />
+
+<img src="{{ 'assets/img/about/2-commit.svg' | relative_url }}" alt="commit" style="width: 100%;display: block; outline: 1px solid #eee;" />
+
+<img src="{{ 'assets/img/about/3-publish.svg' | relative_url }}" alt="publish" style="width: 100%;display: block; outline: 1px solid #eee;" />
+
 ---
 
-<small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `css`/`js`/`jekyll` magic that much myself, so it was a good use case for letting something else handle it. Claude has also done much of the image pipelining and semantic embedding, but partially because I've done these workflows "in person" already. I did eventually have to optimize some of the logic it wrote for effective GPU utilization.</small>
+<small>Claude (Opus 5, medium) wrote the most of the code for the site. I'm not as interested in `css`/`js`/`jekyll` magic that much myself, so it was a good use case for letting something else handle it. Claude has also done much of the image pipelining and semantic embedding, but partially because I've done these workflows "in person" already. I did eventually have to optimize some of the logic it wrote for effective GPU utilization, and refactor a bunch of hacky-but-functional scripts into a usable deployable package as part of a real functional system.</small>
 
 <small>With rare, specifically detailed exception, all prompts conceived of, written, evaluated, refined, and executed by a human author not any existing AI language tool or related agent, harness, or automated prompting and generation loop.</small>
 
+---
+
+[^1]: "No artwork or exhibition is expected to stand on its own without being accompanied by arguably meaningless text." ([source](https://jaymollica.com/blog/ai-bullshit-and-art-speak/))
