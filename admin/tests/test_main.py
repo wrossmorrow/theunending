@@ -1225,7 +1225,10 @@ def test_redo_run_of_failed_publish_run_returns_201_and_enqueues_publish(
             client, session_factory, monkeypatch
         )
         with mock_publisher(session_factory) as publisher:
-            response = client.post(f"/api/v0/sets/{set_id}/publish")
+            response = client.post(
+                f"/api/v0/sets/{set_id}/publish",
+                json={"extra_details": "a dry lake surrounded by watertowers"},
+            )
             assert response.status_code == 200, response.text
             publish_run_id = _get_run_id_by_type(client, set_id, "PUBLISH")
             assert (
@@ -1253,6 +1256,7 @@ def test_redo_run_of_failed_publish_run_returns_201_and_enqueues_publish(
             assert str(enqueued.draft_id) == draft_id
             assert str(enqueued.run_id) == new_run_id
             assert enqueued.attempts == 0
+            assert enqueued.extra_details == "a dry lake surrounded by watertowers"
 
             set_response = client.get(f"/api/v0/sets/{set_id}")
             assert set_response.status_code == 200

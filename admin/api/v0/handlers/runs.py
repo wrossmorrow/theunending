@@ -144,6 +144,7 @@ async def redo_run(
             draft_id=run.draft_id,
             type=run.type,
             status=database.RunStatus.PENDING,
+            extra_details=run.extra_details,
         )
         session.add(new_run)
         await session.flush()
@@ -152,12 +153,14 @@ async def redo_run(
         if run.type == database.RunType.PUBLISH:
             # PUBLISH runs launch an ECS Fargate task via the publisher worker rather
             # than through the external job system queue, so redo re-enqueues the publish
-            # task for the new run instead of submitting an external job.
+            # task for the new run instead of submitting an external job. The retry keeps
+            # the extra details of the failed run since it re-publishes the same post.
             await publisher.put(
                 PublishRequest(
                     set_id=run.set_id,
                     draft_id=run.draft_id,
                     run_id=new_run.run_id,
+                    extra_details=run.extra_details,
                 )
             )
             set_.updated_at = datetime.now(UTC)

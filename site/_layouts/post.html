@@ -24,5 +24,6 @@ layout: default
 
   <div class="post-content">
     {{ content }}
+    {% if page.extra %}<small>{{ page.extra | markdownify }}</small>{% endif %}
   </div>
 </article>

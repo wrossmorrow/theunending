@@ -277,11 +277,12 @@ function confirmDialog({ title, body, ok, extraDetails = null }) {
   field(dlg, "title").textContent = title;
   field(dlg, "body").textContent = body;
   field(dlg, "ok").textContent = ok;
+  const extraLabel = field(dlg, "extra_details-label");
   const extra = field(dlg, "extra_details");
-  if (extra) {
-    extra.hidden = extraDetails == null;
-    if (extraDetails != null) extra.value = extraDetails;
-  }
+  const hidden = extraDetails == null;
+  if (extraLabel) extraLabel.hidden = hidden;
+  if (extra) extra.hidden = hidden;
+  if (extra && extraDetails != null) extra.value = extraDetails;
   dlg.returnValue = "";
   dlg.showModal();
   return new Promise((resolve) => {

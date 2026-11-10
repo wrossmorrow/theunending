@@ -147,7 +147,7 @@ admin/
     - update set fields
 * POST /api/v0/sets/{set_id:uuidv7}/publish
     - publish a COMPLETED set (enqueues a publish run, which runs the publish task)
-    - may carry an optional `extra_details` string (max 512 chars), which is forwarded to the publish task and appended to the post draft
+    - may carry an optional `extra_details` string (max 512 chars), which is stored on the publish run, forwarded to the publish task, and rendered into the post draft via the post's `extra` front matter
 * DELETE /api/v0/sets/{set_id:uuidv7}
     - mark ABANDONED
 
@@ -325,7 +325,7 @@ admin/
     * if that changes (external jobs restart) we can revisit this status flow
 * "redoing" a run requires the run referenced by id to be in a FAILED or CANCELLED status
 * "redoing" a run _creates a distinct run object_ linked to the same set and draft
-* a redo of a FAILED or CANCELLED PUBLISH run enqueues a new publish run through the publisher queue (ECS Fargate task) and marks the linked set PUBLISHING, rather than through the external job system queue
+* a redo of a FAILED or CANCELLED PUBLISH run enqueues a new publish run through the publisher queue (ECS Fargate task) and marks the linked set PUBLISHING, rather than through the external job system queue; the retry carries the extra details of the failed run
 * when updating a run status, we should match the status of the linked DRAFT
     * note that we can't redo a run for the same draft without a run having failed
     * run updates are job specific, and probably have little row-level concurrency concerns
@@ -380,7 +380,7 @@ user -> update set (PATCH /api/v0/sets/{set_id}) with slug/name
 user -> publish set (POST /api/v0/sets/{set_id}/publish) with optional extra details
     -> do checks on set status
         -> set must be in status: COMPLETED (the batch run has finished)
-        -> create/store a new type: PUBLISH run object (status: PENDING, external_run_id: NULL)
+        -> create/store a new type: PUBLISH run object (status: PENDING, external_run_id: NULL, extra_details: <optional>)
         -> enqueue the publish run onto the local publish queue, which launches an ECS Fargate task (with the extra details)
         ("in the background"; the task runs the publish command and reports status via PUT /api/v0/runs/{run_id}/status)
             <- publish task starts, calls PUT /api/v0/runs/{run_id}/status ("IN_PROGRESS")
@@ -391,7 +391,7 @@ user -> publish set (POST /api/v0/sets/{set_id}/publish) with optional extra det
 
 Notes:
 * the "external jobs" referenced below are triggerable by a plain HTTP call. We will need to align on the payloads through working on the design, but triggering them won't be any more complicated than this.
-* publishing may carry optional `extra_details` (max 512 characters) which the publish task appends to the end of the post draft, wrapped in `<small> ... </small>`; when absent, nothing is appended.
+* publishing may carry optional `extra_details` (max 512 characters) which the publish task stores on the publish run and writes into the post draft's `extra` front matter; the post layout renders it as a `<small>` block. When absent, nothing is written.
 * a successfully drafted, commited, and completed set will require other actions we can consider later.
 
 # API Implementation Plan

@@ -111,6 +111,7 @@ class Run(SQLModel, table=True):
     status: RunStatus = Field(default=RunStatus.PENDING)
     message: str | None = Field(default=None, max_length=1024)
     details: dict[str, Any] | None = Field(default=None, sa_type=postgresql.JSONB)
+    extra_details: str | None = Field(default=None, max_length=512)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),

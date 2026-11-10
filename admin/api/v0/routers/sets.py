@@ -84,7 +84,7 @@ async def publish_set(
         async_sessionmaker[AsyncSession], Depends(get_session_factory)
     ],
     publisher: Annotated[Publisher, Depends(get_publisher)],
-    body: models.PublishRequest | None = None,
+    body: models.PublishSetBody | None = None,
 ) -> database.Set:
     """Publish a COMPLETED set, optionally with extra details for the post draft."""
     return await sets_handlers.publish_set(set_id, session_factory, publisher, body)
