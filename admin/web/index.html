@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="admin.css?v=7">
-  <script src="admin.js?v=7" defer></script>
+  <link rel="stylesheet" href="admin.css?v=8">
+  <script src="admin.js?v=8" defer></script>
 </head>
 <body>
   <header class="masthead">
@@ -139,6 +139,10 @@
           <textarea name="prompt" rows="3" maxlength="1023" autocapitalize="none" autocorrect="on" placeholder="a dry lake surrounded by watertowers"></textarea>
         </label>
         <div class="actions">
+          <button type="button" class="icon-button" data-action="copy-prompt" title="Copy prompt" aria-label="Copy prompt">
+            <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"></path></svg>
+            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+          </button>
           <button type="submit" class="primary">Draft it</button>
           <small class="hint">Starts an evaluation run on the GPU.</small>
         </div>
