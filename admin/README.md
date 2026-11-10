@@ -47,7 +47,8 @@ built.
 
 - Health: `GET /health/alive`, `GET /health/ready`
 - Sets: `POST/GET/PATCH/DELETE /api/v0/sets...`, publish at
-  `POST /api/v0/sets/{set_id}/publish`
+  `POST /api/v0/sets/{set_id}/publish` (may carry optional `extra_details`, max 512 chars,
+  forwarded to the publish task and appended to the post draft)
 - Drafts: `GET/POST /api/v0/sets/{set_id}/drafts...`, commit at
   `POST /api/v0/sets/{set_id}/drafts/{draft_id}/commit`
 - Runs: `GET/POST /api/v0/runs...`, status at `PUT /api/v0/runs/{run_id}/status`, cancel at

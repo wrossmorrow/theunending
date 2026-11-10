@@ -1378,6 +1378,42 @@ def test_publish_set_returns_200_and_enqueues_publish_run(
         assert enqueued.attempts == 0
 
 
+def test_publish_set_with_extra_details_enqueues_them_with_the_run(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Publishing with extra details forwards them on the enqueued publish run."""
+    with TestClient(api) as client:
+        set_id, _draft_id, _batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        with mock_publisher(session_factory) as publisher:
+            response = client.post(
+                f"/api/v0/sets/{set_id}/publish",
+                json={"extra_details": "a dry lake surrounded by watertowers"},
+            )
+        assert response.status_code == 200, response.text
+        assert len(publisher.enqueued_requests) == 1
+        enqueued = publisher.enqueued_requests[0]
+        assert enqueued.extra_details == "a dry lake surrounded by watertowers"
+
+
+def test_publish_set_rejects_extra_details_over_512_characters(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Publishing with extra details longer than 512 characters is rejected."""
+    with TestClient(api) as client:
+        set_id, _draft_id, _batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        response = client.post(
+            f"/api/v0/sets/{set_id}/publish",
+            json={"extra_details": "a" * 513},
+        )
+        assert response.status_code == 422
+
+
 def test_publish_set_not_completed_returns_400() -> None:
     """Publishing a set that is not COMPLETED returns 400."""
     with TestClient(api) as client:

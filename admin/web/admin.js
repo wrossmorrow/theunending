@@ -155,7 +155,7 @@ const API = {
   listRuns: (params) => api("GET", `/runs${query(params)}`),
   redoRun: (runId) => api("POST", `/runs/${runId}`),
   cancelRun: (runId) => api("POST", `/runs/${runId}/cancel`),
-  publishSet: (setId) => api("POST", `/sets/${setId}/publish`),
+  publishSet: (setId, body) => api("POST", `/sets/${setId}/publish`, body),
   draftPreview: (setId, draftId) => api("GET", `/sets/${setId}/drafts/${draftId}/preview`),
 };
 
@@ -272,11 +272,16 @@ function setConn(ok, why) {
   el.textContent = ok ? "connected" : (why || "offline");
 }
 
-function confirmDialog({ title, body, ok }) {
+function confirmDialog({ title, body, ok, extraDetails = null }) {
   const dlg = $("#confirm-dialog");
   field(dlg, "title").textContent = title;
   field(dlg, "body").textContent = body;
   field(dlg, "ok").textContent = ok;
+  const extra = field(dlg, "extra_details");
+  if (extra) {
+    extra.hidden = extraDetails == null;
+    if (extraDetails != null) extra.value = extraDetails;
+  }
   dlg.returnValue = "";
   dlg.showModal();
   return new Promise((resolve) => {
@@ -589,14 +594,20 @@ function wireSetDetail(detail, setId) {
       if (state.publishing || set.status !== "COMPLETED") return;
       state.publishing = true;
       try {
+        const extraField = $("#extra-details");
         const ok = await confirmDialog({
           title: `Publish “${setTitle(set)}”?`,
           body: "This starts the publish task: it builds the set's assets and ships them to the site bucket.\n\nPublished assets are write-once.",
           ok: "Publish",
+          extraDetails: extraField.value,
         });
-        if (!ok) return;
+        if (!ok) { extraField.value = ""; return; }
+        const extraDetails = extraField.value.trim();
+        if (extraDetails.length > 512) { toast("Extra details must be at most 512 characters.", true); return; }
+        const body = extraDetails ? { extra_details: extraDetails } : undefined;
         try {
-          await withBusy(btn, () => API.publishSet(setId));
+          await withBusy(btn, () => API.publishSet(setId, body));
+          extraField.value = "";
           toast("Publishing. Publish run started.");
           await Promise.all([refreshCurrent(setId, state.loadSeq, { resetForm: true }), loadSets()]);
         } catch (err) { reportError(err); }

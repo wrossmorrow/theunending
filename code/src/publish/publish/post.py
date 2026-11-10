@@ -8,9 +8,10 @@ def post_draft(
     date: str,
     set: str,
     model: str,
+    extra_details: str | None = None,
 ) -> str:
     # NOTE: make sure no leading space/newline jekyll will barf
-    return dedent(f"""
+    post = dedent(f"""
     ---
     layout: post
     title: {dumps(title)}
@@ -31,3 +32,8 @@ def post_draft(
     All computed on an A100 instance in modal.
     </small>
     """).lstrip()
+
+    extra = (extra_details or "").strip()
+    if not extra:
+        return post
+    return f"{post}\n<small>\n{extra}\n</small>\n"

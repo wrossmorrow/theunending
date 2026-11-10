@@ -104,6 +104,7 @@ def handle(args: argparse.Namespace) -> None:
         date=settings.POST_DATE,
         set=settings.SET_NAME,
         model=settings.MODEL_ID,
+        extra_details=args.extra_details,
     )
     draft_manifest = DraftManifest(
         set=settings.SET_NAME,
@@ -376,6 +377,7 @@ def handle(args: argparse.Namespace) -> None:
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--extra-details", default=None)
     parser.set_defaults(func=handle)
     return parser
 

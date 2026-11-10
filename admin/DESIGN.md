@@ -147,6 +147,7 @@ admin/
     - update set fields
 * POST /api/v0/sets/{set_id:uuidv7}/publish
     - publish a COMPLETED set (enqueues a publish run, which runs the publish task)
+    - may carry an optional `extra_details` string (max 512 chars), which is forwarded to the publish task and appended to the post draft
 * DELETE /api/v0/sets/{set_id:uuidv7}
     - mark ABANDONED
 
@@ -376,11 +377,11 @@ user -> create draft (POST /api/v0/sets/{set_id}/drafts)
 user -> update set (PATCH /api/v0/sets/{set_id}) with slug/name
     <- 400, set already COMMITTED
 
-user -> publish set (POST /api/v0/sets/{set_id}/publish)
+user -> publish set (POST /api/v0/sets/{set_id}/publish) with optional extra details
     -> do checks on set status
         -> set must be in status: COMPLETED (the batch run has finished)
         -> create/store a new type: PUBLISH run object (status: PENDING, external_run_id: NULL)
-        -> enqueue the publish run onto the local publish queue, which launches an ECS Fargate task
+        -> enqueue the publish run onto the local publish queue, which launches an ECS Fargate task (with the extra details)
         ("in the background"; the task runs the publish command and reports status via PUT /api/v0/runs/{run_id}/status)
             <- publish task starts, calls PUT /api/v0/runs/{run_id}/status ("IN_PROGRESS")
             <- publish task fails, calls PUT /api/v0/runs/{run_id}/status ("FAILED")
@@ -390,6 +391,7 @@ user -> publish set (POST /api/v0/sets/{set_id}/publish)
 
 Notes:
 * the "external jobs" referenced below are triggerable by a plain HTTP call. We will need to align on the payloads through working on the design, but triggering them won't be any more complicated than this.
+* publishing may carry optional `extra_details` (max 512 characters) which the publish task appends to the end of the post draft, wrapped in `<small> ... </small>`; when absent, nothing is appended.
 * a successfully drafted, commited, and completed set will require other actions we can consider later.
 
 # API Implementation Plan
