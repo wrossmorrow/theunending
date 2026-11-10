@@ -206,6 +206,10 @@ admin/
 
 * POST /api/v0/sets/{set_id:uuidv7}/drafts
     - create a set draft, returning a server-generated draft_id (uuidv7)
+* POST /api/v0/prompt-ideas/drafts
+    - create a draft set (and its first draft) from a submitted prompt idea; the submitted
+      title becomes the set name, the set slug is derived from it, and an optional `model`
+      picks the evaluation model (defaults to the `DEFAULT_MODEL` setting)
 * GET /api/v0/sets/{set_id:uuidv7}/drafts
     - get all set drafts, ordered by create time descending, with optional status query param filter
 * GET /api/v0/sets/{set_id:uuidv7}/drafts/{draft_id}
@@ -217,6 +221,9 @@ admin/
 
 * To create a draft the set_id referenced in the path must exist, and be in status: DRAFT
 * To create a draft we have to submit a prompt and get back a uuidv7 draft_id
+* POST /api/v0/prompt-ideas/drafts creates a draft set for an anonymous prompt idea; the set
+  slug is derived from the submitted title and falls back to a hash-based slug when the
+  derived value is too short or malformed, so free-form titles still land valid
 * prompts must be checked to be strings less than 1024 characters in length
 * drafts are otherwise immutable except for system-updatable status field
 * The system creates the model_prompt_hash from the prompt in the create request

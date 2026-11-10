@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     run_status: RunStatus = RunStatus.PENDING
     database_url: str = "sqlite+aiosqlite:///./theunending_admin.db"
     admin_base_url: str = "http://localhost:8000"
+    default_model: str = "black-forest-labs/FLUX.2-klein-4B"
     job_base_url: str = "http://localhost:8080"
     job_bearer_token: str = "dev-token"
     s3_bucket_name: str = "unending-local"

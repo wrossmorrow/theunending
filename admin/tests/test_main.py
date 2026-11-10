@@ -627,6 +627,99 @@ def test_create_draft_with_duplicate_prompt_returns_400(
         assert "already exists" in response.json()["detail"]
 
 
+def test_create_draft_from_prompt_returns_201_with_pending_run_and_derived_slug(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Creating a draft from a submitted prompt idea derives the set slug and enqueues the run."""
+    with TestClient(api) as client, mock_job_client(session_factory) as job_client:
+        response = client.post(
+            "/api/v0/prompt-ideas/drafts",
+            json={"name": "Three Or Four Words", "prompt": f"a cat {uuid4().hex}"},
+        )
+        assert response.status_code == 201
+        body = response.json()
+        assert body["status"] == "PENDING"
+        draft_id = body["draft_id"]
+        set_id = body["set_id"]
+
+        set_response = client.get(f"/api/v0/sets/{set_id}")
+        assert set_response.status_code == 200
+        set_body = set_response.json()
+        assert set_body["slug"] == "three-or-four-words"
+        assert set_body["name"] == "Three Or Four Words"
+        assert set_body["status"] == "DRAFT"
+        assert set_body["prompt"] is None
+
+        runs_response = client.get("/api/v0/runs", params={"draft_id": draft_id})
+        assert runs_response.status_code == 200
+        runs = runs_response.json()["runs"]
+        assert len(runs) == 1
+        run = runs[0]
+        assert run["status"] == "PENDING"
+        assert run["type"] == "EVALUATION"
+        assert run["external_run_id"] is None
+        assert run["set_id"] == set_id
+        assert run["draft_id"] == draft_id
+
+        assert len(job_client.enqueued_requests) == 1
+        enqueued = job_client.enqueued_requests[0]
+        assert enqueued.job_type == database.RunType.EVALUATION
+        assert enqueued.job_params.status_update_admin_run_id == enqueued.run_id
+        assert enqueued.job_params.status_update_url.endswith(
+            f"/runs/{enqueued.run_id}/status"
+        )
+
+
+def test_create_draft_from_prompt_with_short_name_derives_hash_slug() -> None:
+    """A title too short for a valid slug still produces a draft via a hash slug."""
+    with TestClient(api) as client:
+        response = client.post(
+            "/api/v0/prompt-ideas/drafts",
+            json={"name": "Go", "prompt": f"a cat {uuid4().hex}"},
+        )
+        assert response.status_code == 201
+        set_response = client.get(f"/api/v0/sets/{response.json()['set_id']}")
+        assert set_response.status_code == 200
+        assert set_response.json()["slug"] != "go"
+
+
+def test_create_draft_from_prompt_with_empty_prompt_returns_422() -> None:
+    with TestClient(api) as client:
+        response = client.post(
+            "/api/v0/prompt-ideas/drafts",
+            json={"name": "Three Or Four Words", "prompt": ""},
+        )
+    assert response.status_code == 422
+
+
+def test_create_draft_from_prompt_without_name_returns_422() -> None:
+    with TestClient(api) as client:
+        response = client.post(
+            "/api/v0/prompt-ideas/drafts",
+            json={"prompt": f"a cat {uuid4().hex}"},
+        )
+    assert response.status_code == 422
+
+
+def test_create_draft_from_prompt_with_duplicate_prompt_returns_400(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    with TestClient(api) as client:
+        with mock_job_client(session_factory):
+            first = client.post(
+                "/api/v0/prompt-ideas/drafts",
+                json={"name": "Three Or Four Words", "prompt": f"a cat {uuid4().hex}"},
+            )
+        assert first.status_code == 201
+        with mock_job_client(session_factory):
+            response = client.post(
+                "/api/v0/prompt-ideas/drafts",
+                json={"name": "Three Or Four Words", "prompt": first.json()["prompt"]},
+            )
+        assert response.status_code == 400
+        assert "already exists" in response.json()["detail"]
+
+
 def test_get_draft_preview_for_missing_draft_returns_404() -> None:
     with TestClient(api) as client:
         response = client.get(f"/api/v0/sets/{uuid4()}/drafts/{uuid4()}/preview")

@@ -32,6 +32,24 @@ async def create_draft(
     return await drafts_handlers.create_draft(set_id, body, session_factory, job_client)
 
 
+@drafts_router.post(
+    "/prompt-ideas/drafts",
+    response_model=database.Draft,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_draft_from_prompt(
+    session_factory: Annotated[
+        async_sessionmaker[AsyncSession], Depends(get_session_factory)
+    ],
+    job_client: Annotated[ExternalJobClient, Depends(get_job_client)],
+    body: models.DraftFromPromptCreate,
+) -> database.Draft:
+    """Create a draft set (and its first draft) from a submitted prompt idea."""
+    return await drafts_handlers.create_draft_from_prompt(
+        body, session_factory, job_client
+    )
+
+
 @drafts_router.get(
     "/sets/{set_id}/drafts",
     response_model=models.DraftsResponse,

@@ -52,6 +52,10 @@ built.
   via the `extra` front matter)
 - Drafts: `GET/POST /api/v0/sets/{set_id}/drafts...`, commit at
   `POST /api/v0/sets/{set_id}/drafts/{draft_id}/commit`
+- Prompt ideas: `POST /api/v0/prompt-ideas/drafts` creates a draft set (and its first
+  draft) from a submitted prompt idea; the submitted title becomes the set name and the
+  set slug is derived from it (hash-based fallback for short titles); may carry an optional
+  `model` (defaults to the `DEFAULT_MODEL` setting) for the evaluation run
 - Runs: `GET/POST /api/v0/runs...`, status at `PUT /api/v0/runs/{run_id}/status`, cancel at
   `POST /api/v0/runs/{run_id}/cancel` (run must be `SUBMITTED`/`IN_PROGRESS` with an `external_run_id`)
 
