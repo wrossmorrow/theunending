@@ -17,3 +17,5 @@ Created with [black-forest-labs/FLUX.2-klein-4B](https://huggingface.co/black-fo
 defined by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). 
 All computed on an A100 instance in modal.
 </small>
+
+<small>Contributed from the community.</small>
