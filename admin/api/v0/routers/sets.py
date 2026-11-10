@@ -84,9 +84,10 @@ async def publish_set(
         async_sessionmaker[AsyncSession], Depends(get_session_factory)
     ],
     publisher: Annotated[Publisher, Depends(get_publisher)],
+    body: models.PublishSetBody | None = None,
 ) -> database.Set:
-    """Update set fields (only slug/name; DRAFT only)."""
-    return await sets_handlers.publish_set(set_id, session_factory, publisher)
+    """Publish a COMPLETED set, optionally with extra details for the post draft."""
+    return await sets_handlers.publish_set(set_id, session_factory, publisher, body)
 
 
 @sets_router.delete(

@@ -20,6 +20,7 @@ class PublishRequest(BaseModel):
     draft_id: UUID
     run_id: UUID
     attempts: int = 0
+    extra_details: str | None = None
 
 
 class Publisher:
@@ -149,6 +150,11 @@ class Publisher:
                             "publish",  # command
                             "--run-id",
                             str(request.run_id),
+                            *(  # optional extra details for the post draft
+                                ["--extra-details", request.extra_details]
+                                if request.extra_details
+                                else []
+                            ),
                         ],
                     }
                 ]

@@ -79,9 +79,14 @@ async def _run_publisher_until(
         await publisher.aclose()
 
 
-def _publish_request() -> PublishRequest:
+def _publish_request(extra_details: str | None = None) -> PublishRequest:
     """Build a publish request for a fresh run."""
-    return PublishRequest(set_id=uuid4(), draft_id=uuid4(), run_id=uuid4())
+    return PublishRequest(
+        set_id=uuid4(),
+        draft_id=uuid4(),
+        run_id=uuid4(),
+        extra_details=extra_details,
+    )
 
 
 async def _create_completed_set_and_publish_run(
@@ -179,13 +184,12 @@ def test_publisher_submits_ecs_task_and_succeeds(
     """The publish worker launches one Fargate task and records the task arn."""
 
     mock_ecs = MockEcsClient()
+    request = _publish_request()
 
     async def scenario() -> None:
         monkeypatch.setattr(boto3, "client", lambda *args, **kwargs: mock_ecs)
         publisher = Publisher(queue_timeout_seconds=0.25, max_attempts=3)
-        await _run_publisher_until(
-            publisher, mock_ecs, _publish_request(), expected_calls=1
-        )
+        await _run_publisher_until(publisher, mock_ecs, request, expected_calls=1)
 
     asyncio.run(scenario())
     assert len(mock_ecs.run_task_calls) == 1
@@ -196,8 +200,38 @@ def test_publisher_submits_ecs_task_and_succeeds(
     assert kwargs["count"] == 1
     override = kwargs["overrides"]["containerOverrides"][0]
     assert override["name"] == settings.publish_container
-    assert override["command"][0] == "publish"
-    assert override["command"][1] == "--run-id"
+    assert override["command"] == [
+        "publish",
+        "publish",
+        "--run-id",
+        str(request.run_id),
+    ]
+
+
+def test_publisher_submits_ecs_task_with_extra_details(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The publish worker forwards optional extra details to the task command."""
+
+    mock_ecs = MockEcsClient()
+
+    async def scenario() -> None:
+        monkeypatch.setattr(boto3, "client", lambda *args, **kwargs: mock_ecs)
+        publisher = Publisher(queue_timeout_seconds=0.25, max_attempts=3)
+        await _run_publisher_until(
+            publisher,
+            mock_ecs,
+            _publish_request(extra_details="a dry lake"),
+            expected_calls=1,
+        )
+
+    asyncio.run(scenario())
+    assert len(mock_ecs.run_task_calls) == 1
+    command = mock_ecs.run_task_calls[0]["overrides"]["containerOverrides"][0][
+        "command"
+    ]
+    assert command[0:3] == ["publish", "publish", "--run-id"]
+    assert command[4:] == ["--extra-details", "a dry lake"]
 
 
 def test_publisher_retries_failed_task_launches_then_succeeds(

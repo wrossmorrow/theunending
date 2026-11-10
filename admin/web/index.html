@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="admin.css?v=8">
-  <script src="admin.js?v=8" defer></script>
+  <link rel="stylesheet" href="admin.css?v=9">
+  <script src="admin.js?v=9" defer></script>
 </head>
 <body>
   <header class="masthead">
@@ -207,6 +207,11 @@
     <form method="dialog" class="stack">
       <h3 data-field="title"></h3>
       <p data-field="body"></p>
+      <label data-field="extra_details-label">
+        <span class="kicker">Extra details <em>optional</em></span>
+        <textarea id="extra-details" data-field="extra_details" name="extra_details" rows="4" maxlength="512" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="optional details appended to the published post"></textarea>
+        <small class="hint">Optional; added at the end of the published post. Max 512 characters.</small>
+      </label>
       <div class="actions">
         <button value="ok" class="primary" data-field="ok"></button>
         <button value="cancel">Cancel</button>

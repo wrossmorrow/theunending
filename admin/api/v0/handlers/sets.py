@@ -108,6 +108,7 @@ async def publish_set(
     set_id: UUID,
     session_factory: async_sessionmaker[AsyncSession],
     publisher: Publisher,
+    body: models.PublishSetBody | None = None,
 ) -> database.Set:
     """Publish set"""
     async with session_factory() as session:
@@ -149,6 +150,7 @@ async def publish_set(
             draft_id=draft_id,
             type=database.RunType.PUBLISH,
             status=database.RunStatus.PENDING,
+            extra_details=body.extra_details if body is not None else None,
         )
         session.add(run)
         await session.flush()
@@ -159,6 +161,7 @@ async def publish_set(
                 set_id=set_id,
                 draft_id=draft_id,
                 run_id=run.run_id,
+                extra_details=body.extra_details if body is not None else None,
             )
         )
 
