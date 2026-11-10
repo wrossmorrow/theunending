@@ -248,6 +248,23 @@ async function withBusy(button, fn) {
   finally { if (button) { button.disabled = false; button.classList.remove("busy"); } }
 }
 
+async function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  // Fallback for contexts without the async clipboard API (e.g. insecure origins).
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+}
+
 function setConn(ok, why) {
   const el = $("#conn-status");
   el.classList.toggle("ok", ok);
@@ -616,6 +633,22 @@ function wireSetDetail(detail, setId) {
         } catch (err) { reportError(err); }
       } finally { state.cancelling = false; }
     }
+
+    if (action === "copy-prompt") {
+      const draft = btn.dataset.draftId
+        ? state.current.drafts.find((d) => d.draft_id === btn.dataset.draftId)
+        : null;
+      const text = draft && draft.prompt ? draft.prompt : promptInput.value;
+      if (!text || !text.trim()) { toast("Write a prompt first.", true); return; }
+      try {
+        await copyToClipboard(text);
+        btn.classList.add("copied");
+        toast("Prompt copied.");
+      } catch (err) {
+        btn.classList.remove("copied");
+        toast("Couldn't copy prompt.", true);
+      }
+    }
   }, { signal: viewSignal() });
 }
 
@@ -829,6 +862,10 @@ function renderDrafts() {
     const isCommitted = !!set.model_prompt_hash && set.model_prompt_hash === draft.model_prompt_hash;
     field(node, "committed-tag").hidden = !isCommitted;
     li.classList.toggle("is-committed", isCommitted);
+
+    // Copy button: put this draft's prompt on the clipboard
+    const copyBtn = node.querySelector('[data-action="copy-prompt"]');
+    copyBtn.dataset.draftId = draft.draft_id;
 
     // Commit button: set DRAFT + draft COMPLETED + slug & name present
     const commit = node.querySelector('[data-action="commit"]');

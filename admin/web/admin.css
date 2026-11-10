@@ -110,6 +110,12 @@ button.primary:hover:not(:disabled) { background: var(--accent-color); border-co
 button.danger { border-color: var(--accent-color); color: var(--accent-color); }
 button.small { font-size: 0.65rem; padding: 0.25em 0.6em; }
 button.busy { cursor: progress; opacity: 0.6; }
+button.icon-button { padding: 0.45em; display: inline-flex; align-items: center; justify-content: center; }
+button.icon-button svg { width: 0.85em; height: 0.85em; display: block; }
+button.icon-button .check-icon { display: none; }
+button.icon-button.copied svg.copy-icon { display: none; }
+button.icon-button.copied svg.check-icon { display: block; }
+button.icon-button.small { padding: 0.25em 0.6em; }
 
 .link-button {
   border: 0;
