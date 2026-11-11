@@ -28,6 +28,10 @@ fix group:
 lint group:
     uv run ruff check src/{{group}}
 
+# Run tests
+run-tests:
+    uv run pytest
+
 # Containerize the application
 containerize group tag=`git rev-parse --short HEAD`:
     docker build --build-arg UV_GROUP={{group}} \
