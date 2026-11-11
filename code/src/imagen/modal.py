@@ -13,9 +13,11 @@ from .similarity.embed import command as embed_command
 DEFAULT_IGNORE_ARGS = {"func", "command"}
 
 # These are overkill, but A10's are pretty slow
-EVAL_GPUS = ["L40S", "A100", "A10"]
+EVAL_GPUS = ["L4", "A10", "L40S", "A100"]
 BATCH_GPUS = ["L40S", "A100"]
 EMBED_GPUS = ["L40S", "A100", "A10"]
+
+EVAL_SCALEDOWN_WINDOW = 600  # 10 minutes
 
 EVAL_TIMEOUT_SEC = 600  # 10 minutes
 BATCH_TIMEOUT_SEC = 7200  # 2 hours: A10 runs ~1 h, A100 ~ 30min
@@ -95,6 +97,7 @@ def _parse_args(
     },
     timeout=EVAL_TIMEOUT_SEC,
     secrets=[modal.Secret.from_name("admin-api-token")],
+    scaledown_window=EVAL_SCALEDOWN_WINDOW,
 )
 def evaluate(args: dict | argparse.Namespace) -> None:
     from .evaluate import handle as _handle_eval
