@@ -113,10 +113,10 @@ def content_bars(image: Image.Image) -> tuple[int, int, int, int] | None:
     ys, xs = np.nonzero(content)
     height, width = content.shape
     return (
-        int(ys[0]),
-        height - 1 - int(ys[-1]),
-        int(xs[0]),
-        width - 1 - int(xs[-1]),
+        int(ys.min()),
+        height - 1 - int(ys.max()),
+        int(xs.min()),
+        width - 1 - int(xs.max()),
     )
 
 
