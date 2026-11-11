@@ -125,7 +125,7 @@ The three stages of work are drafting, committing, and publishing. As of writing
 
 <img src="{{ 'assets/img/about/3-publish.svg' | relative_url }}" alt="publish" style="width: 100%;display: block; outline: 1px solid #eee;" />
 
-The "automation" here is, well, "fun", but also probably important to an overarching goal of "relentless image generation."
+The "automation" here is, well, "fun", but also probably important to an overarching goal of "relentless image generation." In effect, anywhere I am, whatever I'm doing, I can be generating. 
 
 ---
 
