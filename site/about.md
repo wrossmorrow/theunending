@@ -117,13 +117,15 @@ Work started with a collection of scripts and running one-off jobs on reserved i
 
 <img src="{{ 'assets/img/about/admin.png' | relative_url }}" alt="admin" style="width: 100%;display: block; outline: 1px solid #eee;" />
 
-The three stages of work are drafting, committing, and publishing. As of writing they can be visually conceptualized as drawn in the following charts drawn by Claude referencing the repository code:
+The three stages of work are drafting, committing, and publishing. As of writing they can be visually conceptualized as in the following charts drawn by Claude referencing the repository code:
 
 <img src="{{ 'assets/img/about/1-drafting.svg' | relative_url }}" alt="drafting" style="width: 100%;display: block; outline: 1px solid #eee;" />
 
 <img src="{{ 'assets/img/about/2-commit.svg' | relative_url }}" alt="commit" style="width: 100%;display: block; outline: 1px solid #eee;" />
 
 <img src="{{ 'assets/img/about/3-publish.svg' | relative_url }}" alt="publish" style="width: 100%;display: block; outline: 1px solid #eee;" />
+
+The "automation" here is, well, "fun", but also probably important to an overarching goal of "relentless image generation."
 
 ---
 
