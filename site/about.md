@@ -15,9 +15,9 @@ If you're looking it can obviously be about anything you like, not only my half-
 
 I also have a "rule" I've used in my (art)work sometimes: if I'm not myself a little confused and uncertain, especially "halfway through," its not going far enough. That's applicable here. I'm not sure what's happening, I'm not sure it's interesting, and if so exactly how. I'm uncomfortable, in part, just doing it as using AI for "art" production is a bit fraught. Maybe that alone is part of my goal, exploring that discomfort, and in a setting openly emphasizing its use.
 
-You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything, or feel compelled to rationalize our response to it. The intent can be in the action and the engagement alone more than an outcome. We can reclaiming process from the answer-me-now-make-no-mistakes mechanics of contemporary AI.
+You can adopt this perspective too. Meaning, you can just like (or not like) any of this from your gut just as well. We're not doing science here, we don't have to prove anything, or feel compelled to rationalize our response to what we see. The intent can be in the action and the engagement alone more than an outcome. We can reclaim process from the answer-me-now-make-no-mistakes mechanics of contemporary AI.
 
-If you think discussion will poison your views of these pages, [get out]({{ site.baseurl }}/unending/). Go stare at them, as they're mostly intended to be experienced. For ideally uncomfortably long. Maybe come back later, after. <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">Tell me what you think.</a> No wrong answers.
+If you think discussion will poison your views of these pages, [get out]({{ site.baseurl }}/unending/). Go stare at the image streams, as they're mostly intended to be experienced. For ideally uncomfortably long. Maybe come back later, after. <a href="mailto:contact@theunending.ai" class="social-link" aria-label="Email">Tell me what you think.</a> No wrong answers.
 
 ---
 
