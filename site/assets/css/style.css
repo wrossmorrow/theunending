@@ -229,3 +229,8 @@ details.cw-spoiler summary:hover {
   transition: background-color .15s;
 }
 .show-more:hover { background: rgba(128,128,128,.12); }
+
+.site-footer { border-top: 1px solid currentColor; margin-top: 2rem; padding-top: 1rem; opacity: .85; }
+.site-footer p { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.site-footer .social { display: inline-flex; gap: .75rem; }
+.site-footer .icon { width: 16px; height: 16px; vertical-align: middle; }
