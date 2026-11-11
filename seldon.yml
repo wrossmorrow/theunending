@@ -1,0 +1,27 @@
+version: 1
+name: theunending
+run:
+  url: https://theunending.ai
+  # No username/password yet: the site surface worth baselining first is
+  # unauthenticated (landing, gallery, posts, printables). Add a qa@ account
+  # here if you ever want the signed-in flow covered.
+
+testCases:
+  - name: Landing page shows the gallery entry point
+    id: landing-explore
+    steps:
+      - go to /
+      - find the explore link
+    criteria: the landing page renders its explore link into the gallery
+
+  - name: Gallery listing renders image tiles
+    id: gallery-tiles
+    steps:
+      - go to /unending/
+    criteria: the gallery listing displays at least one image tile
+
+  - name: Post page renders the image stream
+    id: post-stream
+    steps:
+      - go to /unending/2026/11/11/qr-coded
+    criteria: the post renders its image stream grid
