@@ -242,7 +242,7 @@ def submit_upload(*a, **kwargs) -> None:
 
 def handle(
     args: argparse.Namespace,
-    s3: S3Client | None,
+    s3: S3Client | None = None,
 ) -> int:
 
     if s3 is None:
@@ -300,7 +300,7 @@ def handle(
                 width=args.width,
             ).images[0]
 
-            reject_reason = check_image(image)
+            reject_reason = check_image(image) if not args.ignore_reject else None
             bars = content_bars(image) if reject_reason is not None else None
 
             if reject_reason is None:
@@ -484,6 +484,7 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         default=None,
         help="An explicit 'run_id' for correlation to admin systems; ignored if empty",
     )
+    parser.add_argument("--ignore-reject", action="store_true", default=False)
     parser.set_defaults(func=handle)
     return parser
 
