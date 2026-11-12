@@ -46,6 +46,16 @@ def load_pipeline(model_id: str) -> Callable:
             components_manager=manager,
         )
         pipe.load_components(dtype={"vae": torch.float32, "default": TORCH_DTYPE})
+
+        upsampler = getattr(pipe, "prompt_upsampler", None)
+        upsampler_processor = getattr(pipe, "prompt_upsampler_processor", None)
+        if upsampler is None or upsampler_processor is None:
+            raise RuntimeError(
+                f"Failed to load FLUX.3 components for {model_id}: "
+                f"prompt_upsampler={upsampler is not None}, "
+                f"prompt_upsampler_processor={upsampler_processor is not None}"
+            )
+
         pipe = pipe.to(DEVICE)
         return pipe
 
