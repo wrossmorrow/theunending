@@ -1,6 +1,6 @@
 import argparse
 
-from .. import og_tiles, web_posters, full_posters
+from .. import full_posters, og_tiles, web_posters
 from ..similarity import review
 
 
