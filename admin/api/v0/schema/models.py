@@ -51,6 +51,17 @@ class DraftCreate(BaseModel):
     prompt: str = Field(min_length=1, max_length=1023)
 
 
+class DraftFromPromptCreate(DraftCreate):
+    """Create a draft set (and its first draft) from a submitted prompt idea.
+
+    The submitted human title becomes the set name; the set slug is derived from
+    it server-side so free-form titles still land in a valid slug.
+    """
+
+    name: str = Field(min_length=1, max_length=64)
+    model: str | None = Field(default=None, min_length=1)
+
+
 class SetUpdate(BaseModel):
     """Update a set; only slug and name may be changed."""
 

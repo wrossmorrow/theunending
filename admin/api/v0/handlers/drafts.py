@@ -13,7 +13,7 @@ from sqlmodel import select
 from api.database import models as database
 from api.settings import settings
 from api.utils.jobs import ExternalJobClient, JobParameters, JobRequest
-from api.utils.prompt import compute_model_prompt_hash
+from api.utils.prompt import compute_model_prompt_hash, derive_set_slug
 from api.utils.s3 import create_presigned_url
 from api.v0.schema import models
 
@@ -75,6 +75,76 @@ async def create_draft(
                 model_id=model,
                 s3_bucket=settings.s3_bucket_name,
                 s3_prefix=f"{settings.s3_evaluate_prefix}/{draft_model_prompt_hash}",
+                prompt=draft.prompt,
+                status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run.run_id}/status",
+                status_update_admin_run_id=run.run_id,
+            ),
+        )
+        try:
+            await job_client.request_job(job_request)
+        except Exception as e:
+            raise HTTPException(
+                status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to enqueue external job.",
+            ) from e
+
+        return draft
+
+
+async def create_draft_from_prompt(
+    body: models.DraftFromPromptCreate,
+    session_factory: async_sessionmaker[AsyncSession],
+    job_client: ExternalJobClient,
+) -> database.Draft:
+    """Create a draft set (and its first draft) from a submitted prompt idea."""
+    model = body.model or settings.default_model
+    slug = derive_set_slug(body.name)
+    set_ = database.Set(
+        model=model,
+        slug=slug,
+        name=body.name,
+        prompt=None,
+        model_prompt_hash=None,
+        status=database.SetStatus.DRAFT,
+        created_at=datetime.now(UTC),
+        committed_at=None,
+        abandoned_at=None,
+    )
+    draft = database.Draft(
+        set_id=set_.set_id,
+        prompt=body.prompt,
+        model_prompt_hash=compute_model_prompt_hash(model, body.prompt),
+        status=database.DraftStatus.PENDING,
+    )
+    run = database.Run(
+        external_run_id=None,
+        set_id=set_.set_id,
+        draft_id=draft.draft_id,
+        type=database.RunType.EVALUATION,
+        status=database.RunStatus.PENDING,
+    )
+    async with session_factory() as session:
+        session.add(set_)
+        session.add(draft)
+        session.add(run)
+        try:
+            await session.commit()
+            await session.refresh(set_)
+            await session.refresh(draft)
+            await session.refresh(run)
+        except sqlalchemy_exc.IntegrityError:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Draft prompt already exists.",
+            )
+
+        job_request = JobRequest(
+            run_id=run.run_id,
+            job_type=database.RunType.EVALUATION,
+            job_params=JobParameters(
+                model_id=model,
+                s3_bucket=settings.s3_bucket_name,
+                s3_prefix=f"{settings.s3_evaluate_prefix}/{draft.model_prompt_hash}",
                 prompt=draft.prompt,
                 status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run.run_id}/status",
                 status_update_admin_run_id=run.run_id,

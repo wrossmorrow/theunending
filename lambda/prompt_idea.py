@@ -14,8 +14,10 @@ be different ones:
 
 Two things this deliberately does NOT do. It does not try to identify callers:
 the Origin check is a filter against casual drive-by traffic, not a security
-control, since curl sets whatever Origin it likes. And it never runs, renders
-or forwards a submission -- stored rows are inert text for a human to read.
+control, since curl sets whatever Origin it likes. And it never runs or renders
+a submission: stored rows are inert text for a human to read. Accepted ideas
+are handed to the admin API to draft (see `create_draft_from_idea`), which is the
+maintainer-facing queue and nothing more.
 
 That last point matters more than it looks. These rows are, by construction,
 text written by strangers that is intended to be fed to a model. Treat them as
@@ -29,6 +31,7 @@ import os
 import re
 from base64 import b64decode
 from datetime import datetime, timedelta, timezone
+from urllib.request import Request, urlopen
 
 import boto3
 from botocore.exceptions import ClientError
@@ -38,6 +41,8 @@ log.setLevel(logging.INFO)
 
 ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "https://theunending.ai")
 TABLE_NAME = os.environ.get("TABLE_NAME", "UnendingPromptIdeas")
+ADMIN_BASE_URL = os.environ.get("ADMIN_BASE_URL", "http://localhost:8000")
+DRAFT_TIMEOUT_SECONDS = 10
 
 MAX_BODY_BYTES = 4096        # the real payload is ~600 bytes
 MAX_NAME_CHARS = 60
@@ -120,6 +125,26 @@ def validate(payload: dict):
         "v": payload.get("v") if isinstance(payload.get("v"), int) else None,
     }
     return {k: v for k, v in fields.items() if v not in (None, "")}, None
+
+
+def create_draft_from_idea(fields: dict) -> dict:
+    """Ask the admin API to turn an accepted prompt idea into a maintainer draft.
+
+    Called only after the idea has been stored successfully, so an accepted idea
+    gets a draft to review rather than just sitting inert in the table.
+    """
+    payload = {
+        "name": fields.get("name") or "",
+        "prompt": fields.get("body") or "",
+    }
+    request = Request(
+        url=f"{ADMIN_BASE_URL}/api/v0/prompt-ideas/drafts",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urlopen(request, timeout=DRAFT_TIMEOUT_SECONDS) as response:
+        return json.loads(response.read().decode("utf-8"))
 
 
 def within_quota(nonce: str, day: str) -> bool:
@@ -215,7 +240,43 @@ def lambda_handler(event, context):
         log.exception("put_item failed")
         return respond(500, {"error": "Could not store that. Please try again."}, origin)
 
+    # The idea is safely stored. Follow up by turning it into a draft the
+    # maintainer can review, so an accepted idea does not just sit inert in the
+    # table. Failure here is reported to the sender; the idea itself is kept.
+    try:
+        draft = create_draft_from_idea(fields)
+    except Exception as exc:
+        log.exception("draft creation follow-up failed")
+        return respond(
+            502,
+            {
+                "error": "The idea was stored, but the draft could not be created.",
+                "details": {"error": str(exc)},
+            },
+            origin,
+        )
+
+    # Point the stored idea at the draft the admin API created, so the record
+    # itself carries the link to its maintainer draft.
+    try:
+        table().update_item(
+            Key={"pk": item["pk"], "sk": item["sk"]},
+            UpdateExpression="SET #d = :d",
+            ExpressionAttributeNames={"#d": "draft_id"},
+            ExpressionAttributeValues={":d": draft["draft_id"]},
+        )
+    except Exception:
+        log.exception("could not set draft_id on stored idea")
+
     # Deliberately not logging name, body or contact: contact is personal data
     # and CloudWatch retention is a separate decision from the table's.
     log.info("stored %s has_contact=%s", item["sk"], "contact" in fields)
-    return respond(200, {"message": "Received.", "request_id": context.aws_request_id}, origin)
+    return respond(
+        200,
+        {
+            "message": "Received.",
+            "request_id": context.aws_request_id,
+            "draft": {"set_id": draft["set_id"], "draft_id": draft["draft_id"]},
+        },
+        origin,
+    )
