@@ -94,8 +94,9 @@ async def commit_draft(
         async_sessionmaker[AsyncSession], Depends(get_session_factory)
     ],
     job_client: Annotated[ExternalJobClient, Depends(get_job_client)],
+    body: models.CommitDraftBody | None = None,
 ) -> database.Set:
     """Commit a draft set."""
     return await drafts_handlers.commit_draft(
-        set_id, draft_id, session_factory, job_client
+        set_id, draft_id, session_factory, job_client, body
     )

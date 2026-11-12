@@ -191,6 +191,7 @@ async def commit_draft(
     draft_id: UUID,
     session_factory: async_sessionmaker[AsyncSession],
     job_client: ExternalJobClient,
+    body: models.CommitDraftBody | None = None,
 ) -> database.Set:
     """Commit a draft set."""
     table = database.Set.metadata.tables[database.Set.__tablename__]
@@ -265,6 +266,7 @@ async def commit_draft(
                 prompt=draft.prompt,
                 status_update_url=f"{settings.admin_base_url}/api/v0/runs/{run.run_id}/status",
                 status_update_admin_run_id=run.run_id,
+                ignore_reject=body.ignore_reject if body is not None else False,
             ),
         )
 

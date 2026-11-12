@@ -30,6 +30,7 @@ class JobParameters(BaseModel):
     prompt: str
     status_update_url: str
     status_update_admin_run_id: UUID
+    ignore_reject: bool = False
 
 
 class JobRequest(BaseModel):

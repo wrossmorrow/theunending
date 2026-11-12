@@ -151,7 +151,7 @@ const API = {
   abandonSet: (id) => api("DELETE", `/sets/${id}`),
   listDrafts: (setId) => api("GET", `/sets/${setId}/drafts`),
   createDraft: (setId, prompt) => api("POST", `/sets/${setId}/drafts`, { prompt }),
-  commitDraft: (setId, draftId) => api("POST", `/sets/${setId}/drafts/${draftId}/commit`),
+  commitDraft: (setId, draftId, body) => api("POST", `/sets/${setId}/drafts/${draftId}/commit`, body),
   listRuns: (params) => api("GET", `/runs${query(params)}`),
   redoRun: (runId) => api("POST", `/runs/${runId}`),
   cancelRun: (runId) => api("POST", `/runs/${runId}/cancel`),
@@ -573,19 +573,26 @@ function wireSetDetail(detail, setId) {
       const draft = state.current.drafts.find((d) => d.draft_id === btn.dataset.draftId);
       if (!draft || state.committing) return;
       state.committing = true;
+      const dlg = document.getElementById("confirm-dialog");
+      const ignoreRejection = dlg.querySelector('[data-field="ignore_reject"]');
       try {
+        ignoreRejection.hidden = false;
         const ok = await confirmDialog({
           title: `Commit “${setTitle(state.current.set)}”?`,
           body: `This locks the set to this prompt and starts the full batch:\n\n“${draft.prompt}”`,
           ok: "Commit & run batch",
         });
         if (!ok) return;
+        const ignoreReject = !!ignoreRejection.querySelector("input").checked;
         try {
-          await withBusy(btn, () => API.commitDraft(setId, draft.draft_id));
+          await withBusy(btn, () =>
+            API.commitDraft(setId, draft.draft_id, { ignore_reject: ignoreReject })
+          );
           toast("Committed. Batch run started.");
           await Promise.all([refreshCurrent(setId, state.loadSeq, { resetForm: true }), loadSets()]);
         } catch (err) { reportError(err); }
       } finally {
+        ignoreRejection.hidden = true;
         state.committing = false;
       }
     }
