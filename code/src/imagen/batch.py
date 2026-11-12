@@ -7,7 +7,7 @@ import os
 import random
 import threading
 from collections.abc import Sequence
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import as_completed, Future, ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
@@ -58,7 +58,7 @@ def count_s3_prefix_objects(
     prefix: str,
     suffix: str | Sequence[str] | None = ".png",
     exclude_prefixes: Sequence[str] = (),
-) -> int:
+) -> tuple[int, list[str]]:
 
     # Ensure prefix ends with a slash if targeting a "folder"
     if prefix and not prefix.endswith("/"):
@@ -77,6 +77,7 @@ def count_s3_prefix_objects(
     exclude_prefixes = tuple(f"{p.rstrip('/')}/" for p in exclude_prefixes if p)
 
     total_count = 0
+    existing_keys = []
     for page in pages:
         contents = page.get("Contents") or []
         keys = [
@@ -86,10 +87,12 @@ def count_s3_prefix_objects(
         ]
         if suffix is None:
             total_count += len(keys)
+            existing_keys.extend(keys)
         else:
             total_count += sum(1 for k in keys if k.endswith(suffix))
+            existing_keys.extend([k for k in keys if k.endswith(suffix)])
 
-    return total_count
+    return total_count, existing_keys
 
 
 def _content_mask(image: Image.Image) -> np.ndarray:
@@ -226,7 +229,23 @@ def save_image_and_upload(
     )
 
 
-def _done(fut) -> None:
+def submit_download(
+    s3: S3Client,
+    bucket: str,
+    key: str,
+    outdir: str,
+) -> Future:
+    _slots.acquire()
+    filename = str(Path(outdir) / Path(key).name)
+    return upload_pool.submit(
+        s3.download_file,
+        Bucket=bucket,
+        Key=key,
+        Filename=filename,
+    )
+
+
+def _upload_done(fut) -> None:
     _slots.release()
     exc = fut.exception()
     if exc:
@@ -237,7 +256,7 @@ def _done(fut) -> None:
 
 def submit_upload(*a, **kwargs) -> None:
     _slots.acquire()
-    upload_pool.submit(save_image_and_upload, *a, **kwargs).add_done_callback(_done)
+    upload_pool.submit(save_image_and_upload, *a, **kwargs).add_done_callback(_upload_done)
 
 
 def handle(
@@ -263,13 +282,47 @@ def handle(
 
         os.makedirs(args.outdir, exist_ok=True)
 
-        existing = count_s3_prefix_objects(
+        existing, keys = count_s3_prefix_objects(
             s3,
             args.s3_bucket,
             args.s3_prefix,
             exclude_prefixes=(f"{args.s3_prefix}/rejected/",),
         )
         total = args.max_images - existing
+
+        if args.embed and existing > 0:
+
+            print(f"Pulling {existing} images locally to consistenly embed.")
+
+            downloaded = 0
+            futures = {
+                submit_download(
+                    s3,
+                    args.s3_bucket,
+                    key,
+                    args.outdir,
+                ): key for key in keys
+            }
+
+            for future in as_completed(futures.keys()):
+                if (exc := future.exception()) is not None:
+                    downloaded += 1
+                else: 
+                    key = futures[future]
+                    print(f"download failed for {key!r}: {exc.__class__.__name__} {exc}")
+
+            if downloaded < existing:
+                message = f"FAILED: only pulled {downloaded} out of {existing} images"
+                print(message)
+                admin_api.update_progress(
+                    status=Status.FAILED,
+                    message=message,
+                    details={
+                        "existing": existing,
+                        "downloaded": downloaded,
+                    },
+                )
+                return 1
 
         print(f"Progress: {existing}/{args.max_images} already exist; work on {total}.")
 
@@ -356,7 +409,7 @@ def handle(
             f"(reasons: {rejection_metrics or 'none'})"
         )
 
-        if accepted < needed:
+        if total > 0 and accepted < needed:
             message = (
                 f"FAILED: only {accepted} of {needed} images were accepted "
                 f"after {attempts} attempts; not embedding"
@@ -384,20 +437,24 @@ def handle(
             )
             return 1
 
-        print("All tasks finished and synced to S3.")
+        print("All tasks (id any) finished and synced to S3.")
         if not args.embed:
             admin_api.update_progress(
                 status=Status.COMPLETED,
                 message="work completed successfully",
-                details={"rejected": rejection_metrics},
+                details={
+                    "total": total,
+                    "rejected": rejection_metrics,
+                },
             )
 
             return 0
 
-        admin_api.update_progress(
-            status=Status.IN_PROGRESS,
-            message="image generation and s3 upload completed",
-        )
+        if total > 0:
+            admin_api.update_progress(
+                status=Status.IN_PROGRESS,
+                message="image generation and s3 upload completed",
+            )
 
         print("Starting embedding on local images.")
         del pipe
