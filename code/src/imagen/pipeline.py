@@ -49,11 +49,13 @@ def load_pipeline(model_id: str) -> Callable:
 
         upsampler = getattr(pipe, "prompt_upsampler", None)
         upsampler_processor = getattr(pipe, "prompt_upsampler_processor", None)
-        if upsampler is None or upsampler_processor is None:
+        transformer = getattr(pipe, "transformer", None)
+        if upsampler is None or upsampler_processor is None or transformer is None:
             raise RuntimeError(
                 f"Failed to load FLUX.3 components for {model_id}: "
                 f"prompt_upsampler={upsampler is not None}, "
-                f"prompt_upsampler_processor={upsampler_processor is not None}"
+                f"prompt_upsampler_processor={upsampler_processor is not None}, "
+                f"transformer={transformer is not None}"
             )
 
         pipe = pipe.to(DEVICE)
