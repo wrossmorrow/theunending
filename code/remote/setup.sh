@@ -31,6 +31,14 @@ snapshot_download(
     token=os.environ['HF_TOKEN']
 )
 snapshot_download(
+    repo_id='black-forest-labs/flux-3-image-klein',
+    token=os.environ['HF_TOKEN']
+)
+snapshot_download(
+    repo_id='black-forest-labs/flux-3-image-klein-pup',
+    token=os.environ['HF_TOKEN']
+)
+snapshot_download(
     repo_id='timm/PE-Core-L-14-336',
     token=os.environ['HF_TOKEN']
 )

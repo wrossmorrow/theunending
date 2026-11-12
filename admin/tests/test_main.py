@@ -230,6 +230,38 @@ def _create_set_with_draft(
     return set_id, draft_id, run_id
 
 
+def test_list_models_returns_supported_models() -> None:
+    with TestClient(api) as client:
+        response = client.get("/api/v0/models")
+        assert response.status_code == 200
+        body = response.json()
+        assert list(body) == ["models"]
+        assert body["models"] == settings.supported_models
+
+
+def test_list_models_default_is_flux2_and_includes_flux3_option() -> None:
+    """The supported models include the flux 2 default and the flux 3 option."""
+    with TestClient(api) as client:
+        response = client.get("/api/v0/models")
+        assert response.status_code == 200
+        models = response.json()["models"]
+        assert models[0] == "black-forest-labs/FLUX.2-klein-4B"
+        assert "black-forest-labs/flux-3-image-klein" in models
+
+
+def test_list_models_reflects_configured_supported_models(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The supported models list is read from settings at request time."""
+    monkeypatch.setattr(
+        settings, "supported_models", ["black-forest-labs/flux-3-image-klein"]
+    )
+    with TestClient(api) as client:
+        response = client.get("/api/v0/models")
+        assert response.status_code == 200
+        assert response.json()["models"] == ["black-forest-labs/flux-3-image-klein"]
+
+
 def test_get_set_with_invalid_uuid_returns_422() -> None:
     with TestClient(api) as client:
         response = client.get("/api/v0/sets/not-a-uuid")

@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
 from .constants import DEVICE
-from .pipeline import load_pipeline
+from .pipeline import default_steps_for, load_pipeline
 from .progress import AdminAPI, Status
 from .similarity.embed import command as embed_command
 from .similarity.embed import handle as embed
@@ -342,6 +342,9 @@ def handle(
         )
 
         pipe = load_pipeline(args.model_id)
+        steps = (
+            args.steps if args.steps is not None else default_steps_for(args.model_id)
+        )
 
         chopped_prompt = args.prompt[:120]
 
@@ -357,7 +360,7 @@ def handle(
             gen = torch.Generator(device=DEVICE).manual_seed(seed)
             image = pipe(
                 prompt=args.prompt,
-                num_inference_steps=args.steps,
+                num_inference_steps=steps,
                 generator=gen,
                 height=args.height,
                 width=args.width,
@@ -524,7 +527,9 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     )
     parser.add_argument("--width", type=int, default=512)
     parser.add_argument("--height", type=int, default=512)
-    parser.add_argument("--steps", type=int, default=4)
+    parser.add_argument(
+        "--steps", type=int, default=None, help="Inference steps; defaults per model"
+    )
     parser.add_argument("--outdir", type=str, default="images")
     parser.add_argument(
         "--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B"

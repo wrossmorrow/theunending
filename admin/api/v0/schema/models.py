@@ -19,6 +19,12 @@ class SetsResponse(BaseModel):
     sets: list[Set] = Field(default_factory=list)
 
 
+class ModelsResponse(BaseModel):
+    """Response wrapper: a collection of supported models."""
+
+    models: list[str] = Field(default_factory=list)
+
+
 class DraftsResponse(BaseModel):
     """Response wrapper: a collection of drafts."""
 
