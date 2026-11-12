@@ -27,7 +27,7 @@ snapshot_download(
     token=os.environ['HF_TOKEN']
 )
 snapshot_download(
-    repo_id='black-forest-labs/FLUX.2-klein-4B',
+    repo_id='black-forest-labs/flux-3-image-klein',
     token=os.environ['HF_TOKEN']
 )
 snapshot_download(

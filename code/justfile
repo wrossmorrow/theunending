@@ -7,7 +7,7 @@ raw_S3_bucket := "wrossmorrow-genai-repetitions-use1"
 site_s3_bucket := "theunending-ai-site-content-use1"
 ssh_key := "imagen-lambda.pem"
 flux1 := "black-forest-labs/FLUX.1-schnell"
-flux2 := "black-forest-labs/FLUX.2-klein-4B"
+flux3 := "black-forest-labs/flux-3-image-klein"
 
 default:
     just --list
@@ -41,7 +41,7 @@ containerize group tag=`git rev-parse --short HEAD`:
 publish group tag=`git rev-parse --short HEAD`: (containerize group tag)
     docker push {{registry}}/{{namespace}}/{{group}}:{{tag}}
 
-run prompt rows cols width="512" height="512" model_id=flux2:
+run prompt rows cols width="512" height="512" model_id=flux3:
     PROMPT="{{ prompt }}" \
     ROWS={{ rows }} \
     COLS={{ cols }} \
@@ -53,8 +53,8 @@ run prompt rows cols width="512" height="512" model_id=flux2:
 run-flux1 prompt rows cols width="512" height="512":
     just run {{ prompt }} {{ rows }} {{ cols }} {{ width }} {{ height }} {{ flux1 }}
 
-run-flux2 prompt rows cols width="512" height="512":
-    just run {{ prompt }} {{ rows }} {{ cols }} {{ width }} {{ height }} {{ flux2 }}
+run-flux3 prompt rows cols width="512" height="512":
+    just run {{ prompt }} {{ rows }} {{ cols }} {{ width }} {{ height }} {{ flux3 }}
 
 regen prompt regen loc width="512" height="512":
     #!/bin/bash

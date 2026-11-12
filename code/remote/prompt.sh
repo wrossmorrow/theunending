@@ -5,7 +5,7 @@ set -ex
 : ${PROMPT:?}
 HASH=$( printf "%s" "${PROMPT}" | sha256sum | awk '{print $1}' )
 TILES="generated-tiles/${HASH}"
-MODEL_ID="${MODEL_ID:-black-forest-labs/FLUX.2-klein-4B}"
+MODEL_ID="${MODEL_ID:-black-forest-labs/flux-3-image-klein}"
 OUTDIR="${OUTDIR:-images}"
 ROWS="${ROWS:-3}"
 COLS="${COLS:-3}"

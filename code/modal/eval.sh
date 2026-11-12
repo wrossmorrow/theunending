@@ -1,7 +1,7 @@
 #!/bin/bash
 : ${PROMPT:?}
 
-MODEL_ID="${MODEL_ID:-black-forest-labs/FLUX.2-klein-4B}"
+MODEL_ID="${MODEL_ID:-black-forest-labs/flux-3-image-klein}"
 PROMPT_HASH=$( echo -n "${MODEL_ID}::${PROMPT}" | sha256sum | cut -d ' ' -f 1 )
 echo "prompt hash (s3 prefix): ${PROMPT_HASH}"
 

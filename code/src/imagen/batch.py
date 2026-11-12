@@ -454,10 +454,10 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     )
     parser.add_argument("--width", type=int, default=512)
     parser.add_argument("--height", type=int, default=512)
-    parser.add_argument("--steps", type=int, default=4)
+    parser.add_argument("--steps", type=int, default=16)
     parser.add_argument("--outdir", type=str, default="images")
     parser.add_argument(
-        "--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B"
+        "--model-id", type=str, default="black-forest-labs/flux-3-image-klein"
     )
     parser.add_argument("--embed", action="store_true", default=False)
     parser.add_argument(

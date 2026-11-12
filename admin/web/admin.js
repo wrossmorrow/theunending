@@ -11,7 +11,7 @@ const CONFIG = {
   // Set models. The API has no endpoint for these, so keep in sync with its settings.
   // The first entry is the default.
   models: [
-    "black-forest-labs/FLUX.2-klein-4B",
+    "black-forest-labs/flux-3-image-klein",
     "black-forest-labs/FLUX.1-schnell",
   ],
 

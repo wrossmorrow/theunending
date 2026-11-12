@@ -154,7 +154,7 @@ admin/
 ### Details
 
 * a model is required to create a set and there are specific choices
-    * "black-forest-labs/FLUX.2-klein-4B" (default)
+    * "black-forest-labs/flux-3-image-klein" (default)
     * "black-forest-labs/FLUX.1-schnell"
     * should be configurable
 * set slugs must be globally unique, but do not have to be chosen at create time

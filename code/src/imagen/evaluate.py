@@ -193,9 +193,9 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--tiles", type=str, default="generated-tiles")
     parser.add_argument("--outdir", type=str, default="images")
     parser.add_argument(
-        "--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B"
+        "--model-id", type=str, default="black-forest-labs/flux-3-image-klein"
     )
-    parser.add_argument("--steps", type=int, default=4)
+    parser.add_argument("--steps", type=int, default=16)
     parser.add_argument(
         "--s3-bucket", type=str, default=os.environ.get("AWS_S3_BUCKET_NAME")
     )

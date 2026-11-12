@@ -58,7 +58,7 @@ done
 
 # infer vars (ok, some defined, but still)
 
-DEFAULT_MODEL_ID="black-forest-labs/FLUX.2-klein-4B" 
+DEFAULT_MODEL_ID="black-forest-labs/flux-3-image-klein" 
 if [[ -z "${MODEL_ID}" ]]; then
     echo "MODEL_ID is not set or empty: ${MODEL_ID}; defaulting to ${DEFAULT_MODEL_ID}"
     MODEL_ID="${DEFAULT_MODEL_ID}"

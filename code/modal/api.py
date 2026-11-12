@@ -10,7 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import modal
 
-DEFAULT_MODEL = "black-forest-labs/FLUX.2-klein-4B"
+DEFAULT_MODEL = "black-forest-labs/flux-3-image-klein"
 DEFAULT_S3_BUCKET_NAME = "theunending-ai-raw-content-use1"
 AUTH_TOKEN_HEADER_NAME = "MODAL_ENDPOINT_AUTH_TOKEN"
 MODAL_APP_NAME = "theunending"
