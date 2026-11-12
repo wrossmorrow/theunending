@@ -6,6 +6,7 @@ models = [
     'black-forest-labs/FLUX.1-schnell',
     'black-forest-labs/FLUX.2-klein-4B',
     'black-forest-labs/flux-3-image-klein',
+    'black-forest-labs/flux-3-image-klein-pup',
     'timm/PE-Core-L-14-336',
 ]
 
