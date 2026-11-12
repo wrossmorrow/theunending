@@ -45,7 +45,9 @@ def load_pipeline(model_id: str) -> Callable:
             model_id,
             components_manager=manager,
         )
-        pipe.load_components(dtype={"vae": torch.float32, "default": TORCH_DTYPE})
+        pipe.load_components(
+            local_files_only=True, dtype={"vae": torch.float32, "default": TORCH_DTYPE}
+        )
 
         upsampler = getattr(pipe, "prompt_upsampler", None)
         upsampler_processor = getattr(pipe, "prompt_upsampler_processor", None)
