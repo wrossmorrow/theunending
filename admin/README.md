@@ -46,6 +46,7 @@ built.
 ## API
 
 - Health: `GET /health/alive`, `GET /health/ready`
+- Models: `GET /api/v0/models` (supported models; first entry is the default)
 - Sets: `POST/GET/PATCH/DELETE /api/v0/sets...`, publish at
   `POST /api/v0/sets/{set_id}/publish` (may carry optional `extra_details`, max 512 chars,
   stored on the publish run, forwarded to the publish task, and written to the post draft

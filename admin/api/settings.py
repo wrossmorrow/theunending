@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     submit_timeout_seconds: float = 60
     max_attempts: int = 3
 
+    supported_models: list[str] = [
+        "black-forest-labs/FLUX.2-klein-4B",
+        "black-forest-labs/flux-3-image-klein",
+        "black-forest-labs/FLUX.1-schnell",
+    ]
+
     publish_private_subnet_ids: list[str] = []
     publish_security_group_id: str = ""
     publish_ecs_cluster: str = "theunending-publish"

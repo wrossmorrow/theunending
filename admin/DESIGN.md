@@ -117,6 +117,19 @@ admin/
 
 # API
 
+## models
+
+### Resource
+
+* "models":
+    * supported model ids, e.g. FLUX.2 Klein, FLUX.3 image klein, FLUX.1 schnell
+    * the first entry is the default
+
+### HTTP calls
+
+* GET /api/v0/models
+    - list supported models (returned in the `models` response field)
+
 ## sets 
 
 ### Resource
@@ -155,6 +168,7 @@ admin/
 
 * a model is required to create a set and there are specific choices
     * "black-forest-labs/FLUX.2-klein-4B" (default)
+    * "black-forest-labs/flux-3-image-klein"
     * "black-forest-labs/FLUX.1-schnell"
     * should be configurable
 * set slugs must be globally unique, but do not have to be chosen at create time

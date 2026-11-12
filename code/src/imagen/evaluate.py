@@ -15,7 +15,7 @@ from PIL import Image
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
-from .pipeline import load_pipeline
+from .pipeline import default_steps_for, load_pipeline
 from .progress import AdminAPI, Status
 
 
@@ -140,10 +140,13 @@ def handle(args: argparse.Namespace, s3: S3Client | None = None) -> int:
         }
 
         pipeline = load_pipeline(args.model_id)
+        steps = (
+            args.steps if args.steps is not None else default_steps_for(args.model_id)
+        )
         for r in range(args.repetitions):
             prompts = [f"{args.prompt}" for _ in range(args.rows * args.cols)]
             generated_tiles = generate_images(
-                pipeline, prompts, img_size, args.steps, args.tiles
+                pipeline, prompts, img_size, steps, args.tiles
             )
             filename = f"{args.outdir}/thematic-grid-{r}.png"
             stitch_grid(filename, generated_tiles, grid_cols=args.cols, padding=12)
@@ -195,7 +198,9 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument(
         "--model-id", type=str, default="black-forest-labs/FLUX.2-klein-4B"
     )
-    parser.add_argument("--steps", type=int, default=4)
+    parser.add_argument(
+        "--steps", type=int, default=None, help="Inference steps; defaults per model"
+    )
     parser.add_argument(
         "--s3-bucket", type=str, default=os.environ.get("AWS_S3_BUCKET_NAME")
     )

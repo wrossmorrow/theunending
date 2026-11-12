@@ -8,13 +8,6 @@
 const CONFIG = {
   apiBase: "/api/v0",
 
-  // Set models. The API has no endpoint for these, so keep in sync with its settings.
-  // The first entry is the default.
-  models: [
-    "black-forest-labs/FLUX.2-klein-4B",
-    "black-forest-labs/FLUX.1-schnell",
-  ],
-
   // How often to refresh while a draft or run is PENDING / IN_PROGRESS.
   pollMs: 4000,
 
@@ -144,6 +137,7 @@ async function api(method, path, body) {
 }
 
 const API = {
+  listModels: () => api("GET", "/models"),
   listSets: (params) => api("GET", `/sets${query(params)}`),
   getSet: (id) => api("GET", `/sets/${id}`),
   createSet: (body) => api("POST", "/sets", body),
@@ -296,6 +290,7 @@ function confirmDialog({ title, body, ok, extraDetails = null }) {
 
 const state = {
   sets: [],
+  models: [], // supported models from GET /api/v0/models; first is the default
   filter: "active",
   route: { view: "home" },
   current: null,      // { set, drafts, runs } for the open set
@@ -320,6 +315,11 @@ function viewSignal() {
 /* ------------------------------------------------------------------ *
  * Set list
  * ------------------------------------------------------------------ */
+
+async function loadModels() {
+  const data = await API.listModels();
+  state.models = data?.models ?? [];
+}
 
 async function loadSets() {
   const params = {};
@@ -382,12 +382,15 @@ function renderNewSet() {
   const form = $("#new-set-form");
 
   const modelSelect = form.elements.model;
-  for (const m of CONFIG.models) {
+  modelSelect.replaceChildren();
+  for (const m of state.models) {
     const opt = document.createElement("option");
     opt.value = m;
     opt.textContent = m;
     modelSelect.append(opt);
   }
+  // The first supported model is the default.
+  if (state.models.length > 0) modelSelect.value = state.models[0];
 
   wireValidation(form);
 
@@ -1048,7 +1051,7 @@ function route() {
 async function boot() {
   if (!getToken()) { setConn(false, "no token"); route(); return; }
   try {
-    await loadSets();
+    await Promise.all([loadSets(), loadModels()]);
   } catch (err) {
     if (!(err instanceof ApiError && (err.status === 401 || err.status === 403))) reportError(err);
   }
