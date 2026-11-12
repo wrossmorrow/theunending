@@ -77,7 +77,7 @@ def count_s3_prefix_objects(
     exclude_prefixes = tuple(f"{p.rstrip('/')}/" for p in exclude_prefixes if p)
 
     total_count = 0
-    existing_keys = []
+    existing_keys: list[str] = []
     for page in pages:
         contents = page.get("Contents") or []
         keys = [
@@ -447,7 +447,7 @@ def handle(
             )
             return 1
 
-        print("All tasks (id any) finished and synced to S3.")
+        print("All tasks (if any) finished and synced to S3.")
         if not args.embed:
             admin_api.update_progress(
                 status=Status.COMPLETED,
