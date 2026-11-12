@@ -229,6 +229,10 @@ def save_image_and_upload(
     )
 
 
+def _download_done(fut) -> None:
+    _slots.release()
+
+
 def submit_download(
     s3: S3Client,
     bucket: str,
@@ -237,12 +241,14 @@ def submit_download(
 ) -> Future:
     _slots.acquire()
     filename = str(Path(outdir) / Path(key).name)
-    return upload_pool.submit(
+    future = upload_pool.submit(
         s3.download_file,
         Bucket=bucket,
         Key=key,
         Filename=filename,
     )
+    future.add_done_callback(_download_done)
+    return future
 
 
 def _upload_done(fut) -> None:
