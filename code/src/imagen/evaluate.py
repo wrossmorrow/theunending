@@ -113,7 +113,10 @@ def _copy_to_s3(
     return args.s3_bucket, keys
 
 
-def handle(args: argparse.Namespace, s3: S3Client | None) -> int:
+def handle(
+    args: argparse.Namespace,
+    s3: S3Client | None = None
+) -> int:
 
     if s3 is None:
         return handle(args, boto3.client("s3"))
