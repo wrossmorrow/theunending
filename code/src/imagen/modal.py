@@ -24,7 +24,9 @@ BATCH_TIMEOUT_SEC = 7200  # 2 hours: A10 runs ~1 h, A100 ~ 30min
 EMBED_TIMEOUT_SEC = 600  # 10 minutes
 
 AWS_OIDC_ROLE_ARN = "arn:aws:iam::396610714890:role/modal-oidc-access"
-AWS_OIDC_SESSION_DURATION_SECONDS = 10800  # 3 hours; check IAM limits, always outlast timeout
+AWS_OIDC_SESSION_DURATION_SECONDS = (
+    10800  # 3 hours; check IAM limits, always outlast timeout
+)
 
 
 def _aws_creds(role_arn: str = AWS_OIDC_ROLE_ARN):
