@@ -299,7 +299,7 @@ def handle(
         total = args.max_images - existing
 
         if args.embed and existing > 0:
-            print(f"Pulling {existing} images locally to consistenly embed.")
+            print(f"Pulling {existing} images locally to consistently embed.")
 
             downloaded = 0
             futures = {
@@ -419,7 +419,7 @@ def handle(
             f"(reasons: {rejection_metrics or 'none'})"
         )
 
-        if total > 0 and accepted < needed:
+        if accepted < needed:
             message = (
                 f"FAILED: only {accepted} of {needed} images were accepted "
                 f"after {attempts} attempts; not embedding"
@@ -486,7 +486,10 @@ def handle(
         admin_api.update_progress(
             status=Status.COMPLETED,
             message="image generation, s3 upload, and embeddings completed",
-            details={"rejected": rejection_metrics},
+            details={
+                "total": total,
+                "rejected": rejection_metrics,
+            },
         )
 
     except Exception as e:  # noqa: BLE001
