@@ -312,10 +312,10 @@ def handle(
 
             for future in as_completed(futures.keys()):
                 if (exc := future.exception()) is not None:
-                    downloaded += 1
-                else: 
                     key = futures[future]
                     print(f"download failed for {key!r}: {exc.__class__.__name__} {exc}")
+                else: 
+                    downloaded += 1
 
             if downloaded < existing:
                 message = f"FAILED: only pulled {downloaded} out of {existing} images"
