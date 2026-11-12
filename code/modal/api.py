@@ -31,6 +31,7 @@ class JobParameters(BaseModel):
     status_update_admin_run_id: str | None = None
     status_update_auth_secret_name: str = "ADMIN_API_TOKEN"
     status_update_auth_secret_type: str = "Bearer"
+    ignore_reject: bool = False
 
     def hash(self) -> str:
         return _compute_model_prompt_hash(self.model, self.prompt)
@@ -80,6 +81,7 @@ def _evaluate(payload: JobParameters, request: Request, authed: bool = Depends(_
 
     target = modal.Function.from_name(MODAL_APP_NAME, "evaluate")
     kwargs = payload.model_dump(mode="json")
+    kwargs.pop("ignore_reject", None)
     fcall = target.spawn({"kwargs": kwargs})
     return {
         "external_run_id": fcall.object_id,
@@ -100,7 +102,11 @@ def _batch(payload: JobParameters, request: Request, authed: bool = Depends(_che
 
     target = modal.Function.from_name(MODAL_APP_NAME, "batch")
     kwargs = payload.model_dump(mode="json")
-    fcall = target.spawn({"flags": ("embed",), "kwargs": kwargs})
+    ignore_reject = bool(kwargs.pop("ignore_reject", False))
+    flags: tuple[str, ...] = ("embed",)
+    if ignore_reject:
+        flags = ("embed", "ignore_reject")
+    fcall = target.spawn({"flags": flags, "kwargs": kwargs})
     return {
         "external_run_id": fcall.object_id,
         "message": "Successfully launched target app function!",

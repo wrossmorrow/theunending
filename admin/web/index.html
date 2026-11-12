@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="admin.css?v=9">
-  <script src="admin.js?v=9" defer></script>
+  <link rel="stylesheet" href="admin.css?v=10">
+  <script src="admin.js?v=10" defer></script>
 </head>
 <body>
   <header class="masthead">
@@ -211,6 +211,10 @@
         <span class="kicker">Extra details <em>optional</em></span>
         <textarea id="extra-details" data-field="extra_details" name="extra_details" rows="4" maxlength="512" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="optional details appended to the published post"></textarea>
         <small class="hint">Optional; added at the end of the published post. Max 512 characters.</small>
+      </label>
+      <label class="check" data-field="ignore_reject" hidden>
+        <input type="checkbox" name="ignore_reject">
+        Ignore rejection
       </label>
       <div class="actions">
         <button value="ok" class="primary" data-field="ok"></button>

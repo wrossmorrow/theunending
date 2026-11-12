@@ -71,6 +71,12 @@ class PublishSetBody(BaseModel):
     extra_details: str | None = Field(default=None, max_length=512)
 
 
+class CommitDraftBody(BaseModel):
+    """Commit a draft set; optional batch behaviour flags."""
+
+    ignore_reject: bool = False
+
+
 class RunStatusUpdate(BaseModel):
     """Update a run status."""
 
