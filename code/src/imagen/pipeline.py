@@ -3,27 +3,47 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import torch
-from diffusers import Flux2KleinPipeline, FluxPipeline
+from diffusers import (
+    ComponentsManager,
+    Flux2KleinPipeline,
+    Flux3ModularPipeline,
+    FluxPipeline,
+    ModularPipeline,
+)
 
 from .constants import DEVICE, TORCH_DTYPE
 
 # TODO; decent typing of the pipeline
 
-SomePipeline = FluxPipeline | Flux2KleinPipeline
+SomePipeline = FluxPipeline | Flux2KleinPipeline | ModularPipeline
 
 
 def load_pipeline(model_id: str) -> Callable:
-    pipe = (
-        FluxPipeline.from_pretrained(
-            model_id,
-            torch_dtype=TORCH_DTYPE,
-        )
-        if "FLUX.1" in model_id
-        else Flux2KleinPipeline.from_pretrained(
-            model_id,
-            torch_dtype=TORCH_DTYPE,
-        )
+    normalized = "".join(
+        character for character in model_id.lower() if character.isalnum()
     )
+
+    if "flux3" in normalized:
+        manager = ComponentsManager()
+        manager.enable_auto_cpu_offload(device=DEVICE)
+        pipe = Flux3ModularPipeline.from_pretrained(
+            model_id,
+            components_manager=manager,
+        )
+        pipe.load_components(dtype={"vae": torch.float32, "default": TORCH_DTYPE})
+        pipe = pipe.to(DEVICE)
+        return pipe
+
+    if "flux1" in normalized:
+        pipe = FluxPipeline.from_pretrained(
+            model_id,
+            torch_dtype=TORCH_DTYPE,
+        )
+    else:
+        pipe = Flux2KleinPipeline.from_pretrained(
+            model_id,
+            torch_dtype=TORCH_DTYPE,
+        )
 
     # Enable VRAM optimizations if running on consumer hardware
     if DEVICE == "cuda":
