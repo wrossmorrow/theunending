@@ -262,7 +262,9 @@ def _upload_done(fut) -> None:
 
 def submit_upload(*a, **kwargs) -> None:
     _slots.acquire()
-    upload_pool.submit(save_image_and_upload, *a, **kwargs).add_done_callback(_upload_done)
+    upload_pool.submit(save_image_and_upload, *a, **kwargs).add_done_callback(
+        _upload_done
+    )
 
 
 def handle(
@@ -297,7 +299,6 @@ def handle(
         total = args.max_images - existing
 
         if args.embed and existing > 0:
-
             print(f"Pulling {existing} images locally to consistenly embed.")
 
             downloaded = 0
@@ -307,14 +308,17 @@ def handle(
                     args.s3_bucket,
                     key,
                     args.outdir,
-                ): key for key in keys
+                ): key
+                for key in keys
             }
 
             for future in as_completed(futures.keys()):
                 if (exc := future.exception()) is not None:
                     key = futures[future]
-                    print(f"download failed for {key!r}: {exc.__class__.__name__} {exc}")
-                else: 
+                    print(
+                        f"download failed for {key!r}: {exc.__class__.__name__} {exc}"
+                    )
+                else:
                     downloaded += 1
 
             if downloaded < existing:
