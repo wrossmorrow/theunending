@@ -99,7 +99,7 @@ def _get_from_s3(
         )
 
 
-def handle(args: argparse.Namespace, s3: S3Client) -> int:
+def handle(args: argparse.Namespace, s3: S3Client | None = None) -> int:
 
     if s3 is None:
         handle(args, boto3.client("s3"))
@@ -121,7 +121,7 @@ def handle(args: argparse.Namespace, s3: S3Client) -> int:
         return 1
 
     path_count = len(paths)
-    out = Path(args.out).expanduser()
+    out = Path(args.output).expanduser()
     out.parent.mkdir(parents=True, exist_ok=True)
 
     model = args.model or DEFAULT_MODEL
@@ -180,7 +180,7 @@ def handle(args: argparse.Namespace, s3: S3Client) -> int:
 
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("paths", nargs="+", help="image files and/or directories")
-    parser.add_argument("-o", "--out", default="embeddings.npy", help="output path")
+    parser.add_argument("--output", default="embeddings.npy", help="output path")
     parser.add_argument(
         "--batch-size", type=int, default=8, help="images per batch [8]"
     )

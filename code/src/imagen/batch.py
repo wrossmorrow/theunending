@@ -473,7 +473,7 @@ def handle(
         del pipe
         embed_parser = embed_command(argparse.ArgumentParser())
         embed_argv = [
-            args.outdir,
+            args.outdir,  # NOTE: input here (paths[+]), not output
             "--device",
             DEVICE,
             "--s3-bucket",

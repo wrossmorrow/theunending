@@ -1,5 +1,6 @@
 import argparse
 import json
+import pathlib
 
 import numpy as np
 
@@ -8,10 +9,13 @@ def _clean_path(p: str) -> str:
     return p.split("/")[-1].split(".")[0]
 
 
-def handle(input: str, output: str) -> None:
+def handle(args: argparse.Namespace) -> None:
 
-    E = np.load(input)
-    with open(f"{input}.json", "r") as f:
+    out = pathlib.Path(args.output).resolve()
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    E = np.load(args.input)
+    with open(f"{args.input}.json", "r") as f:
         meta = json.load(f)
         paths = meta["paths"]
 
@@ -25,7 +29,7 @@ def handle(input: str, output: str) -> None:
     for i, p in enumerate(paths):
         indices = idx[i]
         path = _clean_path(p)
-        with open(f"{output}/{path}.json", "w") as f:
+        with open(f"{out}/{path}.json", "w") as f:
             f.write(
                 json.dumps({"similar": [_clean_path(paths[int(j)]) for j in indices]})
             )
