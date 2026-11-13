@@ -4,6 +4,10 @@ import argparse
 from json import dumps
 from pathlib import Path
 from random import choice
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
 
 import boto3
 from botocore.config import Config
@@ -13,11 +17,74 @@ from pydantic import ValidationError
 
 from ..progress import AdminAPI, Status
 from .commands import run_og_tiles, run_posters, run_similar, run_web_posters
-from .github import GithubPublisher, draft_files
+from .github import github_publish
 from .manifest import DraftManifest, SetSpec
 from .post import post_draft
 from .settings import PublishSettings
 from .utils import do_uploads, get_source_content, list_image_ids
+
+
+def _just_publish_pr(
+    s3: S3Client,
+    settings: PublishSettings,
+    admin: AdminAPI,
+) -> int:
+
+    # get the spec draft manifest instead of making it here
+    draft_manifest: DraftManifest
+    thumb_id: str
+    s3.download_file(
+        Bucket=settings.SITE_BUCKET,
+        Key=f"drafts/{settings.POST_NAME}/spec.json",
+        Filename="spec.json",
+    )
+    with open("spec.json", "r") as f:
+        draft_manifest = DraftManifest.model_validate_json(f.read())
+        thumb_id = draft_manifest.set_spec.thumb
+
+    # get
+    #
+    #   * s3://{settings.SITE_BUCKET}/{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg
+    #       -> og/{settings.SET_NAME}.jpg
+    #   * s3://{settings.SITE_BUCKET}/{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp
+    #       -> {draft_manifest.set_spec.thumb}.webp
+    #
+    # locally
+    og_image_path = f"{settings.SET_NAME}.jpg"
+    it_image_path = f"{thumb_id}.webp"
+    s3.download_file(
+        Bucket=settings.SITE_BUCKET,
+        Key=f"{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg",
+        Filename=og_image_path,
+    )
+    s3.download_file(
+        Bucket=settings.SITE_BUCKET,
+        Key=f"{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp",
+        Filename=it_image_path,
+    )
+
+    try:
+        draft_pr_url = github_publish(
+            settings=settings,
+            manifest=draft_manifest,
+            og_image_path=og_image_path,
+            it_image_path=it_image_path,
+        )
+        admin.update_progress(
+            Status.COMPLETED,
+            "created draft pull request",
+            details={"draft_pr_url": draft_pr_url},
+        )
+        return 0
+    except Exception as e:  # noqa: BLE001
+        admin.update_progress(
+            Status.FAILED,
+            "failed to create draft pull request",
+            details={"error": str(e), "error_class": e.__class__.__name__},
+        )
+        print(f"Failed to create draft PR: {e.__class__.__name__} {e}")
+
+    return 1
 
 
 def handle(args: argparse.Namespace) -> None:
@@ -43,6 +110,11 @@ def handle(args: argparse.Namespace) -> None:
         "publish job launched",
     )
 
+    # special handling if we just need to make the PR
+
+    if args.github_pr_only:
+        raise SystemExit(_just_publish_pr(s3, settings, admin))
+
     # Setup directories, copy down source images, and list manifest (could check size too)
 
     for dir in (
@@ -54,6 +126,8 @@ def handle(args: argparse.Namespace) -> None:
         Path(f"./{dir}").mkdir(parents=True, exist_ok=True)
 
     print(f"Directories: {[d for d in Path('.').iterdir()]}")
+
+    # process starts with getting all the source content
 
     try:
         get_source_content(
@@ -335,23 +409,7 @@ def handle(args: argparse.Namespace) -> None:
         raise
 
     try:
-        github_publisher = GithubPublisher(
-            app_id=settings.GITHUB_APP_ID,
-            client_id=settings.GITHUB_APP_CLIENT_ID,
-            installation_id=settings.GITHUB_APP_INSTALLATION_ID,
-            private_key=settings.GITHUB_APP_PRIVATE_KEY,
-            owner=settings.GITHUB_REPO_OWNER,
-            repo=settings.GITHUB_REPO_NAME,
-        )
-        draft_pr_url = github_publisher.create_draft_pr(
-            files=draft_files(settings, draft_manifest),
-            title=f"Publish draft: {settings.POST_NAME}",
-            body=(
-                f"Publish draft for set {settings.SET_NAME} (post {settings.POST_NAME}). "
-                f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json"
-            ),
-            branch=f"draft/{settings.POST_NAME}",
-        )
+        draft_pr_url = github_publish(settings=settings, manifest=draft_manifest)
         admin.update_progress(
             Status.IN_PROGRESS,
             "created draft pull request",
@@ -378,6 +436,7 @@ def handle(args: argparse.Namespace) -> None:
 def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--extra-details", default=None)
+    parser.add_argument("--github-pr-only", action="store_true", default=False)
     parser.set_defaults(func=handle)
     return parser
 
