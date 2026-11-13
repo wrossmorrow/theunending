@@ -143,12 +143,6 @@ class PEEncoder:
             self._dim = self.embed_pil([Image.new("RGB", (64, 64))]).shape[1]
         return self._dim
 
-    def safe_convert(self, img: Image.Image):
-        try:
-            return img.convert("RGB")
-        except Exception as e:
-            return None
-
     def embed_pil(
         self, images: Sequence[Image.Image], normalize: bool = True
     ) -> np.ndarray:
