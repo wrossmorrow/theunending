@@ -35,7 +35,7 @@ def _just_publish_pr(
     thumb_id: str
     s3.download_file(
         Bucket=settings.SITE_BUCKET,
-        Key=f"drafts/{settings.SET_NAME}/spec.json",
+        Key=f"drafts/{settings.POST_NAME}/spec.json",
         Filename="spec.json",
     )
     with open("spec.json", "r") as f:
