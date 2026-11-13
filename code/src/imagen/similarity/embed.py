@@ -105,8 +105,6 @@ def handle(args: argparse.Namespace, s3: S3Client | None = None) -> int:
         handle(args, boto3.client("s3"))
         return
 
-    print(args)
-
     # get data from S3 if we've been asked to, store in _first_ path arg
     if args.source_from_s3:
         _get_from_s3(
