@@ -14,6 +14,62 @@ from .settings import PublishSettings
 GITHUB_API_BASE_URL = "https://api.github.com"
 
 
+def _draft_files(
+    settings: PublishSettings,
+    manifest: DraftManifest,
+    og_image_path: str | None = None,
+    it_image_path: str | None = None,
+) -> dict[str, bytes]:
+    """Map draft manifest contents to files to add to the draft branch."""
+
+    files: dict[str, bytes] = {}
+
+    # default image paths
+
+    if og_image_path is None:
+        og_image_path = f"og/{settings.SET_NAME}.jpg"
+
+    if it_image_path is None:
+        it_image_path = f"{manifest.set_spec.thumb}.webp"
+
+    # prepared bytes
+
+    post_draft = manifest.post_draft
+    files[f"site/_posts/{settings.POST_NAME}.md"] = post_draft.encode("utf-8")
+
+    image_manifest = manifest.image_manifest
+    files[f"site/assets/streams/{settings.SET_NAME}.json"] = dumps(
+        image_manifest
+    ).encode("utf-8")
+
+    set_spec = manifest.set_spec
+    files[f"site/_data/set_streams/{settings.POST_NAME}.json"] = (
+        set_spec.model_dump_json().encode("utf-8")
+    )
+
+    posters_spec = manifest.posters_spec
+    files[f"site/_data/set_posters/{settings.POST_NAME}.json"] = dumps(
+        posters_spec
+    ).encode("utf-8")
+
+    # above here is prepared content derived from the settings
+    # the two below here are instead files, expected to be at
+    #
+    #   * og/{settings.SET_NAME}.jpg
+    #   * {thumb_id}.webp
+    #
+    # relative to the running directory.
+
+    og_tile = Path(og_image_path).read_bytes()
+    files[f"site/assets/og/{settings.SET_NAME}.jpg"] = og_tile
+
+    thumb_id = manifest.set_spec.thumb
+    index_thumb = Path(it_image_path).read_bytes()
+    files[f"site/assets/img/index-thumbs/{thumb_id}.webp"] = index_thumb
+
+    return files
+
+
 class GithubPublisher:
     """Publishes draft content to a GitHub repository via a GitHub App installation."""
 
@@ -140,34 +196,31 @@ class GithubPublisher:
         return self.open_pr(branch, title, body, token, base)
 
 
-def draft_files(settings: PublishSettings, manifest: DraftManifest) -> dict[str, bytes]:
-    """Map draft manifest contents to files to add to the draft branch."""
-
-    files: dict[str, bytes] = {}
-
-    post_draft = manifest.post_draft
-    files[f"site/_posts/{settings.POST_NAME}.md"] = post_draft.encode("utf-8")
-
-    image_manifest = manifest.image_manifest
-    files[f"site/assets/streams/{settings.SET_NAME}.json"] = dumps(
-        image_manifest
-    ).encode("utf-8")
-
-    set_spec = manifest.set_spec
-    files[f"site/_data/set_streams/{settings.POST_NAME}.json"] = (
-        set_spec.model_dump_json().encode("utf-8")
+def github_publish(
+    settings: PublishSettings,
+    manifest: DraftManifest,
+    og_image_path: str | None = None,
+    it_image_path: str | None = None,
+) -> str:
+    files = _draft_files(
+        settings=settings,
+        manifest=manifest,
+        og_image_path=og_image_path,
+        it_image_path=it_image_path,
     )
-
-    posters_spec = manifest.posters_spec
-    files[f"site/_data/set_posters/{settings.POST_NAME}.json"] = dumps(
-        posters_spec
-    ).encode("utf-8")
-
-    og_tile = Path(f"og/{settings.SET_NAME}.jpg").read_bytes()
-    files[f"site/assets/og/{settings.SET_NAME}.jpg"] = og_tile
-
-    thumb_id = manifest.set_spec.thumb
-    index_thumb = Path(f"{thumb_id}.webp").read_bytes()
-    files[f"site/assets/img/index-thumbs/{thumb_id}.webp"] = index_thumb
-
-    return files
+    return GithubPublisher(
+        app_id=settings.GITHUB_APP_ID,
+        client_id=settings.GITHUB_APP_CLIENT_ID,
+        installation_id=settings.GITHUB_APP_INSTALLATION_ID,
+        private_key=settings.GITHUB_APP_PRIVATE_KEY,
+        owner=settings.GITHUB_REPO_OWNER,
+        repo=settings.GITHUB_REPO_NAME,
+    ).create_draft_pr(
+        files=files,
+        title=f"Publish draft: {settings.POST_NAME}",
+        body=(
+            f"Publish draft for set {settings.SET_NAME} (post {settings.POST_NAME}). "
+            f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json"
+        ),
+        branch=f"draft/{settings.POST_NAME}",
+    )
