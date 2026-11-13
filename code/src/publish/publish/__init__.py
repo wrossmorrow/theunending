@@ -44,9 +44,9 @@ def _just_publish_pr(
 
     # get
     #
-    #   * s3://{settings.SITE_BUCKET}/assets/og/{settings.SET_NAME}.jpg
+    #   * s3://{settings.SITE_BUCKET}/{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg
     #       -> og/{settings.SET_NAME}.jpg
-    #   * s3://{settings.SITE_BUCKET}/assets/img/index-thumbs/{draft_manifest.set_spec.thumb}.webp
+    #   * s3://{settings.SITE_BUCKET}/{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp
     #       -> {draft_manifest.set_spec.thumb}.webp
     #
     # locally
@@ -54,12 +54,12 @@ def _just_publish_pr(
     it_image_path = f"{thumb_id}.webp"
     s3.download_file(
         Bucket=settings.SITE_BUCKET,
-        Key=f"assets/og/{settings.SET_NAME}.jpg",
+        Key=f"{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg",
         Filename=og_image_path,
     )
     s3.download_file(
         Bucket=settings.SITE_BUCKET,
-        Key=f"assets/img/index-thumbs/{draft_manifest.set_spec.thumb}.webp",
+        Key=f"{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp",
         Filename=it_image_path,
     )
 
