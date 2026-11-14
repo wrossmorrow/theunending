@@ -12,7 +12,3 @@ permalink: /unending/
 ---
 
 {% include index-gallery.html posts=site.categories.unending %}
-
----
-
-{% include prompt-idea.html %}
