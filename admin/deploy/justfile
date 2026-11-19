@@ -36,6 +36,7 @@ upload:
     aws s3 cp backup.sh s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp .env s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp compose.yaml s3://theunending-ai-raw-content-use1/deploy/
+    aws s3 cp make-oauth-secret.sh s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp envoy.yaml s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp theunending-admin.service s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp install.sh s3://theunending-ai-raw-content-use1/deploy/
