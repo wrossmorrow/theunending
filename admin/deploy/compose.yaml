@@ -3,7 +3,7 @@ services:
   # envoy, configured as with envoy.yaml to use extprocs
   envoy:
     image: "envoyproxy/envoy:${ENVOY_VERSION:-v1.35-latest}"
-    command: envoy -c /etc/envoy/envoy.yaml --log-level ${ENVOY_LOG_LEVEL:-info}
+    command: envoy -c /etc/envoy/envoy.yaml --log-level ${ENVOY_LOG_LEVEL:-info} --service-node envoy-admin-1 --service-cluster theunending-admin
     ports:
       # listener
       - "8080:8080"
@@ -11,6 +11,7 @@ services:
       - "9901:9901"
     volumes:
       - ${HOME}/deploy/envoy.yaml:/etc/envoy/envoy.yaml
+      - /etc/envoy/secrets:/etc/envoy/secrets
     restart: unless-stopped
     depends_on:
       auth:
