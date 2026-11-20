@@ -17,3 +17,7 @@ Created with [black-forest-labs/FLUX.2-klein-4B](https://huggingface.co/black-fo
 defined by embeddings from [perception encoder](https://huggingface.co/facebook/PE-Core-L14-336). 
 All computed on an A100 instance in modal.
 </small>
+
+<small>
+Composed in reflection on my own experience, perhaps shared with many others, that landed luckily on the mundane end of the Covid-19 pandemic rather than the tragic end. If yours wasn't so, I'm sorry for it and you deserved better.
+</small>
