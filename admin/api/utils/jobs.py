@@ -192,7 +192,9 @@ class ExternalJobClient:
                 "job submissions will be sent without authorization"
             )
             return {}
-        token = machine_jwt(settings.google_service_account_key_json, settings.admin_api_audience)
+        token = machine_jwt(
+            settings.google_service_account_key_json, settings.admin_api_audience
+        )
         return {"Authorization": f"Bearer {token}"}
 
     async def submit_job(self, job_request: JobRequest) -> JobAPIResponse:
