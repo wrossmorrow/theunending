@@ -1,6 +1,6 @@
 services:
 
-  # envoy, configured as with envoy.yaml to use extprocs
+  # envoy, configured as with envoy.yaml
   envoy:
     image: "envoyproxy/envoy:${ENVOY_VERSION:-v1.35-latest}"
     command: envoy -c /etc/envoy/envoy.yaml --log-level ${ENVOY_LOG_LEVEL:-info} --service-node envoy-admin-1 --service-cluster theunending-admin
@@ -13,28 +13,6 @@ services:
       - ${HOME}/deploy/envoy.yaml:/etc/envoy/envoy.yaml
       - /etc/envoy/secrets:/etc/envoy/secrets
     restart: unless-stopped
-    depends_on:
-      auth:
-        condition: service_healthy
-
-  # extproc for auth, checks against static tokens
-  auth:
-    image: "${EXTPROC_IMAGE_REGISTRY}/${EXTPROC_IMAGE_NAME}:${EXTPROC_IMAGE_TAG:-latest}"
-    command: ["--update-duration-header"]
-    environment:
-      ADMIN_AUTH_TOKEN: ${ADMIN_AUTH_TOKEN}
-    ports:
-      # metrics (gRPC kept internal)
-      - '127.0.0.1:9090:9090'
-    volumes:
-      - /opt/theunending/authorization:/opt/theunending/authorization
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "/grpc-health-probe", "-addr=localhost:50051"]
-      interval: 2s
-      timeout: 2s
-      retries: 15
-      start_period: 3s
 
   # api to run; NOTE: listener not exposed on host, foces through envoy
   api:
@@ -43,7 +21,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       ADMIN_BASE_URL: ${ADMIN_BASE_URL}
       JOB_BASE_URL: ${JOB_BASE_URL}
-      JOB_BEARER_TOKEN: ${JOB_BEARER_TOKEN}
+      GOOGLE_SERVICE_ACCOUNT_KEY_JSON: ${GOOGLE_SERVICE_ACCOUNT_KEY_JSON}
       S3_BUCKET_NAME: ${S3_BUCKET_NAME}
       PUBLISH_PRIVATE_SUBNET_IDS: ${PUBLISH_PRIVATE_SUBNET_IDS}
       PUBLISH_SECURITY_GROUP_ID: ${PUBLISH_SECURITY_GROUP_ID}

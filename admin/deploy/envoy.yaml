@@ -82,6 +82,12 @@ static_resources:
                           - email
                           - profile
                         forward_bearer_token: true
+                        # Bypass OAuth entirely when the request carries an Authorization
+                        # header: external/machine callers authenticate via the static
+                        # machine JWKS instead of the Google IdToken cookie flow.
+                        pass_through_matcher:
+                          - name: authorization
+                            present_match: true
                         # Optional: bypass OAuth on health check paths, if not using admin ready
                   # JWT Authn Filter: validates the IdToken cookie issued by OAuth2
                   - name: envoy.filters.http.jwt_authn
@@ -102,13 +108,26 @@ static_resources:
                               timeout: 5s
                             cache_duration:
                               seconds: 300
+                        machine_jwt:
+                          # External machine callers (Modal, Fargate publish jobs,
+                          # admin -> job-system calls) sign RS256 JWTs with the admin
+                          # service account. Verified against the static public JWKS
+                          # (see admin/deploy/make-machine-secret.sh).
+                          audiences:
+                            - "https://admin.theunending.ai"
+                          from_headers:
+                            - Authorization
+                          payload_in_metadata: verified_machine_jwt
+                          static_jwks:
+                            inline_string: |
+                              __MACHINE_JWKS__
                       rules:
                         - match:
                             prefix: /healthz
                         - match:
                             prefix: /
                           requires:
-                            provider_name: google_oidc
+                            any: ["google_oidc", "machine_jwt"]
                   # RBAC Filter: lock access to specific admin email(s)
                   - name: envoy.filters.http.rbac
                     typed_config:
@@ -128,6 +147,18 @@ static_resources:
                                   value:
                                     string_match:
                                       exact: "admin@theunending.ai"
+                          allow_machine:
+                            permissions:
+                              - any: true
+                            principals:
+                              - metadata:
+                                  filter: envoy.filters.http.jwt_authn
+                                  path:
+                                    - key: verified_machine_jwt
+                                    - key: sub
+                                  value:
+                                    string_match:
+                                      exact: "__MACHINE_SA_EMAIL__"
                   - name: envoy.filters.http.router
                     typed_config:
                       '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router

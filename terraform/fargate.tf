@@ -65,8 +65,8 @@ resource "aws_ecs_task_definition" "publish" {
 
       secrets = [
         {
-          name = "ADMIN_API_TOKEN", 
-          valueFrom = "${data.aws_secretsmanager_secret.admin_api_auth.arn}:ADMIN_API_TOKEN::",
+          name = "GOOGLE_SERVICE_ACCOUNT_KEY_JSON",
+          valueFrom = "${data.aws_secretsmanager_secret.admin_api_auth.arn}:GOOGLE_SERVICE_ACCOUNT_KEY_JSON::",
         },
         {
           name = "GITHUB_APP_ID",

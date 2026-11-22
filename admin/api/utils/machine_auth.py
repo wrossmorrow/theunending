@@ -26,7 +26,7 @@ def _load_key(key_json: str | dict[str, Any]) -> tuple[bytes, str]:
     else:
         key = key_json
     if not isinstance(key, dict):
-        raise ValueError("service account key must be a JSON object")
+        raise TypeError("service account key must be a JSON object")
 
     pem = key.get("private_key")
     email = key.get("client_email")

@@ -34,14 +34,45 @@ built.
   onto a local async queue; a worker submits the job via
   `POST {job_base_url}/evaluate` or `POST {job_base_url}/batch` (based on the run type)
   and stores the returned `external_run_id` on the run (run status: `SUBMITTED`).
-  Job submission calls carry a bearer token (`JOB_BEARER_TOKEN`) and a payload with
-  `s3_bucket`, `s3_prefix`, `prompt`, `status_update_url`, and `status_update_admin_run_id`.
+  Job submission calls carry a machine JWT (minted per request from
+  `GOOGLE_SERVICE_ACCOUNT_KEY_JSON`, audience `https://admin.theunending.ai`) and a payload
+  with `prompt`, `s3_bucket`, `s3_prefix`, `status_update_url`, and `status_update_admin_run_id`.
+  When the key is absent, the request is sent without auth (local mock deployments only).
+- Inbound job status updates carry the same machine JWT in the `Authorization` header;
+  the gateway (Envoy) verifies them against the static machine JWKS, and the Modal public
+  endpoint verifies them the same way (`GOOGLE_MACHINE_JWKS` + `GOOGLE_SERVICE_ACCOUNT_EMAIL`).
 - Locally, `just up` (docker compose) brings up the mock external job system
   (`mock-jobs`, base URL `http://mock-jobs:8080`) alongside the api and database; the
   api is configured with `JOB_BASE_URL=http://mock-jobs:8080`,
-  `ADMIN_BASE_URL=http://api:8000`, and `JOB_BEARER_TOKEN`.
+  `ADMIN_BASE_URL=http://api:8000`, and (optionally) `GOOGLE_SERVICE_ACCOUNT_KEY_JSON`.
 - For running the server without docker, use `just mock-jobs` and point the api at it via
   the `JOB_BASE_URL` env var (default `http://localhost:8080`).
+
+## Deployment (gateway / Envoy)
+
+The admin stack is fronted by Envoy (see `deploy/envoy.yaml`). Two auth paths are
+supported at the gateway:
+
+- **Webpage (cookie, Google OIDC)** — the OAuth2 filter exchanges Google sign-in for a
+  signed `IdToken` cookie; `jwt_authn` verifies it and RBAC limits access to the admin
+  email. Any request carrying an `Authorization` header bypasses the OAuth2 filter
+  (`pass_through_matcher`).
+- **Machine (static JWKS)** — requests carrying an `Authorization: Bearer` machine JWT
+  are verified against the static public JWKS in the same filter (`machine_jwt` provider,
+  audience `https://admin.theunending.ai`) and authorized by RBAC against the service
+  account email. The OAuth2 filter is bypassed for these requests.
+
+`admin/deploy/envoy.yaml` ships with placeholders (`__MACHINE_JWKS__`,
+`__MACHINE_SA_EMAIL__`). To render it on the host before starting the stack:
+
+```sh
+set -a && source .env && set +a
+./make-machine-secret.sh   # needs GOOGLE_SERVICE_ACCOUNT_KEY_JSON in .env
+```
+
+This is re-runnable only against a pristine copy (restored from git); the script fails
+loudly if placeholders are already substituted. The same script also anchors the RBAC
+policy for the machine path.
 
 ## API
 

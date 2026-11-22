@@ -275,7 +275,7 @@ data "aws_iam_policy_document" "execution_secret" {
 }
 
 resource "aws_iam_role_policy" "execution_secret" {
-  name   = "read-admin-api-token"
+  name   = "read-admin-api-auth"
   role   = aws_iam_role.execution.id
   policy = data.aws_iam_policy_document.execution_secret.json
 }
