@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 from typing import Literal
 
@@ -8,12 +9,27 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+import jwt
+from jwt.algorithms import RSAAlgorithm
+
 import modal
 
 DEFAULT_MODEL = "black-forest-labs/FLUX.2-klein-4B"
 DEFAULT_S3_BUCKET_NAME = "theunending-ai-raw-content-use1"
-AUTH_TOKEN_HEADER_NAME = "MODAL_ENDPOINT_AUTH_TOKEN"
+DEFAULT_ADMIN_API_AUDIENCE = "https://admin.theunending.ai"
 MODAL_APP_NAME = "theunending"
+
+# Machine auth (see code/src/machine_auth.py): the endpoint accepts a fresh
+# RS256 JWT minted by the admin service account and verified against a static
+# public JWKS. The public JWKS and expected issuer come from the modal secret
+# "google-machine".
+GOOGLE_JWKS_ENV = "GOOGLE_MACHINE_JWKS"
+EXPECTED_ISSUER_ENV = "GOOGLE_SERVICE_ACCOUNT_EMAIL"
+AUDIENCE_ENV = "ADMIN_API_AUDIENCE"
+
+
+def _expected_audience() -> str:
+    return (os.environ.get(AUDIENCE_ENV) or "").strip() or DEFAULT_ADMIN_API_AUDIENCE
 
 
 def _compute_model_prompt_hash(model: str, prompt: str) -> str:
@@ -29,12 +45,10 @@ class JobParameters(BaseModel):
     prompt: str = Field(min_length=1, max_length=1024)
     status_update_url: str | None = None
     status_update_admin_run_id: str | None = None
-    status_update_auth_secret_name: str = "ADMIN_API_TOKEN"
-    status_update_auth_secret_type: str = "Bearer"
     ignore_reject: bool = False
 
     def hash(self) -> str:
-        return _compute_model_prompt_hash(self.model, self.prompt)
+        return _compute_model_prompt_hash(self.model_id, self.prompt)
 
 
 class CancelParameters(BaseModel):
@@ -47,11 +61,83 @@ api = FastAPI()
 auth_scheme = HTTPBearer()
 
 
-def _check_auth(request: Request, token: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> bool:
-    if token.credentials != os.environ[AUTH_TOKEN_HEADER_NAME]:
+def _expected_jwk(token: str) -> dict:
+    """Pick the JWKS key for the given token from the configured JWKS."""
+    raw = os.environ.get(GOOGLE_JWKS_ENV)
+    if not raw or not raw.strip():
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect bearer token",
+            detail="machine JWT JWKS is not configured",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    try:
+        jwks = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="machine JWT JWKS is not valid JSON",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+    keys = jwks.get("keys")
+    if not isinstance(keys, list) or not keys:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="machine JWT JWKS has no keys",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        kid = jwt.get_unverified_header(token).get("kid")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid machine token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+    if kid:
+        for jwk in keys:
+            if jwk.get("kid") == kid:
+                return jwk
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="unknown JWT key id",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return keys[0]
+
+
+def _check_auth(request: Request, token: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> bool:
+    expected_iss = os.environ.get(EXPECTED_ISSUER_ENV)
+    if not expected_iss or not expected_iss.strip():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="machine JWT issuer is not configured",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    jwk = _expected_jwk(token.credentials)
+    try:
+        public_key = RSAAlgorithm.from_jwk(jwk)
+        payload = jwt.decode(
+            token.credentials,
+            public_key,
+            algorithms=["RS256"],
+            audience=_expected_audience(),
+            issuer=expected_iss,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid machine token: {exc}",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+    sub = payload.get("sub")
+    if sub != expected_iss:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid machine token subject",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return True
@@ -149,14 +235,14 @@ def _cancel(payload: CancelParameters, request: Request, authed: bool = Depends(
         )
 
 
-image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]")
+image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]", "pyjwt", "cryptography")
 
 app = modal.App("theunending-api")
 
 
 @app.function(
     image=image,
-    secrets=[modal.Secret.from_name("theunending-auth-token")]
+    secrets=[modal.Secret.from_name("google-machine")]
 )
 @modal.asgi_app()
 def entrypoint():
