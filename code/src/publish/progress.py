@@ -1,7 +1,6 @@
-import base64
+import os
 from collections.abc import Collection
 from enum import StrEnum
-from json import dumps, loads
 from typing import Any
 
 import httpx
@@ -12,6 +11,8 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
+
+from machine_auth import machine_jwt
 
 DEFAULT_RETRY_EXCEPTIONS: tuple[type[Exception], ...] = (
     httpx.TimeoutException,
@@ -86,12 +87,21 @@ def _request_with_retry(
     return response
 
 
+DEFAULT_ADMIN_API_AUDIENCE = "https://admin.theunending.ai"
+
+
+def _admin_api_audience() -> str:
+    return os.environ.get("ADMIN_API_AUDIENCE") or DEFAULT_ADMIN_API_AUDIENCE
+
+
 def _update_progress(
-    client: httpx.Client,
+    client: httpx.Client | None,
     url: str,
     status: Status,
     message: str,
     details: dict | None = None,
+    *,
+    headers: dict | None = None,
 ) -> None:
     _ = _request_with_retry(
         method="PUT",
@@ -102,38 +112,37 @@ def _update_progress(
             "message": message,
             "details": details,
         },
+        headers=headers,
     )
-
-
-def _create_basic_auth_header(credentials: str) -> str:
-    return base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
 
 
 class AdminAPI:
     def __init__(
         self,
         url: str | None,
-        auth_secret: str | None,
-        auth_secret_type: str | None,
-        admin_run_id: str | None,
+        admin_run_id: str | None = None,
     ) -> None:
         self._url = url
-        if url is None:
+        self._admin_run_id = admin_run_id
+        if self._url is None:
             return
+        self._http = httpx.Client()
 
+    def _headers(self) -> dict:
+        key = os.environ.get("GOOGLE_SERVICE_ACCOUNT_KEY_JSON")
+        if not key:
+            raise RuntimeError(
+                "GOOGLE_SERVICE_ACCOUNT_KEY_JSON is not set; cannot mint a machine token"
+            )
+        token = machine_jwt(key, _admin_api_audience())
         headers = {
             "content-type": "application/json",
             "accept": "application/json",
+            "authorization": f"Bearer {token}",
         }
-        if auth_secret is not None:
-            headers["authorization"] = f"{auth_secret_type or 'Bearer'} {auth_secret}"
-        if admin_run_id is not None:
-            headers["x-admin-run-id"] = admin_run_id
-
-        # make sure plain strings no complex types
-        headers = loads(dumps(headers, default=str))
-
-        self._http = httpx.Client(headers=headers)
+        if self._admin_run_id is not None:
+            headers["x-admin-run-id"] = str(self._admin_run_id)
+        return headers
 
     def update_progress(
         self,
@@ -154,6 +163,7 @@ class AdminAPI:
                 status=status,
                 message=message,
                 details=details,
+                headers=self._headers(),
             )
         except httpx.HTTPStatusError as e:
             print(

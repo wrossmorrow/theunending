@@ -1,9 +1,10 @@
 """Machine-to-machine JWT credentials via a Google service account.
 
-The gateway (issued once for machine-to-machine calls) verifies these tokens with
-a static public JWKS served from ``/etc/envoy/secrets/machine-jwks.json``. The
-private key never leaves the machines that mint tokens; the public JWKS is safe
-to distribute (it identifies *which* key a token is signed with, not the secret).
+Callers mint short-lived RS256 JWTs with a service account; the gateway
+(and the Modal public endpoint) verify them against a static public JWKS. The
+private key never leaves the machines that mint tokens; the public JWKS is
+safe to distribute (it identifies *which* key a token is signed with, not the
+secret). Minting happens per request, not once.
 """
 
 from __future__ import annotations
@@ -33,7 +34,7 @@ def _load_key(key_json: str | dict[str, Any]) -> tuple[bytes, str]:
     else:
         key = key_json
     if not isinstance(key, dict):
-        raise ValueError("service account key must be a JSON object")
+        raise TypeError("service account key must be a JSON object")
 
     pem = key.get("private_key")
     email = key.get("client_email")

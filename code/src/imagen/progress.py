@@ -4,8 +4,6 @@ from enum import StrEnum
 from typing import Any
 
 import httpx
-
-from src.machine_auth import machine_jwt
 from tenacity import (
     Retrying,
     retry_if_exception_type,
@@ -13,6 +11,8 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
+
+from machine_auth import machine_jwt
 
 DEFAULT_RETRY_EXCEPTIONS: tuple[type[Exception], ...] = (
     httpx.TimeoutException,
@@ -113,7 +113,9 @@ DEFAULT_ADMIN_API_AUDIENCE = "https://admin.theunending.ai"
 
 
 def _admin_api_audience() -> str:
-    return (os.environ.get("ADMIN_API_AUDIENCE") or "").strip() or DEFAULT_ADMIN_API_AUDIENCE
+    return (
+        os.environ.get("ADMIN_API_AUDIENCE") or ""
+    ).strip() or DEFAULT_ADMIN_API_AUDIENCE
 
 
 def _machine_token() -> str:

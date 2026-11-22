@@ -9,7 +9,7 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from src.machine_auth import machine_jwks, machine_jwt, service_account_email
+from machine_auth import machine_jwks, machine_jwt, service_account_email
 
 
 def _test_key_json():
@@ -35,7 +35,9 @@ def test_machine_jwt_round_trip():
     key_json = _test_key_json()
     audience = "https://admin.theunending.ai"
 
-    token = machine_jwt(json.dumps(key_json), audience, lifetime_seconds=60, now=int(time.time()))
+    token = machine_jwt(
+        json.dumps(key_json), audience, lifetime_seconds=60, now=int(time.time())
+    )
     assert isinstance(token, str) and token
 
     jwks = machine_jwks(key_json)
@@ -60,26 +62,39 @@ def test_machine_jwt_round_trip():
 
 def test_machine_jwks_matches_private_key():
     key_json = _test_key_json()
-    public_from_jwks = _pem_from_jwks(machine_jwks(key_json)["keys"][0])
-
-    # re-derive the correct public key from the private key and compare
     private_key = serialization.load_pem_private_key(
         key_json["private_key"].encode("utf-8"), password=None
     )
-    numbers = private_key.public_key().public_numbers()
-    n = numbers.n.to_bytes((numbers.n.bit_length() + 7) // 8, "big")
-    e = numbers.e.to_bytes((numbers.e.bit_length() + 7) // 8, "big")
-    assert machine_jwks(key_json)["keys"][0]["n"] == base64.urlsafe_b64encode(n).rstrip(b"=").decode()
-    assert machine_jwks(key_json)["keys"][0]["e"] == base64.urlsafe_b64encode(e).rstrip(b"=").decode()
+    expected_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+
+    # the derived JWKS must verify a token signed by this private key
+    jwks = machine_jwks(key_json)
+    assert _pem_from_jwks(jwks["keys"][0]) == expected_pem
+    token = machine_jwt(key_json, "https://admin.theunending.ai")
+    payload = jwt.decode(
+        token,
+        expected_pem,
+        algorithms=["RS256"],
+        audience="https://admin.theunending.ai",
+        issuer=service_account_email(key_json),
+    )
+    assert payload["sub"] == service_account_email(key_json)
 
 
 def test_machine_jwt_rejects_bad_inputs():
     with pytest.raises(ValueError):
         machine_jwt("not json", "https://admin.theunending.ai")
     with pytest.raises(ValueError):
-        machine_jwt(json.dumps({"client_email": "x@test"}), "https://admin.theunending.ai")
+        machine_jwt(
+            json.dumps({"client_email": "x@test"}), "https://admin.theunending.ai"
+        )
     with pytest.raises(ValueError):
         machine_jwt(json.dumps(_test_key_json()), "")
+    with pytest.raises(TypeError):
+        machine_jwt(42, "https://admin.theunending.ai")
 
 
 def _pem_from_jwks(jwk: dict) -> str:

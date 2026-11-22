@@ -26,8 +26,6 @@ def handle(args: argparse.Namespace) -> None:
 
     admin = AdminAPI(
         url=settings.ADMIN_API_URL,
-        auth_secret=settings.ADMIN_API_TOKEN,
-        auth_secret_type="Bearer",
         admin_run_id=settings.RUN_ID,
     )
 

@@ -1,17 +1,17 @@
 #!/bin/bash
 # Trigger a Modal batch job via the public entrypoint.
 # Mints a fresh machine JWT signed as the admin service account (see
-# code/src/machine_auth.py) instead of using a static bearer token.
+# code/src/machine_auth/__init__.py) instead of using a static bearer token.
 set -euo pipefail
 
-: ${PROMPT:?} ${S3_PREFIX:?} ${GOOGLE_SERVICE_ACCOUNT_KEY_JSON:?}
+: "${PROMPT:?}" "${S3_PREFIX:?}" "${GOOGLE_SERVICE_ACCOUNT_KEY_JSON:?}"
 
 MODAL_ENDPOINT=https://morrowwr--theunending-api-entrypoint.us-east.modal.run
 
 cd "$(dirname "$0")/.."  # code/
 TOKEN=$(uv run python -c "
 import os
-from src.machine_auth import machine_jwt
+from machine_auth import machine_jwt
 print(machine_jwt(
     os.environ['GOOGLE_SERVICE_ACCOUNT_KEY_JSON'],
     os.environ.get('ADMIN_API_AUDIENCE') or 'https://admin.theunending.ai',
