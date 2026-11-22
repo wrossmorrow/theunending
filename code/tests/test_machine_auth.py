@@ -40,6 +40,10 @@ def test_machine_jwt_round_trip():
     )
     assert isinstance(token, str) and token
 
+    # the token carries the key id Google publishes for the account
+    header = jwt.get_unverified_header(token)
+    assert header["kid"] == key_json["private_key_id"]
+
     jwks = machine_jwks(key_json)
     email = service_account_email(key_json)
     assert email == "admin-jobs@test-project.iam.gserviceaccount.com"
@@ -82,6 +86,10 @@ def test_machine_jwks_matches_private_key():
         issuer=service_account_email(key_json),
     )
     assert payload["sub"] == service_account_email(key_json)
+
+    # minted with the same key: the derived JWKS matches what Google would publish
+    assert jwt.get_unverified_header(token)["kid"] == key_json["private_key_id"]
+    assert jwks["keys"][0].get("kid") == key_json["private_key_id"]
 
 
 def test_machine_jwt_rejects_bad_inputs():

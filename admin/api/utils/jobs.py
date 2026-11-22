@@ -185,13 +185,16 @@ class ExternalJobClient:
         await self._queue.put(job_request)
 
     def _auth_headers(self) -> dict[str, str]:
-        """Build per-request auth headers (fresh machine token)."""
+        """Build per-request auth headers (fresh machine token).
+
+        The app refuses to start without a key (see api/main.py); a missing key
+        here is a bug, so fail loudly rather than send an unauthenticated request.
+        """
         if not settings.google_service_account_key_json:
-            print(
+            raise RuntimeError(
                 "GOOGLE_SERVICE_ACCOUNT_KEY_JSON is not set; "
-                "job submissions will be sent without authorization"
+                "job submissions must never be sent unauthenticated"
             )
-            return {}
         token = machine_jwt(
             settings.google_service_account_key_json, settings.admin_api_audience
         )

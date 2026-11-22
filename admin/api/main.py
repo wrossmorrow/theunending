@@ -11,6 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.database.db import create_session_factory, selectone
 from api.health import health_router
+from api.machine_auth_config import require_machine_auth
 from api.settings import settings
 from api.utils.jobs import ExternalJobClient
 from api.utils.notifications import SnsNotifier
@@ -20,6 +21,8 @@ from api.v0.router import api_v0_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # Fail startup loudly when the machine-auth key is missing or malformed.
+    require_machine_auth(settings.google_service_account_key_json)
     engine = create_async_engine(settings.database_url)
     app.state.engine = engine
     app.state.session_factory = create_session_factory(engine)

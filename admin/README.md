@@ -37,10 +37,10 @@ built.
   Job submission calls carry a machine JWT (minted per request from
   `GOOGLE_SERVICE_ACCOUNT_KEY_JSON`, audience `https://admin.theunending.ai`) and a payload
   with `prompt`, `s3_bucket`, `s3_prefix`, `status_update_url`, and `status_update_admin_run_id`.
-  When the key is absent, the request is sent without auth (local mock deployments only).
+  If `GOOGLE_SERVICE_ACCOUNT_KEY_JSON` is missing or malformed, the API refuses to start.
 - Inbound job status updates carry the same machine JWT in the `Authorization` header;
-  the gateway (Envoy) verifies them against the static machine JWKS, and the Modal public
-  endpoint verifies them the same way (`GOOGLE_MACHINE_JWKS` + `GOOGLE_SERVICE_ACCOUNT_EMAIL`).
+  the gateway (Envoy) verifies it against Google's per-account JWKS endpoint and the Modal
+  public endpoint verifies it the same way (`GOOGLE_SERVICE_ACCOUNT_EMAIL`).
 - Locally, `just up` (docker compose) brings up the mock external job system
   (`mock-jobs`, base URL `http://mock-jobs:8080`) alongside the api and database; the
   api is configured with `JOB_BASE_URL=http://mock-jobs:8080`,
@@ -57,22 +57,18 @@ supported at the gateway:
   signed `IdToken` cookie; `jwt_authn` verifies it and RBAC limits access to the admin
   email. Any request carrying an `Authorization` header bypasses the OAuth2 filter
   (`pass_through_matcher`).
-- **Machine (static JWKS)** — requests carrying an `Authorization: Bearer` machine JWT
-  are verified against the static public JWKS in the same filter (`machine_jwt` provider,
-  audience `https://admin.theunending.ai`) and authorized by RBAC against the service
-  account email. The OAuth2 filter is bypassed for these requests.
+- **Machine (per-account JWKS)** — requests carrying an `Authorization: Bearer` machine JWT
+  are verified in the same filter (`machine_jwt` provider: issuer = the admin service
+  account, audience `https://admin.theunending.ai`) against the Google per-account JWKS
+  endpoint `https://www.googleapis.com/service_accounts/v1/jwk/<sa-email>` and authorized
+  by RBAC against the service account email. Key rotation happens in GCP — the endpoint
+  serves the current keys, so there is no render step and no redeploy. Tokens minted by
+  the jobs carry `kid: <private_key_id>` so verifiers pick the right key. The OAuth2
+  filter is bypassed for these requests.
 
-`admin/deploy/envoy.yaml` ships with placeholders (`__MACHINE_JWKS__`,
-`__MACHINE_SA_EMAIL__`). To render it on the host before starting the stack:
-
-```sh
-set -a && source .env && set +a
-./make-machine-secret.sh   # needs GOOGLE_SERVICE_ACCOUNT_KEY_JSON in .env
-```
-
-This is re-runnable only against a pristine copy (restored from git); the script fails
-loudly if placeholders are already substituted. The same script also anchors the RBAC
-policy for the machine path.
+`admin/deploy/envoy.yaml` contains `REPLACE_WITH_ADMIN_SERVICE_ACCOUNT_EMAIL` (as the
+machine issuer, the JWKS URL, and the RBAC exact match). Before deploying, replace all
+three occurrences with the admin service account email (a non-secret config value).
 
 ## API
 
