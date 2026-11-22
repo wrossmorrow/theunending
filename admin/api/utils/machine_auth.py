@@ -1,8 +1,9 @@
 """Machine-to-machine JWT credentials for the admin API.
 
-Mirrors ``code/src/machine_auth.py`` (kept self-contained so the admin service
-stays independent of the jobs' package). The gateway verifies these tokens via a
-static public JWKS; the private key never leaves the admin service.
+Mirrors ``code/src/machine_auth/__init__.py`` (kept self-contained so the admin
+service stays independent of the jobs' package). The gateway verifies these
+tokens against Google's per-account JWKS endpoint; the private key never
+leaves the admin service.
 """
 
 from __future__ import annotations
@@ -13,11 +14,11 @@ from typing import Any
 
 import jwt
 
-DEFAULT_LIFETIME_SECONDS = 3600
+DEFAULT_LIFETIME_SECONDS = 300
 
 
-def _load_key(key_json: str | dict[str, Any]) -> tuple[bytes, str]:
-    """Parse a service account key into (private PEM bytes, client email)."""
+def _load_key(key_json: str | dict[str, Any]) -> tuple[bytes, str, str | None]:
+    """Parse a service account key into (private PEM bytes, client email, private key id)."""
     if isinstance(key_json, str):
         try:
             key = json.loads(key_json)
@@ -34,7 +35,12 @@ def _load_key(key_json: str | dict[str, Any]) -> tuple[bytes, str]:
         raise ValueError("service account key is missing 'private_key'")
     if not isinstance(email, str) or not email.strip():
         raise ValueError("service account key is missing 'client_email'")
-    return pem.encode("utf-8"), email
+    kid = key.get("private_key_id")
+    return (
+        pem.encode("utf-8"),
+        email,
+        (kid if isinstance(kid, str) and kid.strip() else None),
+    )
 
 
 def machine_jwt(
@@ -48,7 +54,7 @@ def machine_jwt(
     if not isinstance(audience, str) or not audience.strip():
         raise ValueError("audience is required")
 
-    pem, email = _load_key(key_json)
+    pem, email, kid = _load_key(key_json)
     if now is None:
         now = int(time.time())
 
@@ -59,4 +65,5 @@ def machine_jwt(
         "iat": now,
         "exp": now + lifetime_seconds,
     }
-    return jwt.encode(payload, pem, algorithm="RS256")
+    headers = {"kid": kid} if kid else None
+    return jwt.encode(payload, pem, algorithm="RS256", headers=headers)

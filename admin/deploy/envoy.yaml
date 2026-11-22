@@ -81,14 +81,20 @@ static_resources:
                           - openid
                           - email
                           - profile
-                        forward_bearer_token: true
+                        # The OAuth2 filter does not need to forward the Google
+                        # access token downstream (the API never uses it), and
+                        # forwarding would send a machine-unverifiable bearer
+                        # header on cookie-authenticated requests.
+                        forward_bearer_token: false
+                        # Never redirect API callers to Google sign-in; return 401 instead.
+                        deny_redirect_matcher:
+                          prefix: /api
                         # Bypass OAuth entirely when the request carries an Authorization
-                        # header: external/machine callers authenticate via the static
-                        # machine JWKS instead of the Google IdToken cookie flow.
+                        # header: external/machine callers authenticate via machine JWT
+                        # (static JWKS not required) instead of the IdToken cookie flow.
                         pass_through_matcher:
                           - name: authorization
                             present_match: true
-                        # Optional: bypass OAuth on health check paths, if not using admin ready
                   # JWT Authn Filter: validates the IdToken cookie issued by OAuth2
                   - name: envoy.filters.http.jwt_authn
                     typed_config:
@@ -111,23 +117,27 @@ static_resources:
                         machine_jwt:
                           # External machine callers (Modal, Fargate publish jobs,
                           # admin -> job-system calls) sign RS256 JWTs with the admin
-                          # service account. Verified against the static public JWKS
-                          # (see admin/deploy/make-machine-secret.sh).
+                          # service account. Verified against Google's per-account
+                          # JWKS endpoint, so key rotation needs no redeploy.
+                          issuer: REPLACE_WITH_ADMIN_SERVICE_ACCOUNT_EMAIL
                           audiences:
                             - "https://admin.theunending.ai"
                           from_headers:
                             - Authorization
                           payload_in_metadata: verified_machine_jwt
-                          static_jwks:
-                            inline_string: |
-                              __MACHINE_JWKS__
+                          remote_jwks:
+                            http_uri:
+                              uri: https://www.googleapis.com/service_accounts/v1/jwk/REPLACE_WITH_ADMIN_SERVICE_ACCOUNT_EMAIL
+                              cluster: google_jwks
+                              timeout: 5s
+                            cache_duration:
+                              seconds: 300
                       rules:
                         - match:
-                            prefix: /healthz
-                        - match:
                             prefix: /
-                          requires:
-                            any: ["google_oidc", "machine_jwt"]
+                          requires_any:
+                            - google_oidc
+                            - machine_jwt
                   # RBAC Filter: lock access to specific admin email(s)
                   - name: envoy.filters.http.rbac
                     typed_config:
@@ -158,7 +168,7 @@ static_resources:
                                     - key: sub
                                   value:
                                     string_match:
-                                      exact: "__MACHINE_SA_EMAIL__"
+                                      exact: "REPLACE_WITH_ADMIN_SERVICE_ACCOUNT_EMAIL"
                   - name: envoy.filters.http.router
                     typed_config:
                       '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router

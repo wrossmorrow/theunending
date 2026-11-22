@@ -100,9 +100,14 @@ async function api(method, path, body) {
     try { data = JSON.parse(text); } catch { data = { detail: text.slice(0, 300) }; }
   }
 
-  if (res.status === 401 || res.status === 403) {
+  if (res.status === 401) {
+    // Session expired/invalid: reload so the gateway re-runs the login flow.
+    location.reload();
+    throw new ApiError(res.status, "Unauthorized.");
+  }
+  if (res.status === 403) {
     setConn(false, "unauthorized");
-    throw new ApiError(res.status, res.status === 401 ? "Unauthorized." : "Forbidden.");
+    throw new ApiError(res.status, "Forbidden.");
   }
   if (!res.ok) {
     setConn(true);
