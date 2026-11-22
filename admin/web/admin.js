@@ -45,32 +45,11 @@ function nameProblem(name) {
 }
 
 /* ------------------------------------------------------------------ *
- * Token storage (sessionStorage by default; localStorage if remembered)
+ * Authentication
  * ------------------------------------------------------------------ */
 
-const TOKEN_KEY = "unending-admin-token";
-
-function storageGet(store, key) {
-  try { return window[store].getItem(key); } catch { return null; }
-}
-function storageSet(store, key, value) {
-  try {
-    if (value === null) window[store].removeItem(key);
-    else window[store].setItem(key, value);
-  } catch { /* storage unavailable: token lives for this page load only */ }
-}
-
-let memoryToken = null;
-
-function getToken() {
-  return memoryToken ?? storageGet("sessionStorage", TOKEN_KEY) ?? storageGet("localStorage", TOKEN_KEY);
-}
-
-function setToken(token, remember) {
-  memoryToken = token || null;
-  storageSet("sessionStorage", TOKEN_KEY, token || null);
-  storageSet("localStorage", TOKEN_KEY, remember && token ? token : null);
-}
+// All API calls are same-origin; the gateway exchanges Google OAuth for an
+// IdToken cookie and validates it. No bearer token is sent from this page.
 
 /* ------------------------------------------------------------------ *
  * API client
@@ -100,8 +79,6 @@ function errorMessage(status, body) {
 
 async function api(method, path, body) {
   const headers = { Accept: "application/json" };
-  const token = getToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
   let res;
@@ -124,9 +101,8 @@ async function api(method, path, body) {
   }
 
   if (res.status === 401 || res.status === 403) {
-    setConn(false, res.status === 401 ? "no token" : "token rejected");
-    openTokenDialog();
-    throw new ApiError(res.status, res.status === 401 ? "Unauthorized: set a token." : "Forbidden: token rejected.");
+    setConn(false, "unauthorized");
+    throw new ApiError(res.status, res.status === 401 ? "Unauthorized." : "Forbidden.");
   }
   if (!res.ok) {
     setConn(true);
@@ -818,7 +794,7 @@ function renderBatch() {
 }
 
 /* Preview images: the API hands out short-lived presigned S3 URLs. <img> can't send
- * the Bearer token, so fetch the URL via the API, then point the <img> at S3.
+ * the cookie, so fetch the URL via the API, then point the <img> at S3.
  * URLs are cached per draft so the 4 s polling doesn't re-sign on every refresh. */
 const previewCache = new Map(); // draft_id -> { url, at } | { failed: true, at }
 
@@ -967,37 +943,6 @@ document.addEventListener("visibilitychange", () => {
 });
 
 /* ------------------------------------------------------------------ *
- * Token dialog
- * ------------------------------------------------------------------ */
-
-function openTokenDialog() {
-  const dlg = $("#token-dialog");
-  if (dlg.open) return;
-  const form = $("#token-form");
-  form.elements.token.value = getToken() ?? "";
-  form.elements.remember.checked = !!storageGet("localStorage", TOKEN_KEY);
-  dlg.returnValue = "";
-  dlg.showModal();
-  form.elements.token.focus();
-}
-
-function wireTokenDialog() {
-  const dlg = $("#token-dialog");
-  $("#token-button").addEventListener("click", openTokenDialog);
-  dlg.addEventListener("close", () => {
-    const form = $("#token-form");
-    if (dlg.returnValue === "save") {
-      setToken(form.elements.token.value.trim(), form.elements.remember.checked);
-      toast("Token saved.");
-      boot();
-    } else if (dlg.returnValue === "clear") {
-      setToken(null, false);
-      toast("Token cleared.");
-    }
-  });
-}
-
-/* ------------------------------------------------------------------ *
  * Routing
  * ------------------------------------------------------------------ */
 
@@ -1049,7 +994,6 @@ function route() {
  * ------------------------------------------------------------------ */
 
 async function boot() {
-  if (!getToken()) { setConn(false, "no token"); route(); return; }
   try {
     await Promise.all([loadSets(), loadModels()]);
   } catch (err) {
@@ -1059,8 +1003,6 @@ async function boot() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  wireTokenDialog();
-
   $("#status-filter").addEventListener("change", (e) => {
     state.filter = e.target.value;
     loadSets().catch(reportError);
@@ -1071,6 +1013,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   window.addEventListener("hashchange", route);
 
-  if (!getToken()) openTokenDialog();
   boot();
 });

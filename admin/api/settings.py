@@ -15,7 +15,8 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./theunending_admin.db"
     admin_base_url: str = "http://localhost:8000"
     job_base_url: str = "http://localhost:8080"
-    job_bearer_token: str = "dev-token"
+    google_service_account_key_json: str | None = None
+    admin_api_audience: str = "https://admin.theunending.ai"
     s3_bucket_name: str = "unending-local"
     s3_evaluate_prefix: str = "drafts"
     s3_batch_prefix: str = "runs"

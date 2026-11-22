@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from api.database import models as database
 from api.database.models import DraftStatus, RunStatus, RunType, SetStatus
 from api.settings import settings
+from api.utils.machine_auth import machine_jwt
 from api.utils.notifications import (
     RunNotification,
     SnsNotifier,
@@ -61,13 +62,8 @@ class ExternalJobClient:
         notifier: SnsNotifier | None = None,
     ) -> None:
         """Create a client with the given base URL and timeout."""
-        headers = (
-            {"Authorization": f"Bearer {settings.job_bearer_token}"}
-            if (settings.job_bearer_token)
-            else None
-        )
         self._client = httpx.AsyncClient(
-            base_url=base_url, timeout=submit_timeout_seconds, headers=headers
+            base_url=base_url, timeout=submit_timeout_seconds
         )
         self._queue: asyncio.Queue[JobRequest] = asyncio.Queue()
         self._qtimeout_seconds = queue_timeout_seconds
@@ -188,12 +184,25 @@ class ExternalJobClient:
             raise ValueError("Queue is closed (shutdown), cannot enqueue more requests")
         await self._queue.put(job_request)
 
+    def _auth_headers(self) -> dict[str, str]:
+        """Build per-request auth headers (fresh machine token)."""
+        if not settings.google_service_account_key_json:
+            print(
+                "GOOGLE_SERVICE_ACCOUNT_KEY_JSON is not set; "
+                "job submissions will be sent without authorization"
+            )
+            return {}
+        token = machine_jwt(settings.google_service_account_key_json, settings.admin_api_audience)
+        return {"Authorization": f"Bearer {token}"}
+
     async def submit_job(self, job_request: JobRequest) -> JobAPIResponse:
         """Create an external job of the given type and return the external run id."""
         path = "/evaluate" if job_request.job_type == RunType.EVALUATION else "/batch"
         try:
             response = await self._client.post(
-                path, json=job_request.job_params.model_dump(mode="json")
+                path,
+                json=job_request.job_params.model_dump(mode="json"),
+                headers=self._auth_headers(),
             )
             response.raise_for_status()
             return JobAPIResponse.model_validate(response.json())
@@ -209,7 +218,9 @@ class ExternalJobClient:
         path = "/cancel"
         try:
             response = await self._client.post(
-                path, json={"external_run_id": external_run_id, "job_type": job_type}
+                path,
+                json={"external_run_id": external_run_id, "job_type": job_type},
+                headers=self._auth_headers(),
             )
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
