@@ -3,14 +3,13 @@ import json
 import os
 from typing import Literal
 
-from fastapi import FastAPI, Depends, HTTPException, Request, status
-from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field, ValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
 import jwt
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.algorithms import RSAAlgorithm
+from pydantic import BaseModel, Field
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import modal
 
@@ -19,7 +18,7 @@ DEFAULT_S3_BUCKET_NAME = "theunending-ai-raw-content-use1"
 DEFAULT_ADMIN_API_AUDIENCE = "https://admin.theunending.ai"
 MODAL_APP_NAME = "theunending"
 
-# Machine auth (see code/src/machine_auth.py): the endpoint accepts a fresh
+# Machine auth (see code/src/machine_auth/__init__.py): the endpoint accepts a fresh
 # RS256 JWT minted by the admin service account and verified against a static
 # public JWKS. The public JWKS and expected issuer come from the modal secret
 # "google-machine".
@@ -39,6 +38,7 @@ def _compute_model_prompt_hash(model: str, prompt: str) -> str:
 
 class JobParameters(BaseModel):
     """Parameters for an external job creation request."""
+
     model_id: str = DEFAULT_MODEL
     s3_bucket: str = DEFAULT_S3_BUCKET_NAME
     s3_prefix: str = Field(min_length=1, max_length=1024)
@@ -53,6 +53,7 @@ class JobParameters(BaseModel):
 
 class CancelParameters(BaseModel):
     """Parameters for an external job cancellation request."""
+
     external_run_id: str
     job_type: Literal["EVALUATE", "BATCH", "EMBED"]
 
@@ -107,7 +108,10 @@ def _expected_jwk(token: str) -> dict:
     return keys[0]
 
 
-def _check_auth(request: Request, token: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> bool:
+def _check_auth(
+    request: Request,
+    token: HTTPAuthorizationCredentials = Depends(auth_scheme),  # noqa: B008 - FastAPI dependency injection idiom
+) -> bool:
     expected_iss = os.environ.get(EXPECTED_ISSUER_ENV)
     if not expected_iss or not expected_iss.strip():
         raise HTTPException(
@@ -146,11 +150,13 @@ def _check_auth(request: Request, token: HTTPAuthorizationCredentials = Depends(
 @api.exception_handler(Exception)
 async def _exception_handler(request: Request, exc: Exception) -> JSONResponse:
 
-    print(f"Caught unhandled exception for {request.method} {request.url}: {exc.__class__.__name__} {exc}")
+    print(
+        f"Caught unhandled exception for {request.method} {request.url}: {exc.__class__.__name__} {exc}"
+    )
 
     if isinstance(exc, (HTTPException, StarletteHTTPException)):
         raise exc
-    
+
     return JSONResponse(
         status_code=500,
         content={
@@ -161,9 +167,13 @@ async def _exception_handler(request: Request, exc: Exception) -> JSONResponse:
 
 
 @api.post("/evaluate")
-def _evaluate(payload: JobParameters, request: Request, authed: bool = Depends(_check_auth)):
+def _evaluate(
+    payload: JobParameters, request: Request, authed: bool = Depends(_check_auth)
+):
 
-    print(f"Received {request.method} {request.url} with params: {payload.model_dump_json()}")
+    print(
+        f"Received {request.method} {request.url} with params: {payload.model_dump_json()}"
+    )
 
     target = modal.Function.from_name(MODAL_APP_NAME, "evaluate")
     kwargs = payload.model_dump(mode="json")
@@ -177,14 +187,18 @@ def _evaluate(payload: JobParameters, request: Request, authed: bool = Depends(_
             "modal_app_name": MODAL_APP_NAME,
             "modal_app_function": "evaluate",
             "modal_id": fcall.object_id,
-        }
+        },
     }
 
 
 @api.post("/batch")
-def _batch(payload: JobParameters, request: Request, authed: bool = Depends(_check_auth)):
+def _batch(
+    payload: JobParameters, request: Request, authed: bool = Depends(_check_auth)
+):
 
-    print(f"Received {request.method} {request.url} with params: {payload.model_dump_json()}")
+    print(
+        f"Received {request.method} {request.url} with params: {payload.model_dump_json()}"
+    )
 
     target = modal.Function.from_name(MODAL_APP_NAME, "batch")
     kwargs = payload.model_dump(mode="json")
@@ -201,7 +215,7 @@ def _batch(payload: JobParameters, request: Request, authed: bool = Depends(_che
             "modal_app_name": MODAL_APP_NAME,
             "modal_app_function": "batch",
             "modal_id": fcall.object_id,
-        }
+        },
     }
 
 
@@ -211,9 +225,13 @@ def _embed(authed: bool = Depends(_check_auth)):
 
 
 @api.post("/cancel")
-def _cancel(payload: CancelParameters, request: Request, authed: bool = Depends(_check_auth)):
+def _cancel(
+    payload: CancelParameters, request: Request, authed: bool = Depends(_check_auth)
+):
 
-    print(f"Received {request.method} {request.url} with params: {payload.model_dump_json()}")
+    print(
+        f"Received {request.method} {request.url} with params: {payload.model_dump_json()}"
+    )
 
     external_run_id = payload.external_run_id
 
@@ -227,7 +245,7 @@ def _cancel(payload: CancelParameters, request: Request, authed: bool = Depends(
             "status": "CANCELLED",
             "run_id": external_run_id,
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - report any downstream failure as a 500
         print(f"Failed to cancel {external_run_id}: {e.__class__.__name__} {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -235,15 +253,14 @@ def _cancel(payload: CancelParameters, request: Request, authed: bool = Depends(
         )
 
 
-image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]", "pyjwt", "cryptography")
+image = modal.Image.debian_slim(python_version="3.12").pip_install(
+    "fastapi[standard]", "pyjwt", "cryptography"
+)
 
 app = modal.App("theunending-api")
 
 
-@app.function(
-    image=image,
-    secrets=[modal.Secret.from_name("google-machine")]
-)
+@app.function(image=image, secrets=[modal.Secret.from_name("google-machine")])
 @modal.asgi_app()
 def entrypoint():
     return api
