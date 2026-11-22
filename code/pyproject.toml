@@ -46,6 +46,8 @@ dev = [
 ]
 imagen = [
     "accelerate>=1.15.0",
+    "cryptography>=50.0.2",
+    "pyjwt>=2.15.1",
     "diffusers>=0.42.0",
     "sentencepiece>=0.2.2",
     "torch>=2.14.0",
