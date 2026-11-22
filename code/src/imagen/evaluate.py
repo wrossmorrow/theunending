@@ -120,8 +120,6 @@ def handle(args: argparse.Namespace, s3: S3Client | None = None) -> int:
 
     admin_api = AdminAPI(
         url=args.status_update_url,
-        auth_secret_name=args.status_update_auth_secret_name,
-        auth_secret_type=args.status_update_auth_secret_type,
         admin_run_id=args.status_update_admin_run_id,
     )
 
@@ -210,18 +208,6 @@ def command(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="An explicit URL to issue PUT calls for status updates; ignored if empty",
-    )
-    parser.add_argument(
-        "--status-update-auth-secret-name",
-        type=str,
-        default=None,
-        help="Status update auth secret name; ignored if empty",
-    )
-    parser.add_argument(
-        "--status-update-auth-secret-type",
-        type=str,
-        default=None,
-        help="Status update auth secret type (Bearer, Basic); ignored if empty",
     )
     parser.add_argument(
         "--status-update-admin-run-id",
