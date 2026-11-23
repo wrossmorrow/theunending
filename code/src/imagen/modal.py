@@ -59,11 +59,15 @@ def _sanitize_args(
     )
 
 
-img = modal.Image.from_name(name="theunending").env(
-    {
-        "HF_HUB_OFFLINE": "1",
-        "HF_HOME": "/cache",
-    }
+img = (
+    modal.Image.from_name(name="theunending")
+    .env(
+        {
+            "HF_HUB_OFFLINE": "1",
+            "HF_HOME": "/cache",
+        }
+    )
+    .add_local_python_source("machine_auth")
 )
 app = modal.App("theunending", image=img)
 vol = modal.Volume.from_name("hf-hub-cache")
