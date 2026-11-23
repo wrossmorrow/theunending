@@ -32,10 +32,16 @@ static_resources:
                           route:
                             cluster: api
                         - match:
-                            prefix: "/"
+                            path: "/"
                           redirect:
                             permanent: true
                             uri_template: "/admin"
+                        - match:
+                            prefix: "/"
+                          direct_response:
+                            status: 404
+                            body:
+                              inline_string: "{\"error\": \"NotFound\"}"
                 http_filters:
                   # Force x-forwarded-proto: https for TLS-terminating NLB traffic
                   - name: envoy.filters.http.lua
