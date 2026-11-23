@@ -71,7 +71,7 @@ gcloud iam workload-identity-pools providers create-oidc "modal" \
   --workload-identity-pool="${POOL_ID}" \
   --issuer-uri="https://oidc.modal.com" \
   --allowed-audiences="oidc.modal.com" \
-  --attribute-mapping="google.subject=assertion.sub,attribute.workspace_id=assertion.sub.extract('modal:workspace_id:{ws}:')" \
+  --attribute-mapping="google.subject=assertion.sub.extract('modal:workspace_id:{ws}:'),attribute.workspace_id=assertion.sub.extract('modal:workspace_id:{ws}:')" \
   --attribute-condition="assertion.sub.startsWith('modal:workspace_id:${MODAL_WORKSPACE_ID}:')"
 
 POOL_PATH="projects/${GCP_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}"

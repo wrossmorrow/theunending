@@ -88,7 +88,7 @@ resource "google_iam_workload_identity_pool_provider" "modal" {
   }
 
   attribute_mapping = {
-    "google.subject"         = "assertion.sub"
+    "google.subject"         = "assertion.sub.extract('modal:workspace_id:{ws}:')"
     "attribute.workspace_id" = "assertion.sub.extract('modal:workspace_id:{ws}:')"
   }
 
