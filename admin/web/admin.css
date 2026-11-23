@@ -288,6 +288,8 @@ dialog {
   padding: 1.4em 1.6em;
   max-width: 460px;
   width: calc(100% - 2em);
+  max-height: calc(100vh - 4em);
+  overflow-y: auto;
   font-family: var(--font-serif);
 }
 dialog::backdrop { background: rgba(255, 255, 255, 0.75); }
