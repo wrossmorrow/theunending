@@ -64,3 +64,15 @@ variable "admin_email_address" {
   description = "Email address subscribed to the admin run status SNS topic for notifications."
   type        = string
 }
+
+variable "gcp_aws_wif_provider" {
+  description = "GCP Workload Identity Provider resource name for AWS workloads (projects/<num>/locations/global/workloadIdentityPools/.../providers/aws-iam)."
+  type        = string
+  default     = ""
+}
+
+variable "gcp_publish_sa_email" {
+  description = "Zero-permission GCP service account email impersonated by the Fargate publish task."
+  type        = string
+  default     = ""
+}

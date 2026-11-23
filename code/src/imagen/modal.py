@@ -59,11 +59,15 @@ def _sanitize_args(
     )
 
 
-img = modal.Image.from_name(name="theunending").env(
-    {
-        "HF_HUB_OFFLINE": "1",
-        "HF_HOME": "/cache",
-    }
+img = (
+    modal.Image.from_name(name="theunending")
+    .env(
+        {
+            "HF_HUB_OFFLINE": "1",
+            "HF_HOME": "/cache",
+        }
+    )
+    .add_local_python_source("machine_auth")
 )
 app = modal.App("theunending", image=img)
 vol = modal.Volume.from_name("hf-hub-cache")
@@ -98,7 +102,7 @@ def _parse_args(
         "/cache": vol,
     },
     timeout=EVAL_TIMEOUT_SEC,
-    secrets=[modal.Secret.from_name("admin-api-token")],
+    secrets=[modal.Secret.from_name("google-wif")],
     scaledown_window=EVAL_SCALEDOWN_WINDOW,
 )
 def evaluate(args: dict | argparse.Namespace) -> None:
@@ -127,7 +131,7 @@ def handle_eval(args: argparse.Namespace) -> None:
         "/cache": vol,
     },
     timeout=BATCH_TIMEOUT_SEC,
-    secrets=[modal.Secret.from_name("admin-api-token")],
+    secrets=[modal.Secret.from_name("google-wif")],
 )
 def batch(args: dict | argparse.Namespace) -> None:
     from .batch import handle as _handle_batch
@@ -155,7 +159,7 @@ def handle_batch(args: argparse.Namespace) -> None:
         "/cache": vol,
     },
     timeout=EMBED_TIMEOUT_SEC,
-    secrets=[modal.Secret.from_name("admin-api-token")],
+    secrets=[modal.Secret.from_name("google-wif")],
 )
 def embed(args: dict | argparse.Namespace) -> None:
     from .similarity.embed import handle as _handle_embed

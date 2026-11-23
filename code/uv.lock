@@ -1554,8 +1554,10 @@ dev = [
 ]
 imagen = [
     { name = "accelerate" },
+    { name = "cryptography" },
     { name = "diffusers" },
     { name = "open-clip-torch" },
+    { name = "pyjwt" },
     { name = "sentencepiece" },
     { name = "torch" },
     { name = "torchvision" },
@@ -1589,8 +1591,10 @@ dev = [
 ]
 imagen = [
     { name = "accelerate", specifier = ">=1.15.0" },
+    { name = "cryptography", specifier = ">=50.0.2" },
     { name = "diffusers", specifier = ">=0.42.0" },
     { name = "open-clip-torch", specifier = ">=2.32" },
+    { name = "pyjwt", specifier = ">=2.15.1" },
     { name = "sentencepiece", specifier = ">=0.2.2" },
     { name = "torch", specifier = ">=2.14.0" },
     { name = "torchvision", specifier = ">=0.29.0" },

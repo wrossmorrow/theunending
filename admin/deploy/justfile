@@ -11,12 +11,10 @@ default:
 
 # containerize
 containerize tag=`git rev-parse --short HEAD`:
-    docker build extproc -t {{registry}}/{{namespace}}/admin-auth:{{tag}} --platform linux/amd64,linux/arm64
     docker build ../ -t {{registry}}/{{namespace}}/admin-api:{{tag}} --platform linux/amd64,linux/arm64
 
 # publish
 publish tag=`git rev-parse --short HEAD`: (containerize tag)
-    docker push {{registry}}/{{namespace}}/admin-auth:{{tag}}
     docker push {{registry}}/{{namespace}}/admin-api:{{tag}}
 
 ecr-login:
@@ -36,6 +34,7 @@ upload:
     aws s3 cp backup.sh s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp .env s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp compose.yaml s3://theunending-ai-raw-content-use1/deploy/
+    aws s3 cp make-oauth-secret.sh s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp envoy.yaml s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp theunending-admin.service s3://theunending-ai-raw-content-use1/deploy/
     aws s3 cp install.sh s3://theunending-ai-raw-content-use1/deploy/

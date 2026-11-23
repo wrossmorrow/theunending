@@ -11,6 +11,8 @@ import httpx
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
+from machine_auth import machine_id_token, machine_id_token_from_env
+
 
 class Run(BaseModel):
     run_id: UUID
@@ -32,14 +34,19 @@ class Set(BaseModel):
 class PublishSettings(BaseSettings):
     """Settings for the Unending Backend/Pipelining."""
 
-    # required, not defaultable; keep ADMIN_API_TOKEN in env
+    # required, not defaultable; WIF config (GCP_WIF_PROVIDER + GCP_SERVICE_ACCOUNT_EMAIL)
+    # or GOOGLE_MACHINE_ID_TOKEN for local dev must be present in env
 
     RUN_ID: UUID
-    ADMIN_API_TOKEN: str
+    GCP_WIF_PROVIDER: str | None = None
+    GCP_SERVICE_ACCOUNT_EMAIL: str | None = None
+    GOOGLE_MACHINE_ID_TOKEN: str | None = None
 
     # needed, but defaultable
 
     REQUIRE_PENDING: bool = True
+
+    ADMIN_API_AUDIENCE: str = "https://admin.theunending.ai"
 
     ADMIN_API_HOST: str = "https://admin.theunending.ai"
     POST_DATE: str = datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d")
@@ -69,13 +76,27 @@ class PublishSettings(BaseSettings):
     def ADMIN_API_URL(self) -> str:
         return f"{self.ADMIN_API_HOST}/api/v0/runs/{self.RUN_ID}/status"
 
+    def _machine_headers(self) -> dict[str, str]:
+        static_token = (self.GOOGLE_MACHINE_ID_TOKEN or "").strip()
+        if static_token:
+            token = static_token
+        elif self.GCP_WIF_PROVIDER and self.GCP_SERVICE_ACCOUNT_EMAIL:
+            token = machine_id_token(
+                self.GCP_WIF_PROVIDER,
+                self.GCP_SERVICE_ACCOUNT_EMAIL,
+                self.ADMIN_API_AUDIENCE,
+            )
+        else:
+            token = machine_id_token_from_env(self.ADMIN_API_AUDIENCE)
+        return {
+            "authorization": f"Bearer {token}",
+        }
+
     @cached_property
     def RUN(self) -> Run:
         response = httpx.get(
             url=f"{self.ADMIN_API_HOST}/api/v0/runs/{self.RUN_ID}",
-            headers={
-                "authorization": f"Bearer {self.ADMIN_API_TOKEN}",
-            },
+            headers=self._machine_headers(),
         )
         response.raise_for_status()
         run = Run.model_validate(response.json())
@@ -92,9 +113,7 @@ class PublishSettings(BaseSettings):
     def SET(self) -> Set:
         response = httpx.get(
             url=f"{self.ADMIN_API_HOST}/api/v0/sets/{self.SET_ID}",
-            headers={
-                "authorization": f"Bearer {self.ADMIN_API_TOKEN}",
-            },
+            headers=self._machine_headers(),
         )
         response.raise_for_status()
         set_ = Set.model_validate(response.json())

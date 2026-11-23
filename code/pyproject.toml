@@ -25,9 +25,11 @@ embed = "embed:main"
 publish = "publish:main"
 
 [build-system]
-module-name = ["imagen", "publish"]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = ["imagen", "publish", "embed", "machine_auth"]
 
 [tool.uv]
 default-groups = ["dev", "imagen", "publish"]
@@ -46,6 +48,8 @@ dev = [
 ]
 imagen = [
     "accelerate>=1.15.0",
+    "cryptography>=50.0.2",
+    "pyjwt>=2.15.1",
     "diffusers>=0.42.0",
     "sentencepiece>=0.2.2",
     "torch>=2.14.0",

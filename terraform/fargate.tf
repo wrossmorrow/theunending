@@ -61,11 +61,19 @@ resource "aws_ecs_task_definition" "publish" {
           name  = "GITHUB_REPO_NAME",
           value = "theunending",
         },
+        {
+          name  = "GCP_WIF_PROVIDER",
+          value = var.gcp_aws_wif_provider,
+        },
+        {
+          name  = "GCP_SERVICE_ACCOUNT_EMAIL",
+          value = var.gcp_publish_sa_email,
+        },
       ]
 
       secrets = [
         {
-          name = "ADMIN_API_TOKEN", 
+          name = "ADMIN_API_TOKEN",
           valueFrom = "${data.aws_secretsmanager_secret.admin_api_auth.arn}:ADMIN_API_TOKEN::",
         },
         {

@@ -4,14 +4,27 @@ DEFAULT_SITE_BUCKET="theunending-ai-site-content-use1"
 DEFAULT_RAW_BUCKET="wrossmorrow-genai-repetitions-use1"
 DEFAULT_ADMIN_API_HOST="https://admin.theunending.ai"
 
-: ${BATCH_RUN_ID:?} ${ADMIN_API_TOKEN:?}
+: "${BATCH_RUN_ID:?}"
+
+cd "$(dirname "$0")/.." || exit  # code/
+
+AUDIENCE="${ADMIN_API_AUDIENCE:-https://admin.theunending.ai}"
+if [ -n "${GOOGLE_MACHINE_ID_TOKEN:-}" ]; then
+    TOKEN="${GOOGLE_MACHINE_ID_TOKEN}"
+else
+    : "${GCP_SERVICE_ACCOUNT_EMAIL:?Set GCP_SERVICE_ACCOUNT_EMAIL or GOOGLE_MACHINE_ID_TOKEN}"
+    TOKEN=$(gcloud auth print-identity-token \
+        --impersonate-service-account="${GCP_SERVICE_ACCOUNT_EMAIL}" \
+        --audiences="${AUDIENCE}")
+fi
+AUTH_HEADER="authorization: Bearer ${TOKEN}"
 
 # (I don't really like this, but it could mostly work)
 # Set the values of the 
 
 ADMIN_API_HOST=${ADMIN_API_HOST:-$DEFAULT_ADMIN_API_HOST}
 
-HTTP_STATUS=$( curl "${ADMIN_API_HOST}/api/v0/runs/${BATCH_RUN_ID}" -H 'authorization: '${ADMIN_API_TOKEN} -H 'accept: application/json' -s -o get-run.json -w "%{http_code}" )
+HTTP_STATUS=$( curl "${ADMIN_API_HOST}/api/v0/runs/${BATCH_RUN_ID}" -H "${AUTH_HEADER}" -H 'accept: application/json' -s -o get-run.json -w "%{http_code}" )
 if [ "${HTTP_STATUS}" -ne 200 ]; then
     RESPONSE=$( cat get-run.json )
     echo "GET ${ADMIN_API_HOST}/api/v0/runs/${BATCH_RUN_ID} returned ${HTTP_STATUS} (${RESPONSE})" >&2
@@ -19,14 +32,14 @@ if [ "${HTTP_STATUS}" -ne 200 ]; then
 fi
 
 RUN_TYPE=$( cat get-run.json | jq -r .type )
-if [ "${RUN_TYPE}" -ne "BATCH" ]; then
+if [ "${RUN_TYPE}" != "BATCH" ]; then
     RESPONSE=$( cat get-run.json | jq -c . )
     echo "Run passed (${BATCH_RUN_ID}) is not a BATCH run (${RESPONSE})" >&2
     exit 1
 fi
 
 RUN_STATUS=$( cat get-run.json | jq -r .status )
-if [ "${RUN_STATUS}" -ne "COMPLETED" ]; then
+if [ "${RUN_STATUS}" != "COMPLETED" ]; then
     RESPONSE=$( cat get-run.json | jq -c . )
     echo "Run passed (${BATCH_RUN_ID}) is not COMPLETED (${RESPONSE})" >&2
     exit 1
@@ -34,7 +47,7 @@ fi
 
 SET_ID=$( cat get-run.json | jq -r .set_id )
 
-HTTP_STATUS=$( curl "${ADMIN_API_HOST}/api/v0/sets/${SET_ID}" -H 'authorization: '${ADMIN_API_TOKEN} -H 'accept: application/json' -s -o get-set.json -w "%{http_code}" )
+HTTP_STATUS=$( curl "${ADMIN_API_HOST}/api/v0/sets/${SET_ID}" -H "${AUTH_HEADER}" -H 'accept: application/json' -s -o get-set.json -w "%{http_code}" )
 if [ "${HTTP_STATUS}" -ne 200 ]; then
     RESPONSE=$( cat get-set.json )
     echo "GET ${ADMIN_API_HOST}/api/v0/runs/${BATCH_RUN_ID} returned ${HTTP_STATUS} (${RESPONSE})" >&2

@@ -27,10 +27,6 @@ static_resources:
                             prefix: "/admin"
                           route:
                             cluster: api
-                          typed_per_filter_config:
-                            envoy.filters.http.ext_proc:
-                              '@type': type.googleapis.com/envoy.extensions.filters.http.ext_proc.v3.ExtProcPerRoute
-                              disabled: true
                         - match:
                             prefix: "/api"
                           route:
@@ -42,62 +38,225 @@ static_resources:
                             body:
                               inline_string: "{\"error\": \"NotFound\"}"
                 http_filters:
-                  - name: envoy.filters.http.ext_proc
+                  # Force x-forwarded-proto: https for TLS-terminating NLB traffic
+                  - name: envoy.filters.http.lua
                     typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.ext_proc.v3.ExternalProcessor
-                      grpc_service:
-                        envoy_grpc:
-                          cluster_name: auth
-                        timeout: 1s
-                      failure_mode_allow: false
-                      message_timeout: 60s # raised from 2s; capped at 60s for delayed phases / async processing during load testing
-                      processing_mode:
-                        request_header_mode: SEND
-                        response_header_mode: SKIP
-                        request_body_mode: NONE
-                        response_body_mode: NONE
-                        request_trailer_mode: SKIP
-                        response_trailer_mode: SKIP
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+                      default_source_code:
+                        inline_string: |
+                          function envoy_on_request(request_handle)
+                            request_handle:headers():replace(":scheme", "https")
+                            request_handle:headers():replace("x-forwarded-proto", "https")
+                          end
+                  # OAuth2 Filter: handles /callback, /signout, and cookie issuance
+                  - name: envoy.filters.http.oauth2
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.oauth2.v3.OAuth2
+                      config:
+                        token_endpoint:
+                          cluster: google_oauth
+                          uri: https://oauth2.googleapis.com/token
+                          timeout: 5s
+                        authorization_endpoint: https://accounts.google.com/o/oauth2/v2/auth
+                        redirect_uri: "https://admin.theunending.ai/oauth/callback"
+                        redirect_path_matcher:
+                          path:
+                            exact: /oauth/callback
+                        signout_path:
+                          path:
+                            exact: /signout
+                        credentials:
+                          client_id: "988972755639-vilj19vs7l2dovb8ltf011ctffm981vn.apps.googleusercontent.com"
+                          token_secret:
+                            name: token
+                            sds_config:
+                              path_config_source:
+                                path: /etc/envoy/secrets/token-secret.yaml
+                          hmac_secret:
+                            name: hmac
+                            sds_config:
+                              path_config_source:
+                                path: /etc/envoy/secrets/hmac-secret.yaml                          
+                        auth_scopes:
+                          - openid
+                          - email
+                          - profile
+                        # The OAuth2 filter does not need to forward the Google
+                        # access token downstream (the API never uses it), and
+                        # forwarding would send a machine-unverifiable bearer
+                        # header on cookie-authenticated requests.
+                        forward_bearer_token: false
+                        # Never redirect API callers to Google sign-in; return 401 instead.
+                        deny_redirect_matcher:
+                          - name: ":path"
+                            string_match:
+                              prefix: /api
+                        # Bypass OAuth entirely when the request carries an Authorization
+                        # header: external/machine callers authenticate via machine JWT
+                        # (static JWKS not required) instead of the IdToken cookie flow.
+                        pass_through_matcher:
+                          - name: authorization
+                            present_match: true
+                  # JWT Authn Filter: validates the IdToken cookie issued by OAuth2
+                  - name: envoy.filters.http.jwt_authn
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+                      providers:
+                        google_oidc:
+                          issuer: https://accounts.google.com
+                          audiences:
+                            - "988972755639-vilj19vs7l2dovb8ltf011ctffm981vn.apps.googleusercontent.com"
+                          from_cookies:
+                            - IdToken
+                          payload_in_metadata: verified_jwt
+                          remote_jwks:
+                            http_uri:
+                              uri: https://www.googleapis.com/oauth2/v3/certs
+                              cluster: google_jwks
+                              timeout: 5s
+                            cache_duration:
+                              seconds: 300
+                        machine_jwt:
+                          # External machine callers (Modal jobs, Fargate publish jobs)
+                          # exchange WIF credentials for Google OIDC ID tokens via
+                          # iamcredentials.googleapis.com:generateIdToken. Verified
+                          # against Google's standard OIDC JWKS endpoint; audience
+                          # separates machine tokens from browser OAuth tokens.
+                          issuer: https://accounts.google.com
+                          audiences:
+                            - "https://admin.theunending.ai"
+                          from_headers:
+                            - name: Authorization
+                              value_prefix: "Bearer "
+                          payload_in_metadata: verified_machine_jwt
+                          remote_jwks:
+                            http_uri:
+                              uri: https://www.googleapis.com/oauth2/v3/certs
+                              cluster: google_jwks
+                              timeout: 5s
+                            cache_duration:
+                              seconds: 300
+                      rules:
+                        - match:
+                            prefix: /
+                          requires:
+                            requires_any:
+                              requirements:
+                                - provider_name: google_oidc
+                                - provider_name: machine_jwt
+                  # RBAC Filter: lock access to specific admin email(s)
+                  - name: envoy.filters.http.rbac
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC
+                      rules:
+                        action: ALLOW
+                        policies:
+                          allow_specific_admins:
+                            permissions:
+                              - any: true
+                            principals:
+                              - metadata:
+                                  filter: envoy.filters.http.jwt_authn
+                                  path:
+                                    - key: verified_jwt
+                                    - key: email
+                                  value:
+                                    string_match:
+                                      exact: "admin@theunending.ai"
+                          allow_machine:
+                            permissions:
+                              - any: true
+                            principals:
+                              - and_ids:
+                                  ids:
+                                    - metadata:
+                                        filter: envoy.filters.http.jwt_authn
+                                        path:
+                                          - key: verified_machine_jwt
+                                          - key: email_verified
+                                        value:
+                                          bool_match: true
+                                    - or_ids:
+                                        ids:
+                                          - metadata:
+                                              filter: envoy.filters.http.jwt_authn
+                                              path:
+                                                - key: verified_machine_jwt
+                                                - key: email
+                                              value:
+                                                string_match:
+                                                  exact: "modal-jobs@thunending-oauth.iam.gserviceaccount.com"
+                                          - metadata:
+                                              filter: envoy.filters.http.jwt_authn
+                                              path:
+                                                - key: verified_machine_jwt
+                                                - key: email
+                                              value:
+                                                string_match:
+                                                  exact: "publish-job@thunending-oauth.iam.gserviceaccount.com"
                   - name: envoy.filters.http.router
                     typed_config:
                       '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
   clusters:
-  - name: api
-    connect_timeout: 0.250s
-    type: LOGICAL_DNS
-    lb_policy: LEAST_REQUEST
-    dns_lookup_family: V4_ONLY
-    typed_extension_protocol_options:
-      envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-        "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-        explicit_http_config:
-          http_protocol_options: {}
-    load_assignment:
-      cluster_name: api
-      endpoints:
-        - lb_endpoints:
-            - endpoint:
-                hostname: api
-                address:
-                  socket_address:
-                    address: api
-                    port_value: 8000
-  - name: auth
-    dns_lookup_family: V4_ONLY
-    lb_policy: LEAST_REQUEST
-    load_assignment:
-      cluster_name: auth
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address:
-                address: auth
-                port_value: 50051
-            hostname: base
-    type: LOGICAL_DNS
-    typed_extension_protocol_options:
-      envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-        '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-        explicit_http_config:
-          http2_protocol_options: {}
+
+    # admin API
+    - name: api
+      connect_timeout: 0.250s
+      type: LOGICAL_DNS
+      lb_policy: LEAST_REQUEST
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          explicit_http_config:
+            http_protocol_options: {}
+      load_assignment:
+        cluster_name: api
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  hostname: api
+                  address:
+                    socket_address:
+                      address: api
+                      port_value: 8000
+    
+    # Google OAuth Token Endpoint
+    - name: google_oauth
+      type: LOGICAL_DNS
+      dns_lookup_family: V4_ONLY
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: google_oauth
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: oauth2.googleapis.com
+                      port_value: 443
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          sni: oauth2.googleapis.com
+
+    # Google JWKS Public Keys Endpoint
+    - name: google_jwks
+      type: LOGICAL_DNS
+      dns_lookup_family: V4_ONLY
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: google_jwks
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: www.googleapis.com
+                      port_value: 443
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          sni: www.googleapis.com
