@@ -26,10 +26,16 @@ async def list_sets(
     post_date: str | None = None,
     slug: str | None = None,
     name: str | None = None,
+    model: str | None = None,
 ) -> models.SetsResponse:
     """List sets with query filters."""
     return await sets_handlers.list_sets(
-        session_factory, status=status, post_date=post_date, slug=slug, name=name
+        session_factory,
+        status=status,
+        post_date=post_date,
+        slug=slug,
+        name=name,
+        model=model,
     )
 
 

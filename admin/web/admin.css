@@ -163,8 +163,9 @@ input.bad { border-color: var(--accent-color); }
 }
 
 .sets-pane { position: sticky; top: 4.2rem; max-height: calc(100vh - 5rem); overflow: auto; }
-.pane-head { display: flex; align-items: center; gap: 0.6em; margin-bottom: 0.6em; }
-.pane-head select { width: auto; flex: 1; }
+.pane-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6em; margin-bottom: 0.6em; }
+.pane-head select { width: auto; flex: 1 1 45%; }
+.pane-head .link-button { flex-shrink: 0; }
 
 .set-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border-color); }
 .set-list li { border-bottom: 1px solid var(--border-color); }
