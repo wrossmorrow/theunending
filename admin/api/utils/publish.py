@@ -157,9 +157,7 @@ class Publisher:
                                 else []
                             ),
                             *(  # optional PR-only mode for the publish task
-                                ["--github-pr-only"]
-                                if request.github_pr_only
-                                else []
+                                ["--github-pr-only"] if request.github_pr_only else []
                             ),
                         ],
                     }

@@ -409,7 +409,7 @@ def handle(args: argparse.Namespace) -> None:
             "created draft pull request",
             details={"draft_pr_url": draft_pr_url},
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         admin.update_progress(
             Status.FAILED,
             "failed to create draft pull request",
