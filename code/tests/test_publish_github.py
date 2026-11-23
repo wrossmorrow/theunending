@@ -44,10 +44,11 @@ class FakeSettings:
     SET_NAME = "demo"
     SITE_OG_IMAGE_PREFIX = "assets/og"
     SITE_INDEX_THUMBS_PREFIX = "assets/img/index-thumbs"
-    SET = "demo"
+    SET = SimpleNamespace(slug="demo", post_date="2026-11-22")
     RUN = "2026-11-22-demo"
     RUN_ID = uuid4()
     MAX_S3_THREADS = 32
+    POST_DATE = "2026-11-23"
     ADMIN_API_URL = (
         "http://localhost:8000/api/v0/runs/00000000-0000-0000-0000-000000000000/status"
     )
@@ -322,6 +323,7 @@ def test_just_publish_pr_completes_and_returns_zero(
     assert github.calls[0]["manifest"] == _make_manifest()
     assert github.calls[0]["og_image_path"] == "demo.jpg"
     assert github.calls[0]["it_image_path"] == "thumb-1.webp"
+    assert s3.downloads[0] == ("drafts/2026-11-22-demo/spec.json", "spec.json")
     assert admin.calls[-1][0] == Status.COMPLETED
     assert admin.calls[-1][2] == {
         "draft_pr_url": "https://github.com/owner/repo/pull/9"

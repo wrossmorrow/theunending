@@ -28,6 +28,7 @@ class Set(BaseModel):
     model_prompt_hash: str
     slug: str
     name: str
+    post_date: str | None = None
     status: Literal["PUBLISHING", "PUBLISHED"]  # others, but require PUBLISHING
 
 

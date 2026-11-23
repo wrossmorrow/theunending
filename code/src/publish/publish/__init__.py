@@ -27,12 +27,18 @@ from .utils import do_uploads, get_source_content, list_image_ids
 def _just_publish_pr(s3: S3Client, settings: PublishSettings, admin: AdminAPI) -> int:
 
     try:
-        # get the spec draft manifest instead of making it here
+        # get the spec draft manifest instead of making it here; prefer the set's
+        # published date over the run's publish date, which may be stale
+
+        post_name = (
+            f"{settings.SET.post_date or settings.POST_DATE}-{settings.SET.slug}"
+        )
+
         draft_manifest: DraftManifest
         thumb_id: str
         s3.download_file(
             Bucket=settings.SITE_BUCKET,
-            Key=f"drafts/{settings.POST_NAME}/spec.json",
+            Key=f"drafts/{post_name}/spec.json",
             Filename="spec.json",
         )
         with open("spec.json", "r") as f:

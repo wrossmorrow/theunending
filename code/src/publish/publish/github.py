@@ -35,7 +35,7 @@ def _draft_files(
     # prepared bytes
 
     post_draft = manifest.post_draft
-    files[f"site/_posts/{settings.POST_NAME}.md"] = post_draft.encode("utf-8")
+    files[f"site/_posts/{manifest.post_name}.md"] = post_draft.encode("utf-8")
 
     image_manifest = manifest.image_manifest
     files[f"site/assets/streams/{settings.SET_NAME}.json"] = dumps(
@@ -43,12 +43,12 @@ def _draft_files(
     ).encode("utf-8")
 
     set_spec = manifest.set_spec
-    files[f"site/_data/set_streams/{settings.POST_NAME}.json"] = (
+    files[f"site/_data/set_streams/{manifest.post_name}.json"] = (
         set_spec.model_dump_json().encode("utf-8")
     )
 
     posters_spec = manifest.posters_spec
-    files[f"site/_data/set_posters/{settings.POST_NAME}.json"] = dumps(
+    files[f"site/_data/set_posters/{manifest.post_name}.json"] = dumps(
         posters_spec
     ).encode("utf-8")
 
@@ -239,10 +239,10 @@ def github_publish(
         repo=settings.GITHUB_REPO_NAME,
     ).create_draft_pr(
         files=files,
-        title=f"Publish draft: {settings.POST_NAME}",
+        title=f"Publish draft: {manifest.post_name}",
         body=(
-            f"Publish draft for set {settings.SET_NAME} (post {settings.POST_NAME}). "
-            f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json"
+            f"Publish draft for set {settings.SET_NAME} (post {manifest.post_name}). "
+            f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{manifest.post_name}/spec.json"
         ),
-        branch=f"draft/{settings.POST_NAME}",
+        branch=f"draft/{manifest.post_name}",
     )
