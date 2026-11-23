@@ -24,11 +24,7 @@ from .settings import PublishSettings
 from .utils import do_uploads, get_source_content, list_image_ids
 
 
-def _just_publish_pr(
-    s3: S3Client,
-    settings: PublishSettings,
-    admin: AdminAPI,
-) -> int:
+def _just_publish_pr(s3: S3Client, settings: PublishSettings, admin: AdminAPI) -> int:
 
     # get the spec draft manifest instead of making it here
     draft_manifest: DraftManifest
@@ -415,11 +411,11 @@ def handle(args: argparse.Namespace) -> None:
         )
     except Exception as e:  # noqa: BLE001
         admin.update_progress(
-            Status.IN_PROGRESS,
+            Status.FAILED,
             "failed to create draft pull request",
             details={"error": str(e), "error_class": e.__class__.__name__},
         )
-        print(f"Failed to create draft PR: {e.__class__.__name__} {e}")
+        raise
 
     admin.update_progress(
         Status.COMPLETED,
