@@ -1,0 +1,44 @@
+name: Admin CI
+
+on:
+  pull_request:
+    paths:
+      - "admin/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "admin/**"
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Type check
+        run: uv run mypy .
+
+      - name: Run tests
+        run: uv run pytest
