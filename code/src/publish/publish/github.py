@@ -151,6 +151,24 @@ class GithubPublisher:
             )
             response.raise_for_status()
 
+    def _existing_pr_url(self, branch: str, token: str, base: str) -> str:
+        response = httpx.get(
+            url=f"{self.github_api_base_url}/repos/{self.owner}/{self.repo}/pulls",
+            headers=self._headers(token),
+            params={"head": f"{self.owner}:{branch}", "base": base},
+        )
+        response.raise_for_status()
+        pull_requests = response.json()
+        for pull_request in pull_requests:
+            if (
+                pull_request.get("head", {}).get("ref") == branch
+                and pull_request.get("base", {}).get("ref") == base
+            ):
+                return str(pull_request["html_url"])
+        raise RuntimeError(
+            f"Pull request from {branch} to {base} not found; cannot resolve existing draft pull request."
+        )
+
     def open_pr(
         self,
         branch: str,
@@ -169,6 +187,10 @@ class GithubPublisher:
                 "body": body,
             },
         )
+        if response.status_code == 422:
+            # a pull request from this branch may already exist, e.g. on a retry
+            # of a partially completed publish; treat as idempotent success
+            return self._existing_pr_url(branch=branch, token=token, base=base)
         response.raise_for_status()
         return str(response.json()["html_url"])
 
