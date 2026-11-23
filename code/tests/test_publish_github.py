@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from botocore.exceptions import ClientError
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
@@ -349,6 +350,34 @@ def test_just_publish_pr_fails_and_returns_one(
     assert exit_code == 1
     assert admin.calls[-1][0] == Status.FAILED
     assert admin.calls[-1][2]["error_class"] == "RuntimeError"
+
+
+def test_just_publish_pr_marks_failed_on_s3_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The PR-only task path marks the run failed when an S3 fetch fails."""
+
+    class FailingS3:
+        """Fake S3 client that fails like a transient boto3 ClientError."""
+
+        def download_file(self, **kwargs: dict) -> None:
+            """Always fail like a missing S3 object."""
+            raise ClientError(
+                {"Error": {"Code": "404", "Message": "Not Found"}},
+                "HeadObject",
+            )
+
+    monkeypatch.chdir(tmp_path)
+    settings = FakeSettings()
+    s3 = FailingS3()
+    admin = FakeAdminAPI()
+
+    exit_code = _just_publish_pr(s3, settings, admin)
+
+    assert exit_code == 1
+    assert admin.calls[-1][0] == Status.FAILED
+    assert admin.calls[-1][2]["error_class"] == "ClientError"
 
 
 def test_handle_github_pr_only_exits_with_pr_only_result(

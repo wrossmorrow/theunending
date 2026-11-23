@@ -26,40 +26,40 @@ from .utils import do_uploads, get_source_content, list_image_ids
 
 def _just_publish_pr(s3: S3Client, settings: PublishSettings, admin: AdminAPI) -> int:
 
-    # get the spec draft manifest instead of making it here
-    draft_manifest: DraftManifest
-    thumb_id: str
-    s3.download_file(
-        Bucket=settings.SITE_BUCKET,
-        Key=f"drafts/{settings.POST_NAME}/spec.json",
-        Filename="spec.json",
-    )
-    with open("spec.json", "r") as f:
-        draft_manifest = DraftManifest.model_validate_json(f.read())
-        thumb_id = draft_manifest.set_spec.thumb
-
-    # get
-    #
-    #   * s3://{settings.SITE_BUCKET}/{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg
-    #       -> og/{settings.SET_NAME}.jpg
-    #   * s3://{settings.SITE_BUCKET}/{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp
-    #       -> {draft_manifest.set_spec.thumb}.webp
-    #
-    # locally
-    og_image_path = f"{settings.SET_NAME}.jpg"
-    it_image_path = f"{thumb_id}.webp"
-    s3.download_file(
-        Bucket=settings.SITE_BUCKET,
-        Key=f"{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg",
-        Filename=og_image_path,
-    )
-    s3.download_file(
-        Bucket=settings.SITE_BUCKET,
-        Key=f"{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp",
-        Filename=it_image_path,
-    )
-
     try:
+        # get the spec draft manifest instead of making it here
+        draft_manifest: DraftManifest
+        thumb_id: str
+        s3.download_file(
+            Bucket=settings.SITE_BUCKET,
+            Key=f"drafts/{settings.POST_NAME}/spec.json",
+            Filename="spec.json",
+        )
+        with open("spec.json", "r") as f:
+            draft_manifest = DraftManifest.model_validate_json(f.read())
+            thumb_id = draft_manifest.set_spec.thumb
+
+        # get
+        #
+        #   * s3://{settings.SITE_BUCKET}/{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg
+        #       -> og/{settings.SET_NAME}.jpg
+        #   * s3://{settings.SITE_BUCKET}/{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp
+        #       -> {draft_manifest.set_spec.thumb}.webp
+        #
+        # locally
+        og_image_path = f"{settings.SET_NAME}.jpg"
+        it_image_path = f"{thumb_id}.webp"
+        s3.download_file(
+            Bucket=settings.SITE_BUCKET,
+            Key=f"{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg",
+            Filename=og_image_path,
+        )
+        s3.download_file(
+            Bucket=settings.SITE_BUCKET,
+            Key=f"{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp",
+            Filename=it_image_path,
+        )
+
         draft_pr_url = github_publish(
             settings=settings,
             manifest=draft_manifest,
