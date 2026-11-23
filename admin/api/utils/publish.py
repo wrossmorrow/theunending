@@ -21,6 +21,7 @@ class PublishRequest(BaseModel):
     run_id: UUID
     attempts: int = 0
     extra_details: str | None = None
+    github_pr_only: bool = False
 
 
 class Publisher:
@@ -153,6 +154,11 @@ class Publisher:
                             *(  # optional extra details for the post draft
                                 ["--extra-details", request.extra_details]
                                 if request.extra_details
+                                else []
+                            ),
+                            *(  # optional PR-only mode for the publish task
+                                ["--github-pr-only"]
+                                if request.github_pr_only
                                 else []
                             ),
                         ],

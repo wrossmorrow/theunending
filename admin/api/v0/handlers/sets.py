@@ -165,6 +165,7 @@ async def publish_set(
                 draft_id=draft_id,
                 run_id=run.run_id,
                 extra_details=body.extra_details if body is not None else None,
+                github_pr_only=body.github_pr_only if body is not None else False,
             )
         )
 

@@ -75,6 +75,7 @@ class PublishSetBody(BaseModel):
     """Publish a set; optional extra details added to the post draft."""
 
     extra_details: str | None = Field(default=None, max_length=512)
+    github_pr_only: bool = False
 
 
 class CommitDraftBody(BaseModel):
