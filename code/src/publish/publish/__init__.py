@@ -109,10 +109,14 @@ def _just_publish_pr(s3: S3Client, settings: PublishSettings, admin: AdminAPI) -
         return 0
 
     except Exception as e:  # noqa: BLE001
+        error_details = {"error": str(e), "error_class": e.__class__.__name__}
+        response = getattr(e, "response", None)
+        if response is not None:
+            error_details["response"] = getattr(response, "text", None) or str(response)
         admin.update_progress(
             Status.FAILED,
             "failed to create draft pull request",
-            details={"error": str(e), "error_class": e.__class__.__name__},
+            details=error_details,
         )
         print(f"Failed to create draft PR: {e.__class__.__name__} {e}")
 
