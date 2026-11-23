@@ -260,6 +260,15 @@ function setConn(ok, why) {
   el.textContent = ok ? "connected" : (why || "offline");
 }
 
+// Full run output (message / details) in a modal. Native tooltip-based access doesn't
+// exist on touch devices, so long failure text is also opened here on tap.
+function showRunDetail({ title, body }) {
+  const dlg = $("#run-detail-dialog");
+  field(dlg, "title").textContent = title;
+  field(dlg, "body").textContent = body;
+  dlg.showModal();
+}
+
 function confirmDialog({ title, body, ok, extraDetails = null }) {
   const dlg = $("#confirm-dialog");
   field(dlg, "title").textContent = title;
@@ -795,7 +804,14 @@ function renderRun(run, { latest }) {
   messageEl.textContent = truncate(message, CONFIG.maxRunMessageChars);
   // Full message is one hover away; the list itself stays capped.
   messageEl.title = message;
-  renderDetails(field(node, "details"), run.details);
+  messageEl.addEventListener("click", () => {
+    showRunDetail({ title: `${run.type} run message`, body: message });
+  }, { signal: viewSignal() });
+  const detailsEl = field(node, "details");
+  renderDetails(detailsEl, run.details);
+  detailsEl.addEventListener("click", () => {
+    showRunDetail({ title: `Run ${run.run_id}`, body: JSON.stringify(run.details, null, 2) });
+  }, { signal: viewSignal() });
   const idEl = field(node, "run_id");
   idEl.textContent = run.run_id.slice(-8);
   idEl.title = `run ${run.run_id}\nexternal ${run.external_run_id}`;
