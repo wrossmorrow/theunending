@@ -153,7 +153,7 @@ admin/
 * POST /api/v0/sets
     - create a set (in DRAFT status), returning a server-generated set_id (uuidv7)
 * GET /api/v0/sets
-    - list sets, with query parameter filters (status, post_date, slug, name)
+    - list sets, with query parameter filters (status, model, post_date, slug, name)
 * GET /api/v0/sets/{set_id:uuidv7}
     - get one set (or 404)
 * PATCH /api/v0/sets/{set_id:uuidv7}

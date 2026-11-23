@@ -19,6 +19,7 @@ async def list_sets(
     post_date: str | None = None,
     slug: str | None = None,
     name: str | None = None,
+    model: str | None = None,
 ) -> models.SetsResponse:
     """List sets with query filters."""
     async with session_factory() as session:
@@ -26,6 +27,8 @@ async def list_sets(
         stmt = select(database.Set)
         if status is not None:
             stmt = stmt.where(table.c.status == status)
+        if model is not None:
+            stmt = stmt.where(table.c.model == model)
         if post_date is not None:
             stmt = stmt.where(table.c.post_date == post_date)
         if slug is not None:

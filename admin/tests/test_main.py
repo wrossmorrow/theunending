@@ -441,6 +441,24 @@ def test_list_sets_by_post_date_returns_committed_set(
         assert any(s["set_id"] == set_id for s in body["sets"])
 
 
+def test_list_sets_by_model_returns_only_matching_set() -> None:
+    with TestClient(api) as client:
+        other = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.1-schnell"}
+        )
+        wanted = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        response = client.get(
+            "/api/v0/sets", params={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        assert response.status_code == 200
+        body = response.json()
+        ids = [s["set_id"] for s in body["sets"]]
+        assert wanted.json()["set_id"] in ids
+        assert other.json()["set_id"] not in ids
+
+
 def test_list_sets_by_status_returns_abandoned_set() -> None:
     with TestClient(api) as client:
         created = client.post(

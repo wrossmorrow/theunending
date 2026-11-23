@@ -273,6 +273,7 @@ const state = {
   sets: [],
   models: [], // supported models from GET /api/v0/models; first is the default
   filter: "active",
+  modelFilter: "", // "" = all models; otherwise a models API value
   route: { view: "home" },
   current: null,      // { set, drafts, runs } for the open set
   pollTimer: null,
@@ -297,14 +298,40 @@ function viewSignal() {
  * Set list
  * ------------------------------------------------------------------ */
 
+function renderModelFilter() {
+  const select = $("#model-filter");
+  if (!select) return;
+  const current = state.modelFilter;
+  select.replaceChildren();
+  const all = document.createElement("option");
+  all.value = "";
+  all.textContent = "All models";
+  select.append(all);
+  for (const m of state.models) {
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = m;
+    select.append(opt);
+  }
+  let reset = false;
+  if (current && !state.models.includes(current)) {
+    state.modelFilter = ""; // model left the supported list
+    reset = true;
+  }
+  select.value = state.modelFilter;
+  return reset;
+}
+
 async function loadModels() {
   const data = await API.listModels();
   state.models = data?.models ?? [];
+  if (renderModelFilter()) loadSets().catch(reportError);
 }
 
 async function loadSets() {
   const params = {};
   if (state.filter !== "active" && state.filter !== "all") params.status = state.filter;
+  if (state.modelFilter) params.model = state.modelFilter;
   const data = await API.listSets(params);
   let sets = data.sets ?? [];
   if (state.filter === "active") sets = sets.filter((s) => (s.status !== "ABANDONED" && s.status !== "PUBLISHED"));
@@ -1010,6 +1037,10 @@ async function boot() {
 document.addEventListener("DOMContentLoaded", () => {
   $("#status-filter").addEventListener("change", (e) => {
     state.filter = e.target.value;
+    loadSets().catch(reportError);
+  });
+  $("#model-filter").addEventListener("change", (e) => {
+    state.modelFilter = e.target.value;
     loadSets().catch(reportError);
   });
   $("#refresh-sets").addEventListener("click", () => {
