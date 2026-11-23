@@ -1,0 +1,3 @@
+gcp_project_id = "thunending-oauth"
+# Optional: grant your Google account permission to impersonate admin-api / publish-job via gcloud
+# developer_emails = ["admin@theunending.ai"]

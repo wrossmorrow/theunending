@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from api.database import models as database
 from api.database.models import DraftStatus, RunStatus, RunType, SetStatus
 from api.settings import settings
-from api.utils.machine_auth import machine_jwt
+from api.utils.machine_auth import machine_id_token
 from api.utils.notifications import (
     RunNotification,
     SnsNotifier,
@@ -185,18 +185,29 @@ class ExternalJobClient:
         await self._queue.put(job_request)
 
     def _auth_headers(self) -> dict[str, str]:
-        """Build per-request auth headers (fresh machine token).
+        """Build per-request auth headers (cached/refreshed WIF ID token).
 
-        The app refuses to start without a key (see api/main.py); a missing key
-        here is a bug, so fail loudly rather than send an unauthenticated request.
+        The app refuses to start without valid machine-auth config (see api/main.py);
+        missing config here is a bug, so fail loudly rather than send an
+        unauthenticated request.
         """
-        if not settings.google_service_account_key_json:
+        static_token = (settings.google_machine_id_token or "").strip()
+        if static_token:
+            return {"Authorization": f"Bearer {static_token}"}
+        if not settings.gcp_wif_provider or not settings.gcp_service_account_email:
             raise RuntimeError(
-                "GOOGLE_SERVICE_ACCOUNT_KEY_JSON is not set; "
+                "GCP_WIF_PROVIDER and GCP_SERVICE_ACCOUNT_EMAIL are not set; "
                 "job submissions must never be sent unauthenticated"
             )
-        token = machine_jwt(
-            settings.google_service_account_key_json, settings.admin_api_audience
+        audience = (
+            (settings.modal_api_audience or "").strip()
+            or settings.admin_api_audience
+        )
+        token = machine_id_token(
+            settings.gcp_wif_provider,
+            settings.gcp_service_account_email,
+            audience,
+            aws_region=settings.aws_region_name,
         )
         return {"Authorization": f"Bearer {token}"}
 

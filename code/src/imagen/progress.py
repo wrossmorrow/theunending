@@ -12,7 +12,7 @@ from tenacity import (
     wait_exponential,
 )
 
-from machine_auth import machine_jwt
+from machine_auth import machine_id_token_from_env
 
 DEFAULT_RETRY_EXCEPTIONS: tuple[type[Exception], ...] = (
     httpx.TimeoutException,
@@ -119,14 +119,8 @@ def _admin_api_audience() -> str:
 
 
 def _machine_token() -> str:
-    """Mint a fresh machine JWT for the admin API from the service account key."""
-    key = os.environ.get("GOOGLE_SERVICE_ACCOUNT_KEY_JSON")
-    if not key or not key.strip():
-        raise RuntimeError(
-            "GOOGLE_SERVICE_ACCOUNT_KEY_JSON is not set; "
-            "admin status updates require it"
-        )
-    return machine_jwt(key, _admin_api_audience())
+    """Mint (or reuse cached) Google OIDC ID token for the admin API via WIF."""
+    return machine_id_token_from_env(_admin_api_audience())
 
 
 class AdminAPI:

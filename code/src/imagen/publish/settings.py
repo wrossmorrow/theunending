@@ -11,7 +11,7 @@ import httpx
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
-from machine_auth import machine_jwt
+from machine_auth import machine_id_token, machine_id_token_from_env
 
 
 class Run(BaseModel):
@@ -34,10 +34,13 @@ class Set(BaseModel):
 class PublishSettings(BaseSettings):
     """Settings for the Unending Backend/Pipelining."""
 
-    # required, not defaultable; keep GOOGLE_SERVICE_ACCOUNT_KEY_JSON in env
+    # required, not defaultable; WIF config (GCP_WIF_PROVIDER + GCP_SERVICE_ACCOUNT_EMAIL)
+    # or GOOGLE_MACHINE_ID_TOKEN for local dev must be present in env
 
     RUN_ID: UUID
-    GOOGLE_SERVICE_ACCOUNT_KEY_JSON: str
+    GCP_WIF_PROVIDER: str | None = None
+    GCP_SERVICE_ACCOUNT_EMAIL: str | None = None
+    GOOGLE_MACHINE_ID_TOKEN: str | None = None
 
     # needed, but defaultable
 
@@ -50,9 +53,20 @@ class PublishSettings(BaseSettings):
 
     # derived (including from API call responses)
 
-    def _machine_headers(self) -> dict:
+    def _machine_headers(self) -> dict[str, str]:
+        static_token = (self.GOOGLE_MACHINE_ID_TOKEN or "").strip()
+        if static_token:
+            token = static_token
+        elif self.GCP_WIF_PROVIDER and self.GCP_SERVICE_ACCOUNT_EMAIL:
+            token = machine_id_token(
+                self.GCP_WIF_PROVIDER,
+                self.GCP_SERVICE_ACCOUNT_EMAIL,
+                self.ADMIN_API_AUDIENCE,
+            )
+        else:
+            token = machine_id_token_from_env(self.ADMIN_API_AUDIENCE)
         return {
-            "authorization": f"Bearer {machine_jwt(self.GOOGLE_SERVICE_ACCOUNT_KEY_JSON, self.ADMIN_API_AUDIENCE)}",
+            "authorization": f"Bearer {token}",
         }
 
     @cached_property

@@ -2,119 +2,216 @@ from __future__ import annotations
 
 import base64
 import json
-import time
+import urllib.parse
 
-import jwt
+import httpx
 import pytest
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from botocore.credentials import Credentials
 
-from machine_auth import machine_jwks, machine_jwt, service_account_email
+from machine_auth import (
+    AWS_SUBJECT_TOKEN_TYPE,
+    GCP_IAM_CREDENTIALS_URL,
+    GCP_STS_URL,
+    OIDC_SUBJECT_TOKEN_TYPE,
+    _aws_subject_token,
+    clear_token_cache,
+    machine_id_token,
+    machine_id_token_from_env,
+    validate_wif_config,
+)
+
+TEST_AWS_PROVIDER = (
+    "projects/123456789/locations/global/workloadIdentityPools/"
+    "theunending-workloads/providers/aws"
+)
+TEST_MODAL_PROVIDER = (
+    "projects/123456789/locations/global/workloadIdentityPools/"
+    "theunending-workloads/providers/modal"
+)
+TEST_SA_EMAIL = "publish-job@thunending-oauth.iam.gserviceaccount.com"
+TEST_AUDIENCE = "https://admin.theunending.ai"
 
 
-def _test_key_json():
-    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    pem = key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption(),
-    ).decode("utf-8")
-    return {
-        "type": "service_account",
-        "project_id": "test-project",
-        "private_key_id": "abc123",
-        "private_key": pem,
-        "client_email": "admin-jobs@test-project.iam.gserviceaccount.com",
-        "client_id": "1234567890",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
+class _FakeSession:
+    def __init__(self, creds: Credentials | None) -> None:
+        self._creds = creds
+
+    def get_credentials(self) -> Credentials | None:
+        return self._creds
+
+
+def _make_fake_jwt(exp: int) -> str:
+    def _b64(obj: dict) -> str:
+        raw = json.dumps(obj, separators=(",", ":")).encode("utf-8")
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+    return f"{_b64({'alg': 'RS256'})}.{_b64({'exp': exp})}.sig"
+
+
+@pytest.fixture(autouse=True)
+def _reset_cache() -> None:
+    clear_token_cache()
+
+
+def test_aws_subject_token_format() -> None:
+    creds = Credentials(
+        "AKIAIOSFODNN7EXAMPLE",
+        "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        "session-token-123",
+    )
+    encoded = _aws_subject_token(
+        TEST_AWS_PROVIDER, region="us-east-1", session=_FakeSession(creds)
+    )
+    payload = json.loads(urllib.parse.unquote(encoded))
+
+    assert payload["method"] == "POST"
+    assert (
+        payload["url"]
+        == "https://sts.us-east-1.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15"
+    )
+    headers = {item["key"].lower(): item["value"] for item in payload["headers"]}
+    assert headers["host"] == "sts.us-east-1.amazonaws.com"
+    assert headers["x-goog-cloud-target-resource"] == f"//iam.googleapis.com/{TEST_AWS_PROVIDER}"
+    assert headers["x-amz-security-token"] == "session-token-123"
+    assert "x-amz-date" in headers
+    assert headers["authorization"].startswith("AWS4-HMAC-SHA256 ")
+    assert "x-goog-cloud-target-resource" in headers["authorization"]
+
+
+def test_modal_oidc_exchange(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("MODAL_IDENTITY_TOKEN", raising=False)
+    calls: list[tuple[str, dict, dict]] = []
+    expected_token = _make_fake_jwt(4600)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        calls.append((str(request.url), dict(request.headers), body))
+        if str(request.url) == GCP_STS_URL:
+            return httpx.Response(200, json={"access_token": "sts-access-token"})
+        if str(request.url) == GCP_IAM_CREDENTIALS_URL.format(email=TEST_SA_EMAIL):
+            return httpx.Response(200, json={"token": expected_token})
+        raise AssertionError(f"Unexpected URL: {request.url}")
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        token = machine_id_token(
+            TEST_MODAL_PROVIDER,
+            TEST_SA_EMAIL,
+            TEST_AUDIENCE,
+            modal_identity_token="modal-oidc-jwt",
+            client=client,
+            now=1000.0,
+        )
+
+    assert token == expected_token
+    assert len(calls) == 2
+
+    sts_url, _, sts_body = calls[0]
+    assert sts_url == GCP_STS_URL
+    assert sts_body == {
+        "audience": f"//iam.googleapis.com/{TEST_MODAL_PROVIDER}",
+        "grantType": "urn:ietf:params:oauth:grant-type:token-exchange",
+        "requestedTokenType": "urn:ietf:params:oauth:token-type:access_token",
+        "scope": "https://www.googleapis.com/auth/cloud-platform",
+        "subjectTokenType": OIDC_SUBJECT_TOKEN_TYPE,
+        "subjectToken": "modal-oidc-jwt",
     }
 
-
-def test_machine_jwt_round_trip():
-    key_json = _test_key_json()
-    audience = "https://admin.theunending.ai"
-
-    token = machine_jwt(
-        json.dumps(key_json), audience, lifetime_seconds=60, now=int(time.time())
-    )
-    assert isinstance(token, str) and token
-
-    # the token carries the key id Google publishes for the account
-    header = jwt.get_unverified_header(token)
-    assert header["kid"] == key_json["private_key_id"]
-
-    jwks = machine_jwks(key_json)
-    email = service_account_email(key_json)
-    assert email == "admin-jobs@test-project.iam.gserviceaccount.com"
-
-    # verify against the public key from the derived JWKS
-    jwks_key = jwks["keys"][0]
-    pem = _pem_from_jwks(jwks_key)
-    payload = jwt.decode(
-        token,
-        pem,
-        algorithms=["RS256"],
-        audience=audience,
-        issuer=email,
-    )
-    assert payload["iss"] == email
-    assert payload["sub"] == email
-    assert payload["aud"] == audience
-    assert payload["exp"] - payload["iat"] == 60
+    iam_url, iam_headers, iam_body = calls[1]
+    assert iam_url == GCP_IAM_CREDENTIALS_URL.format(email=TEST_SA_EMAIL)
+    assert iam_headers["authorization"] == "Bearer sts-access-token"
+    assert iam_body == {"audience": TEST_AUDIENCE, "includeEmail": True}
 
 
-def test_machine_jwks_matches_private_key():
-    key_json = _test_key_json()
-    private_key = serialization.load_pem_private_key(
-        key_json["private_key"].encode("utf-8"), password=None
-    )
-    expected_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    )
+def test_token_caching_and_refresh_margin(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("MODAL_IDENTITY_TOKEN", raising=False)
+    minted = [_make_fake_jwt(4600), _make_fake_jwt(8200)]
+    iam_calls = 0
+    total_calls = 0
 
-    # the derived JWKS must verify a token signed by this private key
-    jwks = machine_jwks(key_json)
-    assert _pem_from_jwks(jwks["keys"][0]) == expected_pem
-    token = machine_jwt(key_json, "https://admin.theunending.ai")
-    payload = jwt.decode(
-        token,
-        expected_pem,
-        algorithms=["RS256"],
-        audience="https://admin.theunending.ai",
-        issuer=service_account_email(key_json),
-    )
-    assert payload["sub"] == service_account_email(key_json)
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal iam_calls, total_calls
+        total_calls += 1
+        if str(request.url) == GCP_STS_URL:
+            body = json.loads(request.content)
+            assert body["subjectTokenType"] == AWS_SUBJECT_TOKEN_TYPE
+            return httpx.Response(200, json={"access_token": f"sts-{iam_calls}"})
+        tok = minted[iam_calls]
+        iam_calls += 1
+        return httpx.Response(200, json={"token": tok})
 
-    # minted with the same key: the derived JWKS matches what Google would publish
-    assert jwt.get_unverified_header(token)["kid"] == key_json["private_key_id"]
-    assert jwks["keys"][0].get("kid") == key_json["private_key_id"]
+    creds = Credentials("AKIAEXAMPLE", "secret", "tok")
+    session = _FakeSession(creds)
 
-
-def test_machine_jwt_rejects_bad_inputs():
-    with pytest.raises(ValueError):
-        machine_jwt("not json", "https://admin.theunending.ai")
-    with pytest.raises(ValueError):
-        machine_jwt(
-            json.dumps({"client_email": "x@test"}), "https://admin.theunending.ai"
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        first = machine_id_token(
+            TEST_AWS_PROVIDER,
+            TEST_SA_EMAIL,
+            TEST_AUDIENCE,
+            client=client,
+            session=session,
+            now=1000.0,
         )
+        # Just before exp - 300 (4600 - 300 = 4300): must hit cache
+        second = machine_id_token(
+            TEST_AWS_PROVIDER,
+            TEST_SA_EMAIL,
+            TEST_AUDIENCE,
+            client=client,
+            session=session,
+            now=4299.0,
+        )
+        # Inside refresh margin (4300 >= 4600 - 300): must refresh
+        third = machine_id_token(
+            TEST_AWS_PROVIDER,
+            TEST_SA_EMAIL,
+            TEST_AUDIENCE,
+            client=client,
+            session=session,
+            now=4300.0,
+        )
+
+    assert first == minted[0]
+    assert second == minted[0]
+    assert third == minted[1]
+    assert total_calls == 4
+
+
+def test_machine_id_token_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GOOGLE_MACHINE_ID_TOKEN", "static-local-token")
+    assert machine_id_token_from_env(TEST_AUDIENCE) == "static-local-token"
+
+    monkeypatch.delenv("GOOGLE_MACHINE_ID_TOKEN")
+    monkeypatch.setenv("GCP_WIF_PROVIDER", TEST_MODAL_PROVIDER)
+    monkeypatch.setenv("GCP_SERVICE_ACCOUNT_EMAIL", TEST_SA_EMAIL)
+    monkeypatch.setenv("MODAL_IDENTITY_TOKEN", "modal-env-jwt")
+
+    expected = _make_fake_jwt(9999999999)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if str(request.url) == GCP_STS_URL:
+            return httpx.Response(200, json={"access_token": "sts-env"})
+        return httpx.Response(200, json={"token": expected})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        assert machine_id_token_from_env(TEST_AUDIENCE, client=client) == expected
+
+
+def test_validate_wif_config_and_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("MODAL_IDENTITY_TOKEN", raising=False)
+    provider, email = validate_wif_config(
+        f"//iam.googleapis.com/{TEST_AWS_PROVIDER}",
+        f" {TEST_SA_EMAIL} ",
+    )
+    assert provider == TEST_AWS_PROVIDER
+    assert email == TEST_SA_EMAIL
+
     with pytest.raises(ValueError):
-        machine_jwt(json.dumps(_test_key_json()), "")
-    with pytest.raises(TypeError):
-        machine_jwt(42, "https://admin.theunending.ai")
-
-
-def _pem_from_jwks(jwk: dict) -> str:
-    def b64url_int(value: str) -> int:
-        padded = value + "=" * (-len(value) % 4)
-        return int.from_bytes(base64.urlsafe_b64decode(padded), "big")
-
-    public_numbers = rsa.RSAPublicNumbers(
-        e=b64url_int(jwk["e"]), n=b64url_int(jwk["n"])
-    )
-    public_key = public_numbers.public_key()
-    return public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    )
+        validate_wif_config("", TEST_SA_EMAIL)
+    with pytest.raises(ValueError):
+        validate_wif_config("projects/only-project", TEST_SA_EMAIL)
+    with pytest.raises(ValueError):
+        validate_wif_config(TEST_AWS_PROVIDER, "not-an-email")
+    with pytest.raises(ValueError):
+        machine_id_token(TEST_AWS_PROVIDER, TEST_SA_EMAIL, "")
+    with pytest.raises(RuntimeError):
+        _aws_subject_token(TEST_AWS_PROVIDER, session=_FakeSession(None))

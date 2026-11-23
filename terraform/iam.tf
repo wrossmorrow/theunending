@@ -267,7 +267,6 @@ data "aws_iam_policy_document" "execution_secret" {
       "secretsmanager:GetSecretValue"
     ]
     resources = [
-      data.aws_secretsmanager_secret.admin_api_auth.arn,
       data.aws_secretsmanager_secret.theunending_publish_github_app.arn,
       data.aws_secretsmanager_secret.theunending_publish_github_app_key.arn,
     ]
@@ -275,7 +274,7 @@ data "aws_iam_policy_document" "execution_secret" {
 }
 
 resource "aws_iam_role_policy" "execution_secret" {
-  name   = "read-admin-api-auth"
+  name   = "read-publish-github-app-secrets"
   role   = aws_iam_role.execution.id
   policy = data.aws_iam_policy_document.execution_secret.json
 }

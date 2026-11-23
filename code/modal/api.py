@@ -1,3 +1,4 @@
+import functools
 import hashlib
 import os
 from typing import Literal
@@ -16,34 +17,33 @@ DEFAULT_S3_BUCKET_NAME = "theunending-ai-raw-content-use1"
 DEFAULT_ADMIN_API_AUDIENCE = "https://admin.theunending.ai"
 MODAL_APP_NAME = "theunending"
 
-# Machine auth (see code/src/machine_auth/__init__.py): the endpoint accepts a fresh
-# RS256 JWT minted by the admin service account and verified against Google's
-# per-account JWKS endpoint. The expected issuer comes from the modal secret
-# "google-machine" (GOOGLE_SERVICE_ACCOUNT_EMAIL); key rotation is handled by
-# Google, so Envoy/Modal need no redeploy on rotation.
-EXPECTED_ISSUER_ENV = "GOOGLE_SERVICE_ACCOUNT_EMAIL"
-AUDIENCE_ENV = "ADMIN_API_AUDIENCE"
-JWKS_URL = "https://www.googleapis.com/service_accounts/v1/jwk/{email}"
+# Machine auth (see code/src/machine_auth/__init__.py): the endpoint accepts a
+# Google OIDC ID token minted via WIF + iamcredentials generateIdToken by the
+# admin API service account, verified against Google's OIDC JWKS endpoint.
+# The expected service account email comes from the modal secret
+# "google-machine" (GOOGLE_SERVICE_ACCOUNT_EMAIL).
+GOOGLE_OIDC_ISSUER = "https://accounts.google.com"
+GOOGLE_OIDC_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
+EXPECTED_EMAIL_ENV = "GOOGLE_SERVICE_ACCOUNT_EMAIL"
+AUDIENCE_ENV = "MODAL_API_AUDIENCE"
 
 
 def _expected_audience() -> str:
-    return (os.environ.get(AUDIENCE_ENV) or "").strip() or DEFAULT_ADMIN_API_AUDIENCE
+    return (
+        (os.environ.get(AUDIENCE_ENV) or "").strip()
+        or (os.environ.get("ADMIN_API_AUDIENCE") or "").strip()
+        or DEFAULT_ADMIN_API_AUDIENCE
+    )
 
 
-def _expected_issuer() -> str:
-    return (os.environ.get(EXPECTED_ISSUER_ENV) or "").strip()
+def _expected_email() -> str:
+    return (os.environ.get(EXPECTED_EMAIL_ENV) or "").strip()
 
 
+@functools.lru_cache(maxsize=1)
 def _jwk_client() -> jwt.PyJWKClient:
-    """Client for the Google per-account JWKS endpoint (cached)."""
-    email = _expected_issuer()
-    if not email:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="machine JWT issuer is not configured",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return jwt.PyJWKClient(JWKS_URL.format(email=email), cache_keys=True, lifespan=300)
+    """Cached client for Google's OIDC JWKS endpoint."""
+    return jwt.PyJWKClient(GOOGLE_OIDC_JWKS_URL, cache_keys=True, lifespan=300)
 
 
 def _compute_model_prompt_hash(model: str, prompt: str) -> str:
@@ -81,11 +81,11 @@ def _check_auth(
     request: Request,
     token: HTTPAuthorizationCredentials = Depends(auth_scheme),  # noqa: B008 - FastAPI dependency injection idiom
 ) -> bool:
-    expected_iss = _expected_issuer()
-    if not expected_iss:
+    expected_email = _expected_email()
+    if not expected_email:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="machine JWT issuer is not configured",
+            detail="machine JWT service account email is not configured",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -96,7 +96,7 @@ def _check_auth(
             signing_key.key,
             algorithms=["RS256"],
             audience=_expected_audience(),
-            issuer=expected_iss,
+            issuer=GOOGLE_OIDC_ISSUER,
         )
     except Exception as exc:
         raise HTTPException(
@@ -105,11 +105,10 @@ def _check_auth(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
-    sub = payload.get("sub")
-    if sub != expected_iss:
+    if payload.get("email") != expected_email or payload.get("email_verified") is not True:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid machine token subject",
+            detail="Invalid machine token email",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return True

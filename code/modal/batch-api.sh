@@ -1,22 +1,22 @@
 #!/bin/bash
 # Trigger a Modal batch job via the public entrypoint.
-# Mints a fresh machine JWT signed as the admin service account (see
-# code/src/machine_auth/__init__.py) instead of using a static bearer token.
+# Uses a pre-minted GOOGLE_MACHINE_ID_TOKEN if set, or impersonates
+# GCP_SERVICE_ACCOUNT_EMAIL via gcloud (no static service account keys).
 set -euo pipefail
 
-: "${PROMPT:?}" "${S3_PREFIX:?}" "${GOOGLE_SERVICE_ACCOUNT_KEY_JSON:?}"
+: "${PROMPT:?}" "${S3_PREFIX:?}"
 
 MODAL_ENDPOINT=https://morrowwr--theunending-api-entrypoint.us-east.modal.run
+AUDIENCE="${MODAL_API_AUDIENCE:-${ADMIN_API_AUDIENCE:-https://admin.theunending.ai}}"
 
-cd "$(dirname "$0")/.."  # code/
-TOKEN=$(uv run python -c "
-import os
-from machine_auth import machine_jwt
-print(machine_jwt(
-    os.environ['GOOGLE_SERVICE_ACCOUNT_KEY_JSON'],
-    os.environ.get('ADMIN_API_AUDIENCE') or 'https://admin.theunending.ai',
-))
-")
+if [ -n "${GOOGLE_MACHINE_ID_TOKEN:-}" ]; then
+    TOKEN="${GOOGLE_MACHINE_ID_TOKEN}"
+else
+    : "${GCP_SERVICE_ACCOUNT_EMAIL:?Set GCP_SERVICE_ACCOUNT_EMAIL or GOOGLE_MACHINE_ID_TOKEN}"
+    TOKEN=$(gcloud auth print-identity-token \
+        --impersonate-service-account="${GCP_SERVICE_ACCOUNT_EMAIL}" \
+        --audiences="${AUDIENCE}")
+fi
 
 BODY=$(jq -nc --arg prompt "$PROMPT" --arg s3_prefix "$S3_PREFIX" \
     '{prompt: $prompt, s3_prefix: $s3_prefix}')

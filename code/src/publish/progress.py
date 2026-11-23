@@ -12,7 +12,7 @@ from tenacity import (
     wait_exponential,
 )
 
-from machine_auth import machine_jwt
+from machine_auth import machine_id_token_from_env
 
 DEFAULT_RETRY_EXCEPTIONS: tuple[type[Exception], ...] = (
     httpx.TimeoutException,
@@ -91,7 +91,9 @@ DEFAULT_ADMIN_API_AUDIENCE = "https://admin.theunending.ai"
 
 
 def _admin_api_audience() -> str:
-    return os.environ.get("ADMIN_API_AUDIENCE") or DEFAULT_ADMIN_API_AUDIENCE
+    return (
+        os.environ.get("ADMIN_API_AUDIENCE") or ""
+    ).strip() or DEFAULT_ADMIN_API_AUDIENCE
 
 
 def _update_progress(
@@ -128,13 +130,8 @@ class AdminAPI:
             return
         self._http = httpx.Client()
 
-    def _headers(self) -> dict:
-        key = os.environ.get("GOOGLE_SERVICE_ACCOUNT_KEY_JSON")
-        if not key:
-            raise RuntimeError(
-                "GOOGLE_SERVICE_ACCOUNT_KEY_JSON is not set; cannot mint a machine token"
-            )
-        token = machine_jwt(key, _admin_api_audience())
+    def _headers(self) -> dict[str, str]:
+        token = machine_id_token_from_env(_admin_api_audience())
         headers = {
             "content-type": "application/json",
             "accept": "application/json",

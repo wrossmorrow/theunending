@@ -1,33 +1,27 @@
-"""Startup validation for the admin's machine-auth key."""
+"""Startup validation for the admin's machine-auth WIF configuration."""
 
 from __future__ import annotations
 
-import json
-from typing import Any
+from api.utils.machine_auth import validate_wif_config
 
 
-def require_machine_auth(key_json: str | dict[str, Any] | None):
-    """Ensure the machine-auth signing key is present and well-formed.
+def require_machine_auth(
+    wif_provider: str | None,
+    service_account_email: str | None,
+    static_token: str | None = None,
+) -> tuple[str, str] | None:
+    """Ensure WIF machine-auth configuration (or a local static token override) is valid.
 
-    The admin service mints machine JWTs for every call into the job system;
-    running without a valid key (e.g. a missing env var in a deploy) must fail
-    loudly at startup rather than silently sending unauthenticated requests.
-
-    Returns the parsed key (dict).
+    The admin service mints Google OIDC ID tokens via Workload Identity Federation
+    for every call into the job system; running without valid config (e.g. missing
+    env vars in a deploy) must fail loudly at startup rather than silently sending
+    unauthenticated requests.
     """
-    if not key_json:
+    if isinstance(static_token, str) and static_token.strip():
+        return None
+    if not wif_provider or not service_account_email:
         raise ValueError(
-            "GOOGLE_SERVICE_ACCOUNT_KEY_JSON is not set; refusing to start. "
-            "Admin job submissions require a machine JWT key."
+            "GCP_WIF_PROVIDER and GCP_SERVICE_ACCOUNT_EMAIL must be set "
+            "(or GOOGLE_MACHINE_ID_TOKEN for local dev); refusing to start."
         )
-    try:
-        key = json.loads(key_json) if isinstance(key_json, str) else key_json
-    except json.JSONDecodeError as exc:
-        raise ValueError("GOOGLE_SERVICE_ACCOUNT_KEY_JSON is not valid JSON") from exc
-    if not isinstance(key, dict):
-        raise TypeError("GOOGLE_SERVICE_ACCOUNT_KEY_JSON must be a JSON object")
-    if not isinstance(key.get("private_key"), str) or not key["private_key"].strip():
-        raise ValueError("GOOGLE_SERVICE_ACCOUNT_KEY_JSON is missing 'private_key'")
-    if not isinstance(key.get("client_email"), str) or not key["client_email"].strip():
-        raise ValueError("GOOGLE_SERVICE_ACCOUNT_KEY_JSON is missing 'client_email'")
-    return key
+    return validate_wif_config(wif_provider, service_account_email)

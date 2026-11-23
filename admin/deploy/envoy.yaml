@@ -88,7 +88,9 @@ static_resources:
                         forward_bearer_token: false
                         # Never redirect API callers to Google sign-in; return 401 instead.
                         deny_redirect_matcher:
-                          prefix: /api
+                          - name: ":path"
+                            string_match:
+                              prefix: /api
                         # Bypass OAuth entirely when the request carries an Authorization
                         # header: external/machine callers authenticate via machine JWT
                         # (static JWKS not required) instead of the IdToken cookie flow.
@@ -115,19 +117,21 @@ static_resources:
                             cache_duration:
                               seconds: 300
                         machine_jwt:
-                          # External machine callers (Modal, Fargate publish jobs,
-                          # admin -> job-system calls) sign RS256 JWTs with the admin
-                          # service account. Verified against Google's per-account
-                          # JWKS endpoint, so key rotation needs no redeploy.
-                          issuer: REPLACE_WITH_ADMIN_SERVICE_ACCOUNT_EMAIL
+                          # External machine callers (Modal jobs, Fargate publish jobs)
+                          # exchange WIF credentials for Google OIDC ID tokens via
+                          # iamcredentials.googleapis.com:generateIdToken. Verified
+                          # against Google's standard OIDC JWKS endpoint; audience
+                          # separates machine tokens from browser OAuth tokens.
+                          issuer: https://accounts.google.com
                           audiences:
                             - "https://admin.theunending.ai"
                           from_headers:
-                            - Authorization
+                            - name: Authorization
+                              value_prefix: "Bearer "
                           payload_in_metadata: verified_machine_jwt
                           remote_jwks:
                             http_uri:
-                              uri: https://www.googleapis.com/service_accounts/v1/jwk/REPLACE_WITH_ADMIN_SERVICE_ACCOUNT_EMAIL
+                              uri: https://www.googleapis.com/oauth2/v3/certs
                               cluster: google_jwks
                               timeout: 5s
                             cache_duration:
@@ -135,9 +139,11 @@ static_resources:
                       rules:
                         - match:
                             prefix: /
-                          requires_any:
-                            - google_oidc
-                            - machine_jwt
+                          requires:
+                            requires_any:
+                              requirements:
+                                - provider_name: google_oidc
+                                - provider_name: machine_jwt
                   # RBAC Filter: lock access to specific admin email(s)
                   - name: envoy.filters.http.rbac
                     typed_config:
@@ -161,14 +167,33 @@ static_resources:
                             permissions:
                               - any: true
                             principals:
-                              - metadata:
-                                  filter: envoy.filters.http.jwt_authn
-                                  path:
-                                    - key: verified_machine_jwt
-                                    - key: sub
-                                  value:
-                                    string_match:
-                                      exact: "REPLACE_WITH_ADMIN_SERVICE_ACCOUNT_EMAIL"
+                              - and_ids:
+                                  ids:
+                                    - metadata:
+                                        filter: envoy.filters.http.jwt_authn
+                                        path:
+                                          - key: verified_machine_jwt
+                                          - key: email_verified
+                                        value:
+                                          bool_match: true
+                                    - or_ids:
+                                        ids:
+                                          - metadata:
+                                              filter: envoy.filters.http.jwt_authn
+                                              path:
+                                                - key: verified_machine_jwt
+                                                - key: email
+                                              value:
+                                                string_match:
+                                                  exact: "REPLACE_WITH_MODAL_JOBS_SA_EMAIL"
+                                          - metadata:
+                                              filter: envoy.filters.http.jwt_authn
+                                              path:
+                                                - key: verified_machine_jwt
+                                                - key: email
+                                              value:
+                                                string_match:
+                                                  exact: "REPLACE_WITH_PUBLISH_JOB_SA_EMAIL"
                   - name: envoy.filters.http.router
                     typed_config:
                       '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router

@@ -21,8 +21,12 @@ from api.v0.router import api_v0_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Fail startup loudly when the machine-auth key is missing or malformed.
-    require_machine_auth(settings.google_service_account_key_json)
+    # Fail startup loudly when machine-auth WIF config is missing or malformed.
+    require_machine_auth(
+        settings.gcp_wif_provider,
+        settings.gcp_service_account_email,
+        settings.google_machine_id_token,
+    )
     engine = create_async_engine(settings.database_url)
     app.state.engine = engine
     app.state.session_factory = create_session_factory(engine)

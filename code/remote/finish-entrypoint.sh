@@ -4,17 +4,19 @@ DEFAULT_SITE_BUCKET="theunending-ai-site-content-use1"
 DEFAULT_RAW_BUCKET="wrossmorrow-genai-repetitions-use1"
 DEFAULT_ADMIN_API_HOST="https://admin.theunending.ai"
 
-: "${BATCH_RUN_ID:?}" "${GOOGLE_SERVICE_ACCOUNT_KEY_JSON:?}"
+: "${BATCH_RUN_ID:?}"
 
 cd "$(dirname "$0")/.." || exit  # code/
-TOKEN=$(uv run python -c "
-import os
-from machine_auth import machine_jwt
-print(machine_jwt(
-    os.environ['GOOGLE_SERVICE_ACCOUNT_KEY_JSON'],
-    os.environ.get('ADMIN_API_AUDIENCE') or 'https://admin.theunending.ai',
-))
-")
+
+AUDIENCE="${ADMIN_API_AUDIENCE:-https://admin.theunending.ai}"
+if [ -n "${GOOGLE_MACHINE_ID_TOKEN:-}" ]; then
+    TOKEN="${GOOGLE_MACHINE_ID_TOKEN}"
+else
+    : "${GCP_SERVICE_ACCOUNT_EMAIL:?Set GCP_SERVICE_ACCOUNT_EMAIL or GOOGLE_MACHINE_ID_TOKEN}"
+    TOKEN=$(gcloud auth print-identity-token \
+        --impersonate-service-account="${GCP_SERVICE_ACCOUNT_EMAIL}" \
+        --audiences="${AUDIENCE}")
+fi
 AUTH_HEADER="authorization: Bearer ${TOKEN}"
 
 # (I don't really like this, but it could mostly work)
