@@ -1,0 +1,43 @@
+name: Code CI
+
+on:
+  pull_request:
+    paths:
+      - "code/**"
+      - ".github/workflows/pull-request-code.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "code/**"
+      - ".github/workflows/pull-request-code.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: code
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Run tests
+        run: uv run pytest

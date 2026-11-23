@@ -1,13 +1,11 @@
-
 import modal
 
-
 models = [
-    'black-forest-labs/FLUX.1-schnell',
-    'black-forest-labs/FLUX.2-klein-4B',
-    'black-forest-labs/flux-3-image-klein',
-    'black-forest-labs/flux-3-image-klein-pup',
-    'timm/PE-Core-L-14-336',
+    "black-forest-labs/FLUX.1-schnell",
+    "black-forest-labs/FLUX.2-klein-4B",
+    "black-forest-labs/flux-3-image-klein",
+    "black-forest-labs/flux-3-image-klein-pup",
+    "timm/PE-Core-L-14-336",
 ]
 
 app = modal.App("theunending-volume")
@@ -23,12 +21,13 @@ vol = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)
 )
 def preload_models():
     import os
+
     from huggingface_hub import snapshot_download
 
     for model in models:
         snapshot_download(
             repo_id=model,
-            token=os.environ['HF_TOKEN'],
+            token=os.environ["HF_TOKEN"],
         )
 
     vol.commit()

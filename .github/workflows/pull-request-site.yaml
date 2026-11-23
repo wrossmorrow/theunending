@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - site/**
+      - ".github/workflows/pull-request-site.yaml"
 
 permissions:
   id-token: write

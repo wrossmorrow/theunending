@@ -200,9 +200,8 @@ class ExternalJobClient:
                 "job submissions must never be sent unauthenticated"
             )
         audience = (
-            (settings.modal_api_audience or "").strip()
-            or settings.admin_api_audience
-        )
+            settings.modal_api_audience or ""
+        ).strip() or settings.admin_api_audience
         token = machine_id_token(
             settings.gcp_wif_provider,
             settings.gcp_service_account_email,

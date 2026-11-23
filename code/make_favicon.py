@@ -23,11 +23,11 @@ from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw, ImageFont
 
-VIEW = 64          # SVG user-space box
-SS = 16            # supersample factor for the PNGs
+VIEW = 64  # SVG user-space box
+SS = 16  # supersample factor for the PNGs
 
 PALETTES = {
-    "dark":  {"bg": "#111111", "fg": "#ffffff"},
+    "dark": {"bg": "#111111", "fg": "#ffffff"},
     "light": {"bg": "#ffffff", "fg": "#111111"},
 }
 
@@ -79,7 +79,7 @@ def write_svg(path, d, bounds, pal, pad_ratio):
         f'<rect width="{VIEW}" height="{VIEW}" fill="{pal["bg"]}"/>'
         f'<g transform="translate({tx:.4f} {ty:.4f}) scale({scale:.6f} {-scale:.6f})">'
         f'<path fill="{pal["fg"]}" d="{d}"/>'
-        f'</g></svg>\n'
+        f"</g></svg>\n"
     )
     with open(path, "w") as fh:
         fh.write(svg)
@@ -108,16 +108,19 @@ def raster(font_path, text, size, pal, pad_ratio):
     d = ImageDraw.Draw(im)
     px, (l, t, r, b) = fit(d, text, font_path, big, pad_ratio)
     f = ImageFont.truetype(font_path, px)
-    d.text(((big - (r - l)) / 2 - l, (big - (b - t)) / 2 - t),
-           text, font=f, fill=pal["fg"])
+    d.text(
+        ((big - (r - l)) / 2 - l, (big - (b - t)) / 2 - t), text, font=f, fill=pal["fg"]
+    )
     return im.resize((size, size), Image.LANCZOS)
 
 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--text", default="Un")
-    p.add_argument("--font",
-                   default="/usr/share/texmf/fonts/opentype/public/tex-gyre/texgyrebonum-bold.otf")
+    p.add_argument(
+        "--font",
+        default="/usr/share/texmf/fonts/opentype/public/tex-gyre/texgyrebonum-bold.otf",
+    )
     p.add_argument("--out", default="assets/icons")
     p.add_argument("--palette", default="dark", choices=list(PALETTES))
     p.add_argument("--pad", type=float, default=0.14)
@@ -132,22 +135,33 @@ def main():
 
     for s in (16, 32, 48, 96, 192, 512):
         raster(args.font, args.text, s, pal, args.pad).save(
-            os.path.join(args.out, f"icon-{s}.png"))
+            os.path.join(args.out, f"icon-{s}.png")
+        )
 
     # iOS rounds the corners itself and never shows transparency, so the touch
     # icon is opaque and sits a little further from the edge than a tab icon
     raster(args.font, args.text, 180, pal, args.pad + 0.06).save(
-        os.path.join(args.out, "apple-touch-icon.png"))
+        os.path.join(args.out, "apple-touch-icon.png")
+    )
 
     raster(args.font, args.text, 48, pal, args.pad).save(
-        os.path.join(args.out, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)])
+        os.path.join(args.out, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)]
+    )
 
     manifest = {
         "name": args.name,
         "short_name": args.text,
         "icons": [
-            {"src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
-            {"src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+            {
+                "src": "/assets/icons/icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+            },
+            {
+                "src": "/assets/icons/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+            },
         ],
         "theme_color": pal["bg"],
         "background_color": pal["bg"],

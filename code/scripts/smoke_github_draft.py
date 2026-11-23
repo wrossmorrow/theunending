@@ -52,7 +52,7 @@ try:
 
     print(f"Created draft PR: {pr_url}")
 
-except Exception as e:
+except Exception as e:  # noqa: BLE001
     print(f"Failed to create PR: {e.__class__.__name__} {e}")
 
 finally:

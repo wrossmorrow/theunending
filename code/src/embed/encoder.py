@@ -13,17 +13,17 @@ import os
 # implementations and silently need the CPU fallback.
 os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Iterator, Sequence
 
 import numpy as np
 import torch
 from PIL import Image
 
 __all__ = [
-    "MODELS",
     "IMAGE_EXTENSIONS",
+    "MODELS",
     "PEEncoder",
     "iter_images",
     "pick_device",
@@ -136,7 +136,7 @@ class PEEncoder:
         model: str = DEFAULT_MODEL,
         device: str = "auto",
         dtype: str = "float32",
-    ) -> "PEEncoder":
+    ) -> PEEncoder:
         import open_clip  # imported lazily so `--help` stays fast
 
         model_id = resolve_model(model)

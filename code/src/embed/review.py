@@ -1,5 +1,6 @@
 import argparse
 import json
+
 import numpy as np
 
 
@@ -14,10 +15,10 @@ def cmd_review(input: str, output: str):
         meta = json.load(f)
         paths = meta["paths"]
 
-    E = E / np.linalg.norm(E, axis=1, keepdims=True)   # L2-normalize → cosine = dot
-    S = E @ E.T                                        # 5000×5000, ~100MB float32
-    np.fill_diagonal(S, -1)                            # never recommend the image itself
-    idx = np.argpartition(-S, 4, axis=1)[:, :4]        # then sort those 4 by score
+    E = E / np.linalg.norm(E, axis=1, keepdims=True)  # L2-normalize → cosine = dot
+    S = E @ E.T  # 5000×5000, ~100MB float32
+    np.fill_diagonal(S, -1)  # never recommend the image itself
+    idx = np.argpartition(-S, 4, axis=1)[:, :4]  # then sort those 4 by score
 
     print(idx.shape, idx)
 
@@ -25,9 +26,9 @@ def cmd_review(input: str, output: str):
         indices = idx[i]
         path = clean_path(p)
         with open(f"{output}/{path}.json", "w") as f:
-            f.write(json.dumps({
-                "similar": [clean_path(paths[int(j)]) for j in indices]
-            }))
+            f.write(
+                json.dumps({"similar": [clean_path(paths[int(j)]) for j in indices]})
+            )
 
 
 if __name__ == "__main__":
