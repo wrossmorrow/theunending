@@ -1468,6 +1468,61 @@ def test_publish_set_rejects_extra_details_over_512_characters(
         assert response.status_code == 422
 
 
+def test_publish_set_github_pr_only_on_published_set_returns_201(
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Publishing a PUBLISHED set with github_pr_only returns 201 and enqueues a PR-only run."""
+    with TestClient(api) as client:
+        set_id, _draft_id, _batch_run_id = _create_completed_set(
+            client, session_factory, monkeypatch
+        )
+        with mock_publisher(session_factory) as publisher:
+            response = client.post(f"/api/v0/sets/{set_id}/publish")
+            assert response.status_code == 200, response.text
+            publish_run_id = _get_run_id_by_type(client, set_id, "PUBLISH")
+            assert (
+                client.put(
+                    f"/api/v0/runs/{publish_run_id}/status",
+                    json={"status": "IN_PROGRESS"},
+                ).status_code
+                == 200
+            )
+            assert (
+                client.put(
+                    f"/api/v0/runs/{publish_run_id}/status",
+                    json={"status": "COMPLETED"},
+                ).status_code
+                == 200
+            )
+            assert client.get(f"/api/v0/sets/{set_id}").json()["status"] == "PUBLISHED"
+
+            response = client.post(
+                f"/api/v0/sets/{set_id}/publish",
+                json={"github_pr_only": True},
+            )
+            assert response.status_code == 200, response.text
+            assert len(publisher.enqueued_requests) == 2
+            enqueued = publisher.enqueued_requests[1]
+            assert enqueued.github_pr_only is True
+            assert enqueued.attempts == 0
+
+
+def test_publish_set_github_pr_only_on_draft_set_returns_400() -> None:
+    """Publishing a DRAFT set with github_pr_only returns 400."""
+    with TestClient(api) as client:
+        created = client.post(
+            "/api/v0/sets", json={"model": "black-forest-labs/FLUX.2-klein-4B"}
+        )
+        set_id = created.json()["set_id"]
+        response = client.post(
+            f"/api/v0/sets/{set_id}/publish",
+            json={"github_pr_only": True},
+        )
+        assert response.status_code == 400
+        assert "COMPLETED" in response.json()["detail"]
+
+
 def test_publish_set_not_completed_returns_400() -> None:
     """Publishing a set that is not COMPLETED returns 400."""
     with TestClient(api) as client:
