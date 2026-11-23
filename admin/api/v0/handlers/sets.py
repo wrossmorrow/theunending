@@ -123,7 +123,10 @@ async def publish_set(
                 status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Set {set_id} not found.",
             )
-        if set_.status != database.SetStatus.COMPLETED:
+        pr_only = body.github_pr_only if body is not None else False
+        if set_.status != database.SetStatus.COMPLETED and not (
+            pr_only and set_.status == database.SetStatus.PUBLISHED
+        ):
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Set {set_id} is not in COMPLETED status.",
@@ -165,6 +168,7 @@ async def publish_set(
                 draft_id=draft_id,
                 run_id=run.run_id,
                 extra_details=body.extra_details if body is not None else None,
+                github_pr_only=pr_only,
             )
         )
 

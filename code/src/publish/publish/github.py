@@ -14,6 +14,62 @@ from .settings import PublishSettings
 GITHUB_API_BASE_URL = "https://api.github.com"
 
 
+def _draft_files(
+    settings: PublishSettings,
+    manifest: DraftManifest,
+    og_image_path: str | None = None,
+    it_image_path: str | None = None,
+) -> dict[str, bytes]:
+    """Map draft manifest contents to files to add to the draft branch."""
+
+    files: dict[str, bytes] = {}
+
+    # default image paths
+
+    if og_image_path is None:
+        og_image_path = f"og/{settings.SET_NAME}.jpg"
+
+    if it_image_path is None:
+        it_image_path = f"{manifest.set_spec.thumb}.webp"
+
+    # prepared bytes
+
+    post_draft = manifest.post_draft
+    files[f"site/_posts/{manifest.post_name}.md"] = post_draft.encode("utf-8")
+
+    image_manifest = manifest.image_manifest
+    files[f"site/assets/streams/{settings.SET_NAME}.json"] = dumps(
+        image_manifest
+    ).encode("utf-8")
+
+    set_spec = manifest.set_spec
+    files[f"site/_data/set_streams/{manifest.post_name}.json"] = (
+        set_spec.model_dump_json().encode("utf-8")
+    )
+
+    posters_spec = manifest.posters_spec
+    files[f"site/_data/set_posters/{manifest.post_name}.json"] = dumps(
+        posters_spec
+    ).encode("utf-8")
+
+    # above here is prepared content derived from the settings
+    # the two below here are instead files, expected to be at
+    #
+    #   * og/{settings.SET_NAME}.jpg
+    #   * {thumb_id}.webp
+    #
+    # relative to the running directory.
+
+    og_tile = Path(og_image_path).read_bytes()
+    files[f"site/assets/og/{settings.SET_NAME}.jpg"] = og_tile
+
+    thumb_id = manifest.set_spec.thumb
+    index_thumb = Path(it_image_path).read_bytes()
+    files[f"site/assets/img/index-thumbs/{thumb_id}.webp"] = index_thumb
+
+    return files
+
+
 class GithubPublisher:
     """Publishes draft content to a GitHub repository via a GitHub App installation."""
 
@@ -84,6 +140,14 @@ class GithubPublisher:
 
     def add_files(self, files: dict[str, bytes], branch: str, token: str) -> None:
         for path, content in files.items():
+            # resolve the existing blob sha when the file already exists on the
+            # branch so that updates can target the file precisely
+            existing = httpx.get(
+                url=f"{self.github_api_base_url}/repos/{self.owner}/{self.repo}/contents/{path.lstrip('/')}",
+                headers=self._headers(token),
+                params={"ref": branch},
+            )
+            sha = str(existing.json()["sha"]) if existing.status_code == 200 else None
             response = httpx.put(
                 url=f"{self.github_api_base_url}/repos/{self.owner}/{self.repo}/contents/{path.lstrip('/')}",
                 headers=self._headers(token),
@@ -91,9 +155,28 @@ class GithubPublisher:
                     "message": f"publish draft {self.repo}",
                     "content": base64.b64encode(content).decode("ascii"),
                     "branch": branch,
+                    **({"sha": sha} if sha is not None else {}),
                 },
             )
             response.raise_for_status()
+
+    def _existing_pr_url(self, branch: str, token: str, base: str) -> str:
+        response = httpx.get(
+            url=f"{self.github_api_base_url}/repos/{self.owner}/{self.repo}/pulls",
+            headers=self._headers(token),
+            params={"head": f"{self.owner}:{branch}", "base": base},
+        )
+        response.raise_for_status()
+        pull_requests = response.json()
+        for pull_request in pull_requests:
+            if (
+                pull_request.get("head", {}).get("ref") == branch
+                and pull_request.get("base", {}).get("ref") == base
+            ):
+                return str(pull_request["html_url"])
+        raise RuntimeError(
+            f"Pull request from {branch} to {base} not found; cannot resolve existing draft pull request."
+        )
 
     def open_pr(
         self,
@@ -113,6 +196,10 @@ class GithubPublisher:
                 "body": body,
             },
         )
+        if response.status_code == 422:
+            # a pull request from this branch may already exist, e.g. on a retry
+            # of a partially completed publish; treat as idempotent success
+            return self._existing_pr_url(branch=branch, token=token, base=base)
         response.raise_for_status()
         return str(response.json()["html_url"])
 
@@ -140,34 +227,31 @@ class GithubPublisher:
         return self.open_pr(branch, title, body, token, base)
 
 
-def draft_files(settings: PublishSettings, manifest: DraftManifest) -> dict[str, bytes]:
-    """Map draft manifest contents to files to add to the draft branch."""
-
-    files: dict[str, bytes] = {}
-
-    post_draft = manifest.post_draft
-    files[f"site/_posts/{settings.POST_NAME}.md"] = post_draft.encode("utf-8")
-
-    image_manifest = manifest.image_manifest
-    files[f"site/assets/streams/{settings.SET_NAME}.json"] = dumps(
-        image_manifest
-    ).encode("utf-8")
-
-    set_spec = manifest.set_spec
-    files[f"site/_data/set_streams/{settings.POST_NAME}.json"] = (
-        set_spec.model_dump_json().encode("utf-8")
+def github_publish(
+    settings: PublishSettings,
+    manifest: DraftManifest,
+    og_image_path: str | None = None,
+    it_image_path: str | None = None,
+) -> str:
+    files = _draft_files(
+        settings=settings,
+        manifest=manifest,
+        og_image_path=og_image_path,
+        it_image_path=it_image_path,
     )
-
-    posters_spec = manifest.posters_spec
-    files[f"site/_data/set_posters/{settings.POST_NAME}.json"] = dumps(
-        posters_spec
-    ).encode("utf-8")
-
-    og_tile = Path(f"og/{settings.SET_NAME}.jpg").read_bytes()
-    files[f"site/assets/og/{settings.SET_NAME}.jpg"] = og_tile
-
-    thumb_id = manifest.set_spec.thumb
-    index_thumb = Path(f"{thumb_id}.webp").read_bytes()
-    files[f"site/assets/img/index-thumbs/{thumb_id}.webp"] = index_thumb
-
-    return files
+    return GithubPublisher(
+        app_id=settings.GITHUB_APP_ID,
+        client_id=settings.GITHUB_APP_CLIENT_ID,
+        installation_id=settings.GITHUB_APP_INSTALLATION_ID,
+        private_key=settings.GITHUB_APP_PRIVATE_KEY,
+        owner=settings.GITHUB_REPO_OWNER,
+        repo=settings.GITHUB_REPO_NAME,
+    ).create_draft_pr(
+        files=files,
+        title=f"Publish draft: {manifest.post_name}",
+        body=(
+            f"Publish draft for set {settings.SET_NAME} (post {manifest.post_name}). "
+            f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{manifest.post_name}/spec.json"
+        ),
+        branch=f"draft/{manifest.post_name}",
+    )

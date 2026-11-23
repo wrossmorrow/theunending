@@ -79,13 +79,16 @@ async def _run_publisher_until(
         await publisher.aclose()
 
 
-def _publish_request(extra_details: str | None = None) -> PublishRequest:
+def _publish_request(
+    extra_details: str | None = None, github_pr_only: bool = False
+) -> PublishRequest:
     """Build a publish request for a fresh run."""
     return PublishRequest(
         set_id=uuid4(),
         draft_id=uuid4(),
         run_id=uuid4(),
         extra_details=extra_details,
+        github_pr_only=github_pr_only,
     )
 
 
@@ -290,3 +293,30 @@ def test_publisher_gives_up_after_exhausting_attempts(
 
     asyncio.run(scenario())
     assert len(mock_ecs.run_task_calls) == 2
+
+
+def test_publisher_submits_ecs_task_with_github_pr_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The publish worker forwards the PR-only flag to the task command."""
+
+    mock_ecs = MockEcsClient()
+    request = _publish_request(github_pr_only=True)
+
+    async def scenario() -> None:
+        monkeypatch.setattr(boto3, "client", lambda *args, **kwargs: mock_ecs)
+        publisher = Publisher(queue_timeout_seconds=0.25, max_attempts=3)
+        await _run_publisher_until(publisher, mock_ecs, request, expected_calls=1)
+
+    asyncio.run(scenario())
+    assert len(mock_ecs.run_task_calls) == 1
+    command = mock_ecs.run_task_calls[0]["overrides"]["containerOverrides"][0][
+        "command"
+    ]
+    assert command == [
+        "publish",
+        "publish",
+        "--run-id",
+        str(request.run_id),
+        "--github-pr-only",
+    ]

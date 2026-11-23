@@ -5,7 +5,8 @@ import os
 
 import boto3
 
-from publish.publish.github import GithubPublisher, draft_files
+from publish.publish.github import github_publish
+from publish.publish.manifest import DraftManifest
 from publish.publish.settings import PublishSettings
 
 with open(os.environ["GITHUB_APP_PRIVATE_KEY_FILE"], "r") as f:
@@ -20,34 +21,28 @@ spec = s3.get_object(
     Bucket=settings.SITE_BUCKET,
     Key=f"drafts/{settings.POST_NAME}/spec.json",
 )
-draft_manifest = json.loads(spec["Body"].read())
+draft_manifest = DraftManifest.model_validate(json.loads(spec["Body"].read()))
 
 og_filename = f"og/{settings.SET_NAME}.jpg"
+thumb_filename = f"{draft_manifest.set_spec.thumb}.webp"
 os.makedirs("og", exist_ok=True)
 s3.download_file(
     Bucket=settings.SITE_BUCKET,
-    Key=f"assets/og/{settings.SET_NAME}.jpg",
+    Key=f"{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg",
     Filename=og_filename,
+)
+s3.download_file(
+    Bucket=settings.SITE_BUCKET,
+    Key=f"{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp",
+    Filename=thumb_filename,
 )
 
 try:
-    publisher = GithubPublisher(
-        app_id=settings.GITHUB_APP_ID,
-        client_id=settings.GITHUB_APP_CLIENT_ID,
-        installation_id=settings.GITHUB_APP_INSTALLATION_ID,
-        private_key=settings.GITHUB_APP_PRIVATE_KEY,
-        owner=settings.GITHUB_REPO_OWNER,
-        repo=settings.GITHUB_REPO_NAME,
-    )
-
-    pr_url = publisher.create_draft_pr(
-        files=draft_files(settings, draft_manifest),
-        title=f"Publish draft: {settings.POST_NAME}",
-        body=(
-            f"Publish draft for set {settings.SET_NAME} (post {settings.POST_NAME}). "
-            f"Draft manifest: s3://{settings.SITE_BUCKET}/drafts/{settings.POST_NAME}/spec.json"
-        ),
-        branch=f"draft/{settings.POST_NAME}",
+    pr_url = github_publish(
+        settings=settings,
+        manifest=draft_manifest,
+        og_image_path=og_filename,
+        it_image_path=thumb_filename,
     )
 
     print(f"Created draft PR: {pr_url}")
@@ -57,3 +52,4 @@ except Exception as e:  # noqa: BLE001
 
 finally:
     os.remove(og_filename)
+    os.remove(thumb_filename)
