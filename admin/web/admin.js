@@ -15,6 +15,12 @@ const CONFIG = {
   // short-lived presigned URL. Reuse a fetched URL for this long before asking again;
   // keep it well under the presign expiry.
   previewReuseMs: 5 * 60 * 1000,
+
+  // Voluminous run output (failure traces, detail blobs) is capped in the rendered
+  // list; the full value is kept on the element's `title` for hover. Capped so run
+  // rows can't overflow their container on small screens.
+  maxRunMessageChars: 160,
+  maxRunDetailChars: 240,
 };
 
 /* ------------------------------------------------------------------ *
@@ -163,6 +169,13 @@ function setBadge(el, status) {
   el.textContent = status.replace("_", " ");
 }
 
+// Shorten free-form text for inline display, appending an ellipsis when truncated.
+function truncate(text, max) {
+  const t = (text ?? "").trim();
+  if (t.length <= max) return t;
+  return `${t.slice(0, Math.max(1, max - 1))}…`;
+}
+
 // API timestamps are naive UTC; make sure the browser parses them as UTC.
 function parseUtc(ts) {
   if (!ts) return null;
@@ -245,6 +258,15 @@ function setConn(ok, why) {
   el.classList.toggle("ok", ok);
   el.classList.toggle("bad", !ok);
   el.textContent = ok ? "connected" : (why || "offline");
+}
+
+// Full run output (message / details) in a modal. Native tooltip-based access doesn't
+// exist on touch devices, so long failure text is also opened here on tap.
+function showRunDetail({ title, body }) {
+  const dlg = $("#run-detail-dialog");
+  field(dlg, "title").textContent = title;
+  field(dlg, "body").textContent = body;
+  dlg.showModal();
 }
 
 function confirmDialog({ title, body, ok, extraDetails = null }) {
@@ -760,7 +782,9 @@ function renderDetails(el, details) {
     if (v === null || v === undefined || v === "") continue;
     parts.push(`${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`);
   }
-  el.textContent = parts.join(" · ");
+  const summary = parts.join(" · ");
+  // Cap the inline summary; the full JSON stays on hover via the title above.
+  el.textContent = truncate(summary, CONFIG.maxRunDetailChars);
 }
 
 function renderRun(run, { latest }) {
@@ -775,8 +799,19 @@ function renderRun(run, { latest }) {
   else if (ACTIVE.has(run.status) && start) time += ` · ${fmtDuration(Date.now() - start)} so far`;
   field(node, "time").textContent = time;
 
-  field(node, "message").textContent = run.message ?? "";
-  renderDetails(field(node, "details"), run.details);
+  const message = run.message ?? "";
+  const messageEl = field(node, "message");
+  messageEl.textContent = truncate(message, CONFIG.maxRunMessageChars);
+  // Full message is one hover away; the list itself stays capped.
+  messageEl.title = message;
+  messageEl.addEventListener("click", () => {
+    showRunDetail({ title: `${run.type} run message`, body: message });
+  }, { signal: viewSignal() });
+  const detailsEl = field(node, "details");
+  renderDetails(detailsEl, run.details);
+  detailsEl.addEventListener("click", () => {
+    showRunDetail({ title: `Run ${run.run_id}`, body: JSON.stringify(run.details, null, 2) });
+  }, { signal: viewSignal() });
   const idEl = field(node, "run_id");
   idEl.textContent = run.run_id.slice(-8);
   idEl.title = `run ${run.run_id}\nexternal ${run.external_run_id}`;
