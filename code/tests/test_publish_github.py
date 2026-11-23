@@ -379,7 +379,8 @@ def test_just_publish_pr_marks_failed_on_s3_error(
 
     assert exit_code == 1
     assert admin.calls[-1][0] == Status.FAILED
-    assert admin.calls[-1][2]["error_class"] == "ClientError"
+    assert admin.calls[-1][2]["error_class"] == "S3DownloadError"
+    assert "2026-11-22-demo" in admin.calls[-1][2]["error"]
 
 
 def test_handle_github_pr_only_exits_with_pr_only_result(

@@ -24,6 +24,31 @@ from .settings import PublishSettings
 from .utils import do_uploads, get_source_content, list_image_ids
 
 
+class S3DownloadError(Exception):
+    def __init__(self, bucket: str, key: str, error: ClientError):
+        self.bucket = bucket
+        self.key = key
+        self.code = error.response["Error"]["Code"]
+        self.error = error
+        super().__init__(f"S3 ClientError ({self.code}) at 's3://{bucket}/{key}'")
+
+
+def _wrapped_download_file(
+    s3: S3Client,
+    bucket: str,
+    key: str,
+    filename: str,
+) -> None:
+    try:
+        s3.download_file(
+            Bucket=bucket,
+            Key=key,
+            Filename=filename,
+        )
+    except ClientError as e:
+        raise S3DownloadError(bucket, key, e) from e
+
+
 def _just_publish_pr(s3: S3Client, settings: PublishSettings, admin: AdminAPI) -> int:
 
     try:
@@ -36,10 +61,12 @@ def _just_publish_pr(s3: S3Client, settings: PublishSettings, admin: AdminAPI) -
 
         draft_manifest: DraftManifest
         thumb_id: str
-        s3.download_file(
-            Bucket=settings.SITE_BUCKET,
-            Key=f"drafts/{post_name}/spec.json",
-            Filename="spec.json",
+        draft_manifest_name = f"drafts/{post_name}/spec.json"
+        _wrapped_download_file(
+            s3,
+            settings.SITE_BUCKET,
+            draft_manifest_name,
+            "spec.json",
         )
         with open("spec.json", "r") as f:
             draft_manifest = DraftManifest.model_validate_json(f.read())
@@ -55,15 +82,17 @@ def _just_publish_pr(s3: S3Client, settings: PublishSettings, admin: AdminAPI) -
         # locally
         og_image_path = f"{settings.SET_NAME}.jpg"
         it_image_path = f"{thumb_id}.webp"
-        s3.download_file(
-            Bucket=settings.SITE_BUCKET,
-            Key=f"{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg",
-            Filename=og_image_path,
+        _wrapped_download_file(
+            s3,
+            settings.SITE_BUCKET,
+            f"{settings.SITE_OG_IMAGE_PREFIX}/{settings.SET_NAME}.jpg",
+            og_image_path,
         )
-        s3.download_file(
-            Bucket=settings.SITE_BUCKET,
-            Key=f"{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp",
-            Filename=it_image_path,
+        _wrapped_download_file(
+            s3,
+            settings.SITE_BUCKET,
+            f"{settings.SITE_INDEX_THUMBS_PREFIX}/{draft_manifest.set_spec.thumb}.webp",
+            it_image_path,
         )
 
         draft_pr_url = github_publish(
@@ -78,6 +107,7 @@ def _just_publish_pr(s3: S3Client, settings: PublishSettings, admin: AdminAPI) -
             details={"draft_pr_url": draft_pr_url},
         )
         return 0
+
     except Exception as e:  # noqa: BLE001
         admin.update_progress(
             Status.FAILED,
