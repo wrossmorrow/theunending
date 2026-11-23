@@ -66,7 +66,7 @@ variable "admin_email_address" {
 }
 
 variable "gcp_aws_wif_provider" {
-  description = "GCP Workload Identity Provider resource name for AWS workloads (projects/<num>/locations/global/workloadIdentityPools/.../providers/aws)."
+  description = "GCP Workload Identity Provider resource name for AWS workloads (projects/<num>/locations/global/workloadIdentityPools/.../providers/aws-iam)."
   type        = string
   default     = ""
 }

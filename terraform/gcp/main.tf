@@ -59,7 +59,7 @@ resource "google_iam_workload_identity_pool" "workloads" {
 
 resource "google_iam_workload_identity_pool_provider" "aws" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.workloads.workload_identity_pool_id
-  workload_identity_pool_provider_id = "aws"
+  workload_identity_pool_provider_id = "aws-iam"
   display_name                       = "AWS Workloads"
   description                        = "Trusts assumed-role credentials from the admin EC2 and publish Fargate roles."
 

@@ -21,6 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-default-groups --group ${UV_GROUP} --no-install-project
 
 COPY src/${UV_GROUP} src/${UV_GROUP}
+COPY src/machine_auth src/machine_auth
 
 ENV PYTHONPATH=/app/src
 ENTRYPOINT ["python", "-m"]

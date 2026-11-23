@@ -3,6 +3,11 @@ variable "gcp_project_id" {
   type        = string
 }
 
+variable "modal_workspace_id" {
+  description = "Modal workspace ID allowed to federate via https://oidc.modal.com."
+  type        = string
+}
+
 variable "aws_account_id" {
   description = "12-digit AWS account ID trusted for AWS Workload Identity Federation."
   type        = string
@@ -19,12 +24,6 @@ variable "aws_publish_role_name" {
   description = "AWS IAM role name for the ECS Fargate publish task."
   type        = string
   default     = "theunending-publish-task"
-}
-
-variable "modal_workspace_id" {
-  description = "Modal workspace ID allowed to federate via https://oidc.modal.com."
-  type        = string
-  default     = "ac-CUGZoMZ8GV9XJHWy1qggIn"
 }
 
 variable "pool_id" {

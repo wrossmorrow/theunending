@@ -185,7 +185,7 @@ static_resources:
                                                 - key: email
                                               value:
                                                 string_match:
-                                                  exact: "REPLACE_WITH_MODAL_JOBS_SA_EMAIL"
+                                                  exact: "modal-jobs@thunending-oauth.iam.gserviceaccount.com"
                                           - metadata:
                                               filter: envoy.filters.http.jwt_authn
                                               path:
@@ -193,7 +193,7 @@ static_resources:
                                                 - key: email
                                               value:
                                                 string_match:
-                                                  exact: "REPLACE_WITH_PUBLISH_JOB_SA_EMAIL"
+                                                  exact: "publish-job@thunending-oauth.iam.gserviceaccount.com"
                   - name: envoy.filters.http.router
                     typed_config:
                       '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router

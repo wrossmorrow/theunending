@@ -73,6 +73,10 @@ resource "aws_ecs_task_definition" "publish" {
 
       secrets = [
         {
+          name = "ADMIN_API_TOKEN",
+          valueFrom = "${data.aws_secretsmanager_secret.admin_api_auth.arn}:ADMIN_API_TOKEN::",
+        },
+        {
           name = "GITHUB_APP_ID",
           valueFrom = "${data.aws_secretsmanager_secret.theunending_publish_github_app.arn}:GITHUB_APP_ID::",
         },

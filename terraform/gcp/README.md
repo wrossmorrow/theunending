@@ -10,7 +10,7 @@ This module provisions zero-permission GCP service accounts and Workload Identit
   - `modal-jobs@<project>.iam.gserviceaccount.com` (Modal GPU jobs → Envoy gateway)
   - `publish-job@<project>.iam.gserviceaccount.com` (ECS Fargate publish tasks → Envoy gateway)
 - One Workload Identity Pool (`theunending-workloads`) with two providers:
-  - `aws`: trusts AWS account `396610714890`, restricted to `assumed-role/theunending-admin/*` and `assumed-role/theunending-publish-task/*`.
+  - `aws-iam`: trusts AWS account `396610714890`, restricted to `assumed-role/theunending-admin/*` and `assumed-role/theunending-publish-task/*`.
   - `modal`: trusts OIDC issuer `https://oidc.modal.com` (audience `oidc.modal.com`), restricted to `modal:workspace_id:ac-CUGZoMZ8GV9XJHWy1qggIn:*`.
 - `roles/iam.serviceAccountTokenCreator` bindings tying each workload identity to its service account.
 
@@ -57,7 +57,7 @@ gcloud iam workload-identity-pools create "${POOL_ID}" \
   --location="global" \
   --display-name="The Unending Workloads"
 
-gcloud iam workload-identity-pools providers create-aws "aws" \
+gcloud iam workload-identity-pools providers create-aws "aws-iam" \
   --project="${GCP_PROJECT_ID}" \
   --location="global" \
   --workload-identity-pool="${POOL_ID}" \
