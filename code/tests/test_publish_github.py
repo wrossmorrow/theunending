@@ -162,6 +162,8 @@ def _github_publisher(monkeypatch: pytest.MonkeyPatch) -> GithubPublisher:
                 method="GET",
                 url=url,
             )
+        if "/contents/" in url:
+            return _response(200, {"sha": "abc123"}, method="GET", url=url)
         return _response(200, {}, method="GET", url=url)
 
     def fake_put(**kwargs: dict) -> httpx.Response:
@@ -225,9 +227,10 @@ def test_github_publish_creates_draft_pr_when_free(
         return _response(200, {"sha": "abc123"}, method="POST", url=url)
 
     def fake_get(**kwargs: dict) -> httpx.Response:
-        return _response(
-            200, {"object": {"sha": "abc123"}}, method="GET", url=str(kwargs.get("url"))
-        )
+        url = str(kwargs.get("url") or "")
+        if "/contents/" in url:
+            return _response(200, {"sha": "abc123"}, method="GET", url=url)
+        return _response(200, {"object": {"sha": "abc123"}}, method="GET", url=url)
 
     def fake_put(**kwargs: dict) -> httpx.Response:
         return _response(200, {"content": {}}, method="PUT", url=str(kwargs.get("url")))

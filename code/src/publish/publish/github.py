@@ -140,6 +140,14 @@ class GithubPublisher:
 
     def add_files(self, files: dict[str, bytes], branch: str, token: str) -> None:
         for path, content in files.items():
+            # resolve the existing blob sha when the file already exists on the
+            # branch so that updates can target the file precisely
+            existing = httpx.get(
+                url=f"{self.github_api_base_url}/repos/{self.owner}/{self.repo}/contents/{path.lstrip('/')}",
+                headers=self._headers(token),
+                params={"ref": branch},
+            )
+            sha = str(existing.json()["sha"]) if existing.status_code == 200 else None
             response = httpx.put(
                 url=f"{self.github_api_base_url}/repos/{self.owner}/{self.repo}/contents/{path.lstrip('/')}",
                 headers=self._headers(token),
@@ -147,6 +155,7 @@ class GithubPublisher:
                     "message": f"publish draft {self.repo}",
                     "content": base64.b64encode(content).decode("ascii"),
                     "branch": branch,
+                    **({"sha": sha} if sha is not None else {}),
                 },
             )
             response.raise_for_status()
