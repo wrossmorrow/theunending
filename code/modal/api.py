@@ -105,7 +105,10 @@ def _check_auth(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
-    if payload.get("email") != expected_email or payload.get("email_verified") is not True:
+    if (
+        payload.get("email") != expected_email
+        or payload.get("email_verified") is not True
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid machine token email",

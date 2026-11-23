@@ -51,9 +51,7 @@ def _mint_oidc_token(
         "iat": now,
         "exp": now + 3600,
     }
-    return pyjwt.encode(
-        payload, private_pem, algorithm="RS256", headers={"kid": kid}
-    )
+    return pyjwt.encode(payload, private_pem, algorithm="RS256", headers={"kid": kid})
 
 
 @pytest.fixture

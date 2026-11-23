@@ -1,9 +1,6 @@
-
 import modal
 
-
 if __name__ == "__main__":
-
     app = modal.App.lookup("theunending", create_if_missing=True)
 
     img = (

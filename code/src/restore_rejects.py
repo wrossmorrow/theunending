@@ -13,6 +13,7 @@ into it, until the run has --target images (or exactly --count moved).
 Accepted = <prefix>/*.png (top level only); rejected = <prefix>/rejected/*.png.
 Moves are copy + delete, and drop the rejected/reason metadata on the copy.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,7 +26,9 @@ import boto3
 def list_keys(s3, bucket: str, prefix: str, ext: str) -> list[str]:
     keys = []
     for page in s3.get_paginator("list_objects_v2").paginate(
-        Bucket=bucket, Prefix=prefix, Delimiter="/"  # top level only
+        Bucket=bucket,
+        Prefix=prefix,
+        Delimiter="/",  # top level only
     ):
         keys += [o["Key"] for o in page.get("Contents", []) if o["Key"].endswith(ext)]
     return keys
@@ -36,11 +39,18 @@ def main() -> int:
     ap.add_argument("--bucket", required=True)
     ap.add_argument("--prefix", required=True, help="run prefix, e.g. runs/<hash>")
     g = ap.add_mutually_exclusive_group()
-    g.add_argument("--target", type=int, default=5000, help="fill accepted up to this many (default 5000)")
+    g.add_argument(
+        "--target",
+        type=int,
+        default=5000,
+        help="fill accepted up to this many (default 5000)",
+    )
     g.add_argument("--count", type=int, help="move exactly this many instead")
     ap.add_argument("--ext", default=".png")
     ap.add_argument("--seed", type=int, default=None)
-    ap.add_argument("--apply", action="store_true", help="actually move (default: dry run)")
+    ap.add_argument(
+        "--apply", action="store_true", help="actually move (default: dry run)"
+    )
     args = ap.parse_args()
 
     s3 = boto3.client("s3")
@@ -56,20 +66,26 @@ def main() -> int:
         print("nothing to move")
         return 0
     if want > len(rejected):
-        print(f"need {want} but only {len(rejected)} rejected available", file=sys.stderr)
+        print(
+            f"need {want} but only {len(rejected)} rejected available", file=sys.stderr
+        )
         return 1
 
     picks = random.Random(args.seed).sample(rejected, want)
     print(f"{'moving' if args.apply else 'would move'} {want} -> {prefix}")
 
     for i, src in enumerate(picks, 1):
-        dst = prefix + src[len(rej_prefix):]
+        dst = prefix + src[len(rej_prefix) :]
         if not args.apply:
             if i <= 5:
                 print(f"  {src} -> {dst}")
             continue
         head = s3.head_object(Bucket=args.bucket, Key=src)
-        meta = {k: v for k, v in head.get("Metadata", {}).items() if k not in ("rejected", "reason")}
+        meta = {
+            k: v
+            for k, v in head.get("Metadata", {}).items()
+            if k not in ("rejected", "reason")
+        }
         s3.copy_object(
             Bucket=args.bucket,
             Key=dst,

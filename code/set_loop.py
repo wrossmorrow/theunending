@@ -34,9 +34,9 @@ import json
 import math
 import os
 import random
-import sys
 import shutil
 import subprocess
+import sys
 import tempfile
 
 from PIL import Image
@@ -46,18 +46,23 @@ BG_NAMES = {"white": (255, 255, 255), "black": (0, 0, 0), "paper": (250, 249, 24
 
 # ---------------------------------------------------------------- sources
 
+
 def list_local(path):
     return sorted(
-        os.path.join(path, n) for n in os.listdir(path)
+        os.path.join(path, n)
+        for n in os.listdir(path)
         if n.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
     )
 
 
 def list_s3(bucket, prefix):
     import boto3
+
     s3 = boto3.client("s3")
     keys = []
-    for page in s3.get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix):
+    for page in s3.get_paginator("list_objects_v2").paginate(
+        Bucket=bucket, Prefix=prefix
+    ):
         for obj in page.get("Contents", []):
             if obj["Key"].lower().endswith((".png", ".jpg", ".jpeg")):
                 keys.append(obj["Key"])
@@ -66,6 +71,7 @@ def list_s3(bucket, prefix):
 
 def open_s3(bucket, key):
     import boto3
+
     s3 = boto3.client("s3")
     return Image.open(io.BytesIO(s3.get_object(Bucket=bucket, Key=key)["Body"].read()))
 
@@ -74,9 +80,11 @@ def square_crop(im, size):
     w, h = im.size
     side = min(w, h)
     left, top = (w - side) // 2, (h - side) // 2
-    return (im.crop((left, top, left + side, top + side))
-              .convert("RGB")
-              .resize((size, size), Image.LANCZOS))
+    return (
+        im.crop((left, top, left + side, top + side))
+        .convert("RGB")
+        .resize((size, size), Image.LANCZOS)
+    )
 
 
 def gather(source, bucket, prefix, name, count, seed, tile):
@@ -87,19 +95,22 @@ def gather(source, bucket, prefix, name, count, seed, tile):
         where = source
     else:
         keys = list_s3(bucket, prefix)
-        opener = lambda k: open_s3(bucket, k)      # noqa: E731
+        opener = lambda k: open_s3(bucket, k)
         where = f"s3://{bucket}/{prefix}"
     if not keys:
         raise SystemExit(f"{name}: no images in {where}")
     if len(keys) < count:
-        print(f"  {name}: only {len(keys)} images, wanted {count} -- reusing some",
-              file=sys.stderr)
+        print(
+            f"  {name}: only {len(keys)} images, wanted {count} -- reusing some",
+            file=sys.stderr,
+        )
         keys = (keys * math.ceil(count / len(keys)))[:count]
     picked = random.Random(seed).sample(keys, count)
     return [square_crop(opener(k), tile) for k in picked]
 
 
 # ---------------------------------------------------------------- frames
+
 
 def q10(ms):
     """Round a duration to something GIF can actually store.
@@ -110,7 +121,7 @@ def q10(ms):
     browsers treat a delay below 20ms as 100ms, so a "faster" value runs five
     times slower than asked.
     """
-    return max(20, int(round(ms / 10.0)) * 10)
+    return max(20, round(ms / 10.0) * 10)
 
 
 def build_frames(tiles, cols, rows, tile, gap, bg, swaps, drain, rng):
@@ -128,14 +139,14 @@ def build_frames(tiles, cols, rows, tile, gap, bg, swaps, drain, rng):
 
     canvas = blank()
     frames, durs = [canvas.copy()], []
-    durs.append(q10(220))                  # a beat on the empty grid
+    durs.append(q10(220))  # a beat on the empty grid
 
     # fill: left to right, row by row, the way the site's stream fills
     for i in range(cells):
         canvas.paste(tiles[i], xy(i))
         frames.append(canvas.copy())
         durs.append(q10(70))
-    durs[-1] = q10(700)                         # hold once the grid is complete
+    durs[-1] = q10(700)  # hold once the grid is complete
 
     # cycle: replace cells in a shuffled order so it does not read as a wipe
     order = list(range(cells))
@@ -183,7 +194,7 @@ def build_cycle_frames(tiles, cols, rows, tile, gap, bg, rings, rng, swap_ms=140
     need = cells * rings
     if len(tiles) < need:
         raise SystemExit(f"need {need} images for {cols}x{rows} with rings={rings}")
-    ring = [tiles[i * rings:(i + 1) * rings] for i in range(cells)]
+    ring = [tiles[i * rings : (i + 1) * rings] for i in range(cells)]
 
     W = cols * tile + gap * (cols - 1)
     H = rows * tile + gap * (rows - 1)
@@ -199,13 +210,13 @@ def build_cycle_frames(tiles, cols, rows, tile, gap, bg, rings, rng, swap_ms=140
     frames, durs = [canvas.copy()], [swap_ms]
     for step in range(1, rings + 1):
         order = list(range(cells))
-        rng.shuffle(order)                 # a fresh order each round
+        rng.shuffle(order)  # a fresh order each round
         for cell in order:
             canvas.paste(ring[cell][step % rings], xy(cell))
             frames.append(canvas.copy())
             durs.append(swap_ms)
 
-    frames.pop()                           # identical to frames[0]
+    frames.pop()  # identical to frames[0]
     durs.pop()
     return frames, durs
 
@@ -233,15 +244,27 @@ def save_gif(path, frames, durs, bg):
     pal = shared_palette(frames, bg)
     conv = [f.quantize(palette=pal, dither=Image.FLOYDSTEINBERG) for f in frames]
     conv[0].save(
-        path, save_all=True, append_images=conv[1:],
-        duration=durs, loop=0, optimize=True, disposal=1,
+        path,
+        save_all=True,
+        append_images=conv[1:],
+        duration=durs,
+        loop=0,
+        optimize=True,
+        disposal=1,
     )
 
 
 def save_webp(path, frames, durs, quality):
     frames[0].save(
-        path, format="WEBP", save_all=True, append_images=frames[1:],
-        duration=durs, loop=0, quality=quality, method=6, minimize_size=True,
+        path,
+        format="WEBP",
+        save_all=True,
+        append_images=frames[1:],
+        duration=durs,
+        loop=0,
+        quality=quality,
+        method=6,
+        minimize_size=True,
     )
 
 
@@ -255,7 +278,7 @@ def save_mp4(path, frames, durs, fps=30, crf=18):
     """
     if not shutil.which("ffmpeg"):
         raise SystemExit("ffmpeg not found; brew install ffmpeg")
-    
+
     # ffmpeg picks its container from the extension, so a .webp path here
     # silently becomes a WebP encode with libx264 and fails deep in the muxer
     if not path.lower().endswith(".mp4"):
@@ -274,22 +297,42 @@ def save_mp4(path, frames, durs, fps=30, crf=18):
                 frame.save(p)
                 fh.write(f"file '{p}'\nduration {ms / 1000:.4f}\n")
             # concat needs the final image repeated or it gets no duration
-            fh.write(f"file '{os.path.join(tmp, f'f{len(frames)-1:05d}.png')}'\n")
+            fh.write(f"file '{os.path.join(tmp, f'f{len(frames) - 1:05d}.png')}'\n")
 
-        subprocess.run([
-            "ffmpeg", "-y", "-loglevel", "error",
-            "-f", "concat", "-safe", "0", "-i", listing,
-            "-r", str(fps),
-            "-c:v", "libx264", "-preset", "slow", "-crf", str(crf),
-            "-pix_fmt", "yuv420p",
-            "-movflags", "+faststart",
-            path,
-        ], check=True)
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-loglevel",
+                "error",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                listing,
+                "-r",
+                str(fps),
+                "-c:v",
+                "libx264",
+                "-preset",
+                "slow",
+                "-crf",
+                str(crf),
+                "-pix_fmt",
+                "yuv420p",
+                "-movflags",
+                "+faststart",
+                path,
+            ],
+            check=True,
+        )
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
 
 # ---------------------------------------------------------------- main
+
 
 def report(path):
     kb = os.path.getsize(path) / 1024
@@ -300,26 +343,36 @@ def report(path):
 
 
 def main():
-    p = argparse.ArgumentParser(description=__doc__,
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     p.add_argument("--bucket", default=os.environ.get("S3_BUCKET", ""))
     p.add_argument("--prefix", help="run prefix for --set")
     p.add_argument("--map", help="YAML/JSON mapping of set name -> run id")
     p.add_argument("--set", help="single set name")
     p.add_argument("--source", help="local directory instead of S3 (for testing)")
     p.add_argument("--mode", default="cycle", choices=["cycle", "fill"])
-    p.add_argument("--rings", type=int, default=3,
-                   help="images each cell cycles through (cycle mode)")
+    p.add_argument(
+        "--rings",
+        type=int,
+        default=3,
+        help="images each cell cycles through (cycle mode)",
+    )
     p.add_argument("--out", default="assets/loops")
     p.add_argument("--cols", type=int, default=4)
     p.add_argument("--rows", type=int, default=5)
     p.add_argument("--width", type=int, default=720, help="output width in px")
     p.add_argument("--gap", type=int, default=2)
     p.add_argument("--bg", default="white", help="white, black, paper, or #rrggbb")
-    p.add_argument("--swaps", type=int, default=None,
-                   help="cycle frames (default: one per cell)")
-    p.add_argument("--no-drain", dest="drain", action="store_false",
-                   help="end on a full grid; the loop will visibly jump")
+    p.add_argument(
+        "--swaps", type=int, default=None, help="cycle frames (default: one per cell)"
+    )
+    p.add_argument(
+        "--no-drain",
+        dest="drain",
+        action="store_false",
+        help="end on a full grid; the loop will visibly jump",
+    )
     p.add_argument("--quality", type=int, default=80, help="WebP quality")
     p.add_argument("--no-gif", dest="gif", default=True, action="store_false")
     p.add_argument("--no-webp", dest="webp", default=True, action="store_false")
@@ -328,7 +381,7 @@ def main():
 
     if args.bg.startswith("#"):
         h = args.bg.lstrip("#")
-        bg = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+        bg = tuple(int(h[i : i + 2], 16) for i in (0, 2, 4))
     elif args.bg in BG_NAMES:
         bg = BG_NAMES[args.bg]
     else:
@@ -336,7 +389,8 @@ def main():
 
     pairs = {}
     if args.map:
-        text = open(args.map).read()
+        with open(args.map) as f:
+            text = f.read()
         try:
             pairs = json.loads(text)
         except json.JSONDecodeError:
@@ -362,20 +416,24 @@ def main():
 
     os.makedirs(args.out, exist_ok=True)
     for name, prefix in pairs.items():
-        rng = random.Random(name)              # deterministic per set
+        rng = random.Random(name)  # deterministic per set
 
         need = cells * args.rings if args.mode == "cycle" else cells + swaps
         tiles = gather(args.source, args.bucket, prefix, name, need, name, tile)
         if args.mode == "cycle":
-            frames, durs = build_cycle_frames(tiles, args.cols, args.rows, tile,
-                                              args.gap, bg, args.rings, rng)
+            frames, durs = build_cycle_frames(
+                tiles, args.cols, args.rows, tile, args.gap, bg, args.rings, rng
+            )
         else:
-            frames, durs = build_frames(tiles, args.cols, args.rows, tile, args.gap,
-                                        bg, swaps, args.drain, rng)
+            frames, durs = build_frames(
+                tiles, args.cols, args.rows, tile, args.gap, bg, swaps, args.drain, rng
+            )
 
         total = sum(durs) / 1000
-        print(f"{name}: {len(frames)} frames, {total:.1f}s, "
-              f"{args.cols}x{args.rows} at {tile}px")
+        print(
+            f"{name}: {len(frames)} frames, {total:.1f}s, "
+            f"{args.cols}x{args.rows} at {tile}px"
+        )
         if args.gif:
             path = os.path.join(args.out, f"{name}.gif")
             save_gif(path, frames, durs, bg)

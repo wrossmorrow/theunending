@@ -7,7 +7,11 @@ from diffusers.utils import load_image
 
 # 1. Load pipeline in bfloat16
 model_id = "black-forest-labs/FLUX.2-klein-4B"
-device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else ("mps" if torch.backends.mps.is_available() else "cpu")
+)
 
 pipe = Flux2KleinPipeline.from_pretrained(
     model_id,
@@ -26,7 +30,7 @@ num_out = 10
 # Refer directly to the reference inputs (e.g., 'image 1', 'image 2')
 prompt = f"""
 A cinematic 35mm closeup photograph of `an emo girl with a pearl earring` 
-in the style of {", ".join([f"image {i}" for i in range(1, num_refs+1)])}.
+in the style of {", ".join([f"image {i}" for i in range(1, num_refs + 1)])}.
 Prominent pearl earring or earrings, muted light blue and yellow headband or 
 hairtie. full face visible, partial profile, eyes looking directly towards the
 camera. muted unfocused shadowy background suiting a portrait photograph.
@@ -35,11 +39,11 @@ print("PROMPT:", prompt)
 
 # 2. Load reference image(s) as PIL Images
 # Dimensions should ideally be multiples of 16
-prefix = "/Users/wrossmorrow/Work/Projects/website/jekylled/assets/img/2022-11-01-pearl/bulk"
+prefix = (
+    "/Users/wrossmorrow/Work/Projects/website/jekylled/assets/img/2022-11-01-pearl/bulk"
+)
 filenames = [
-    f"tile_row{r:02d}_col{c:02d}.jpg"
-    for r in range(1, 9)
-    for c in range(1, 8)
+    f"tile_row{r:02d}_col{c:02d}.jpg" for r in range(1, 9) for c in range(1, 8)
 ]
 
 # 4. Run Inference

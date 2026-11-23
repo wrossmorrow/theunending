@@ -71,7 +71,10 @@ def test_aws_subject_token_format() -> None:
     )
     headers = {item["key"].lower(): item["value"] for item in payload["headers"]}
     assert headers["host"] == "sts.us-east-1.amazonaws.com"
-    assert headers["x-goog-cloud-target-resource"] == f"//iam.googleapis.com/{TEST_AWS_PROVIDER}"
+    assert (
+        headers["x-goog-cloud-target-resource"]
+        == f"//iam.googleapis.com/{TEST_AWS_PROVIDER}"
+    )
     assert headers["x-amz-security-token"] == "session-token-123"
     assert "x-amz-date" in headers
     assert headers["authorization"].startswith("AWS4-HMAC-SHA256 ")

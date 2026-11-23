@@ -112,7 +112,9 @@ def _aws_subject_token(
     token_payload = {
         "url": request.url,
         "method": request.method,
-        "headers": [{"key": str(k), "value": str(v)} for k, v in request.headers.items()],
+        "headers": [
+            {"key": str(k), "value": str(v)} for k, v in request.headers.items()
+        ],
     }
     return urllib.parse.quote(json.dumps(token_payload), safe="")
 
@@ -240,9 +242,7 @@ def machine_id_token(
                 or os.environ.get("AWS_DEFAULT_REGION")
                 or "us-east-1"
             ).strip()
-            subject_token = _aws_subject_token(
-                provider, region=region, session=session
-            )
+            subject_token = _aws_subject_token(provider, region=region, session=session)
             subject_token_type = AWS_SUBJECT_TOKEN_TYPE
 
         access_token = _exchange_sts_token(

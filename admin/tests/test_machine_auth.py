@@ -49,9 +49,11 @@ def _reset_cache() -> None:
 
 def test_require_machine_auth_accepts_static_token_or_valid_wif() -> None:
     assert require_machine_auth(None, None, static_token="local-dev-token") is None
-    provider, email = require_machine_auth(
+    result = require_machine_auth(
         f"//iam.googleapis.com/{TEST_AWS_PROVIDER}", TEST_SA_EMAIL
     )
+    assert result is not None
+    provider, email = result
     assert provider == TEST_AWS_PROVIDER
     assert email == TEST_SA_EMAIL
 

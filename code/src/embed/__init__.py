@@ -2,7 +2,7 @@
 
 from .encoder import MODELS, PEEncoder, iter_images, pick_device, resolve_model
 
-__all__ = ["MODELS", "PEEncoder", "iter_images", "pick_device", "resolve_model", "main"]
+__all__ = ["MODELS", "PEEncoder", "iter_images", "main", "pick_device", "resolve_model"]
 __version__ = "0.1.0"
 
 

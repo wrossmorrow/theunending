@@ -88,7 +88,9 @@ def cmd_embed(args: argparse.Namespace) -> int:
                 indent=2,
             )
         )
-        print(f"Wrote {saved} ({len(paths)} x {vectors.shape[1]}) and {_sidecar(saved)}")
+        print(
+            f"Wrote {saved} ({len(paths)} x {vectors.shape[1]}) and {_sidecar(saved)}"
+        )
     return 0
 
 
@@ -118,7 +120,7 @@ def cmd_similar(args: argparse.Namespace) -> int:
     order = np.argsort(-scores)[: args.k]
     for rank, idx in enumerate(order, start=1):
         print(f"{rank:2d}. {scores[idx]:.4f}  {paths[idx]}")
-    
+
     return 0
 
 
@@ -129,18 +131,18 @@ def cmd_review(args: argparse.Namespace):
         meta = json.load(f)
         paths = meta["paths"]
 
-    E = E / np.linalg.norm(E, axis=1, keepdims=True)   # L2-normalize → cosine = dot
-    S = E @ E.T                                        # 5000×5000, ~100MB float32
-    np.fill_diagonal(S, -1)                            # never recommend the image itself
-    idx = np.argpartition(-S, 4, axis=1)[:, :4]        # then sort those 4 by score
+    E = E / np.linalg.norm(E, axis=1, keepdims=True)  # L2-normalize → cosine = dot
+    S = E @ E.T  # 5000×5000, ~100MB float32
+    np.fill_diagonal(S, -1)  # never recommend the image itself
+    idx = np.argpartition(-S, 4, axis=1)[:, :4]  # then sort those 4 by score
 
     for i, p in enumerate(paths):
         indices = idx[i]
         path = clean_path(p)
         with open(f"{args.output}/{path}.json", "w") as f:
-            f.write(json.dumps({
-                "similar": [clean_path(paths[int(j)]) for j in indices]
-            }))
+            f.write(
+                json.dumps({"similar": [clean_path(paths[int(j)]) for j in indices]})
+            )
 
 
 def cmd_info(args: argparse.Namespace) -> int:
@@ -217,7 +219,9 @@ def build_parser() -> argparse.ArgumentParser:
     review.set_defaults(func=cmd_review)
 
     info = sub.add_parser("info", help="show device and model information")
-    info.add_argument("--device", default="auto", choices=["auto", "mps", "cpu", "cuda"])
+    info.add_argument(
+        "--device", default="auto", choices=["auto", "mps", "cpu", "cuda"]
+    )
     info.set_defaults(func=cmd_info)
 
     return parser
