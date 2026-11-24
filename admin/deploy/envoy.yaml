@@ -34,8 +34,8 @@ static_resources:
                         - match:
                             path: "/"
                           redirect:
-                            permanent: true
-                            uri_template: "/admin"
+                            path_redirect: "/admin/"
+                            response_code: MOVED_PERMANENTLY
                         - match:
                             prefix: "/"
                           direct_response:
